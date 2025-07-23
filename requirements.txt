@@ -1,0 +1,4 @@
+PyMuPDF
+streamlit
+google-generativeai
+requests
