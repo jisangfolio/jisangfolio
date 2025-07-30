@@ -4,23 +4,20 @@ import google.generativeai as genai
 import time
 import requests
 
-# API 키 및 모델 설정 (유연한 secret 접근)
-def get_secret(key, subkey=None):
-    try:
-        if subkey:
-            return st.secrets[key][subkey]
-        else:
-            return st.secrets[key]
-    except KeyError:
-        return None
+# Streamlit 클라우드용 Secrets (단일 키 방식)
+genai.configure(api_key=st.secrets["google_api_key"])
+NEXON_API_KEY = st.secrets["nexon_api_key"]
 
-google_api_key = get_secret("google_api_key") or get_secret("google", "api_key")
-nexon_api_key = get_secret("nexon_api_key") or get_secret("nexon", "api_key")
+# ---------------------------
+# 로컬 개발용 .streamlit/secrets.toml 예시 (주석)
+# ---------------------------
+"""
+[google]
+api_key = "로컬_구글_API_키"
 
-genai.configure(api_key=google_api_key)
-model = genai.GenerativeModel("gemini-2.5-flash-lite")
-
-NEXON_API_KEY = nexon_api_key
+[nexon]
+api_key = "로컬_넥슨_API_키"
+"""
 
 def get_character_basic_info(character_name):
     headers = {"x-nxopen-api-key": NEXON_API_KEY}
