@@ -4,13 +4,9 @@ import google.generativeai as genai
 import time
 import requests
 
-DEFAULT_LANGUAGE = "한국어"
-
 # API 키 및 모델 설정
-
-
 genai.configure(api_key="AIzaSyDimeo7tcuyKYq_sAWefpiSXnoi9mOJPPE")
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.5-flash-lite")
 
 # 넥슨 API 키 및 캐릭터 기본 정보 가져오기
 NEXON_API_KEY = "test_8c70fb58a8535fd3b4b735379682bf774adccedbdb67b3ab610cc10c6347d246efe8d04e6d233bd35cf2fabdeb93fb0d"
@@ -38,26 +34,7 @@ char_info = get_character_basic_info(char_name)
 
 st.set_page_config(page_title="메지상", page_icon="🤖")
 
-# 언어별 텍스트 정의
-LANG_TEXTS = {
-    "한국어": {
-        "app_title": "메지상",
-        "greeting": "안녕하세요! 무엇이든 물어보세요.",
-        "chat_input": "무엇이든 물어보세요!",
-        "user_label": "사용자",
-        "assistant_label": "어시스턴트",
-        "language_subtitle": "제 AI 챗봇에 오신 걸 환영해요! 편한 언어를 골라주세요.",
-        "elapsed_time_label": "⏳ 응답 시간"
-    }
-}
-
-def get_text(key):
-    # Always return Korean text
-    return LANG_TEXTS["한국어"].get(key, "")
-
 # 세션 상태 초기화
-if "language" not in st.session_state:
-    st.session_state.language = "한국어"
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
@@ -90,33 +67,22 @@ def show_chat():
             else:
                 return "https://i.pravatar.cc/40?u=assistant"
 
-    st.title(get_text("app_title"))
+    st.title("메지상")
     # Greeting and static example questions shown below
     with st.chat_message("assistant", avatar=get_avatar_url("assistant")):
         greeting = get_greeting()
         st.write(f"{char_info.get('character_name', '어시스턴트')}: {greeting}")
         st.write("예시 질문을 참고해보세요 👇")
-        st.markdown("- 너의 직업은 뭐야?\n- 지상이는 어떤 사람이야?\n- 포트폴리오 요약해줘")
+        st.markdown("- 너의 직업은 뭐야?\n- 박지상은 어떤 사람이야?\n- 박지상의 포트폴리오 요약해줘")
 
     # Remove buttons and separate markdown for example questions
     if user_input is None:
-        user_input = st.chat_input(get_text("chat_input"))
+        user_input = st.chat_input("무엇이든 물어보세요!")
 
     portfolio_text = extract_text_from_pdf("resume.pdf")
 
-    # 캐릭터 정보 테스트 출력 (초기에는 비활성화)
-    # if "error" in char_info:
-    #     st.error(f"❌ {char_info['error']}")
-    # else:
-    #     st.subheader("🧝‍♂️ 캐릭터 정보 (Character Info)")
-    #     st.image(char_info["character_image"])
-    #     st.markdown(f"**닉네임:** {char_info['character_name']}")
-    #     st.markdown(f"**직업:** {char_info['character_class']}")
-    #     st.markdown(f"**서버:** {char_info['world_name']}")
-
-
     for role, message in st.session_state.chat_history:
-        label = char_info.get("character_name", "Assistant") if role != "user" else get_text("user_label")
+        label = char_info.get("character_name", "Assistant") if role != "user" else "사용자"
         avatar_url = get_avatar_url(role)
         with st.chat_message(role, avatar=avatar_url):
             st.markdown(f"**{label}**: {message}")
@@ -128,8 +94,12 @@ def show_chat():
         문장: "{user_input}"
         "예" 또는 "아니오"로만 대답해주세요.
         '''
-        classification_response = model.generate_content(classification_prompt)
-        classification = classification_response.text.strip()
+        try:
+            classification_response = model.generate_content(classification_prompt)
+            classification = classification_response.text.strip()
+        except Exception as e:
+            st.error("⚠️ 오늘의 Gemini 무료 사용량을 초과했어요! 내일 다시 시도해주세요.")
+            return
 
         if classification == "예":
             with st.chat_message("assistant", avatar=get_avatar_url("assistant")):
@@ -145,7 +115,7 @@ def show_chat():
 
         # 이하 기존 처리 유지
         with st.chat_message("user", avatar=get_avatar_url("user")):
-            st.markdown(f"**{get_text('user_label')}**: {user_input}")
+            st.markdown(f"**사용자**: {user_input}")
 
         st.session_state.chat_history.append(("user", user_input))
         
@@ -188,7 +158,7 @@ def show_chat():
                 time.sleep(0.05)
 
             if elapsed > 0:
-                st.markdown(f"*{get_text('elapsed_time_label')}: {elapsed:.2f}초*")
+                st.markdown(f"*⏳ 응답 시간: {elapsed:.2f}초*")
             st.session_state.chat_history.append(("assistant", answer))
 
 show_chat()
