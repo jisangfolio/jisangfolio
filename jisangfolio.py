@@ -4,12 +4,23 @@ import google.generativeai as genai
 import time
 import requests
 
-# API 키 및 모델 설정
-genai.configure(api_key=st.secrets["google"]["api_key"])
+# API 키 및 모델 설정 (유연한 secret 접근)
+def get_secret(key, subkey=None):
+    try:
+        if subkey:
+            return st.secrets[key][subkey]
+        else:
+            return st.secrets[key]
+    except KeyError:
+        return None
+
+google_api_key = get_secret("google_api_key") or get_secret("google", "api_key")
+nexon_api_key = get_secret("nexon_api_key") or get_secret("nexon", "api_key")
+
+genai.configure(api_key=google_api_key)
 model = genai.GenerativeModel("gemini-2.5-flash-lite")
 
-# 넥슨 API 키 및 캐릭터 기본 정보 가져오기
-NEXON_API_KEY = st.secrets["nexon"]["api_key"]
+NEXON_API_KEY = nexon_api_key
 
 def get_character_basic_info(character_name):
     headers = {"x-nxopen-api-key": NEXON_API_KEY}
