@@ -42,18 +42,18 @@ def extract_text_from_pdf(pdf_path):
 
 # 5. 메인 로직
 def show_chat():
-    st.title("🧑‍💻 안녕하세요, JJ Park입니다.")
+    st.title("🧑‍💻 안녕하세요, 박지상입니다.")
     st.caption("제 이력서와 경험에 대해 궁금한 점을 직접 물어봐 주세요! (AI가 저를 대신해 답변합니다)")
 
     # 사이드바: 이력서 다운로드
     with st.sidebar:
         st.header("Profile")
-        st.info("UIUC Data Science Major\nData Engineer / Scientist 지망")
+        st.info("UIUC Data Science Major\nData Engineer")
         
         try:
             with open("resume.pdf", "rb") as f:
                 st.download_button(
-                    label="📄 제 이력서 다운로드 (PDF)",
+                    label="📄 영문 이력서 다운로드 (PDF)",
                     data=f,
                     file_name="JJ_Park_Resume.pdf",
                     mime="application/pdf"
