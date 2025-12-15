@@ -19,7 +19,7 @@ except KeyError:
     st.stop()
 
 genai.configure(api_key=google_api_key)
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # 2. 페이지 설정
 st.set_page_config(page_title="Chat with JJ Park", page_icon="🧑‍💻")
