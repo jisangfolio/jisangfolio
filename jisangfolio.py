@@ -1,12 +1,12 @@
 '''
 git add .
-git commit -m "Your commit message"
+git commit -m "message"
 git push origin main
 
 streamlit run jisangfolio.py
 '''
 
-import fitz  # PyMuPDF
+import fitz
 import streamlit as st
 import google.generativeai as genai
 import time
