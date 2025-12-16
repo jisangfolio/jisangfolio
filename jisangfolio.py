@@ -44,6 +44,7 @@ def extract_text_from_pdf(pdf_path):
 def show_chat():
     st.title("🧑‍💻 안녕하세요, 제 이름은 박지상입니다.")
     st.caption("저에 대해 궁금한 점을 직접 물어봐 주세요! (AI가 알려드립니다!)")
+    st.caption("현재 개발 진행 중 입니다! 완벽하지 않은 답변이 출력될 수 있습니다!")
 
     # 사이드바: 이력서 다운로드
     with st.sidebar:
