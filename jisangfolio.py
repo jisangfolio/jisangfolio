@@ -23,7 +23,7 @@ except KeyError:
 
 genai.configure(api_key=google_api_key)
 # 많은 양의 텍스트를 처리하기 위해 flash 모델 추천 (속도 빠름)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.0-flash")
 
 # 2. 페이지 설정
 st.set_page_config(page_title="Chat with JJ Park", page_icon="🧑‍💻")
