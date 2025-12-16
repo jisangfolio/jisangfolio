@@ -42,8 +42,8 @@ def extract_text_from_pdf(pdf_path):
 
 # 5. 메인 로직
 def show_chat():
-    st.title("🧑‍💻 안녕하세요, 박지상입니다.")
-    st.caption("제 이력서와 경험에 대해 궁금한 점을 직접 물어봐 주세요! (AI가 저를 대신해 답변합니다)")
+    st.title("🧑‍💻 안녕하세요, 제 이름은 박지상입니다.")
+    st.caption("저에 대해 궁금한 점을 직접 물어봐 주세요! (AI가 알려드립니다!)")
 
     # 사이드바: 이력서 다운로드
     with st.sidebar:
