@@ -18,15 +18,14 @@ RESUME_FILENAME = "master_resume.pdf"
 try:
     google_api_key = st.secrets["google_api_key"]
 except KeyError:
-    st.error("⚠️ Google API 키가 설정되지 않았습니다. .streamlit/secrets.toml 파일을 확인해주세요.")
+    st.error("⚠️ Google API 키가 설정되지 않았습니다.")
     st.stop()
 
 genai.configure(api_key=google_api_key)
-# 많은 양의 텍스트를 처리하기 위해 flash 모델 추천 (속도 빠름)
 model = genai.GenerativeModel("gemini-2.0-flash")
 
 # 2. 페이지 설정
-st.set_page_config(page_title="Chat with JJ Park", page_icon="🧑‍💻")
+st.set_page_config(page_title="JisangFolio", page_icon="🧑‍💻")
 
 # 3. 세션 상태 초기화
 if "chat_history" not in st.session_state:
@@ -94,7 +93,7 @@ def show_chat():
             st.markdown(message)
 
     # 사용자 입력 처리
-    if user_input := st.chat_input("질문 예시: 삼성 SDI 인턴 때는 어떤 문제를 해결했나요?"):
+    if user_input := st.chat_input("질문 예시: 어느 학교를 졸업했나요?"):
         # 사용자 메시지 표시
         st.session_state.chat_history.append(("user", user_input))
         with st.chat_message("user", avatar="🧐"):
