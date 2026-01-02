@@ -60,17 +60,17 @@ def show_chat():
         
         st.divider()
         
-        # 파일이 실제로 있을 때만 다운로드 버튼 표시
-        if os.path.exists(RESUME_FILENAME):
-            with open(RESUME_FILENAME, "rb") as f:
-                st.download_button(
-                    label="📄 영문 레주메 다운로드 (PDF)",
-                    data=f,
-                    file_name="resume.pdf",
-                    mime="application/pdf"
-                )
-        else:
-            st.warning(f"⚠️ '{RESUME_FILENAME}' 파일이 폴더에 없습니다.")
+        # # 파일이 실제로 있을 때만 다운로드 버튼 표시
+        # if os.path.exists(RESUME_FILENAME):
+        #     with open(RESUME_FILENAME, "rb") as f:
+        #         st.download_button(
+        #             label="📄 영문 레주메 다운로드 (PDF)",
+        #             data=f,
+        #             file_name="resume.pdf",
+        #             mime="application/pdf"
+        #         )
+        # else:
+        #     st.warning(f"⚠️ '{RESUME_FILENAME}' 파일이 폴더에 없습니다.")
 
     # 이력서 텍스트 로드 (한 번만 실행하여 캐싱)
     if "resume_text" not in st.session_state:
