@@ -18,6 +18,11 @@
 
 불필요한 임베딩/검색 과정을 제거하고, LLM이 전체 맥락을 보고 정확하게 답변하도록 설계했습니다.
 
+## 🛠 Tech
+
+UI/UX: Streamlit
+Language: Python
+
 ```mermaid
 graph LR
     A[📄 PDF Resume] -->|PyMuPDF| B(Raw Text Extraction)
@@ -25,3 +30,9 @@ graph LR
     B -->|Full Resume Text| D
     D -->|System Prompt + Query| E[✨ Google Gemini 2.0 API]
     E -->|Streaming Response| F[💬 Streamlit Chat UI]
+```
+
+## 📬 Contact
+
+Email: jjpark324434@gmail.com
+Role: Data Engineer
