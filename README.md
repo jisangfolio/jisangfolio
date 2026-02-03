@@ -1,7 +1,7 @@
 # 👨‍💻 JisangFolio
 
 > **"읽지 말고 대화하는 이력서."**
-> 정적인 PDF 문서의 한계를 넘어, 채용 담당자와 실시간으로 소통하며 저의 경험과 역량을 증명하는 **AI 에이전트**입니다.
+> 정적인 PDF 문서의 한계를 넘어, 채용 담당자와 실시간으로 소통하며 제 경험과 역량을 증명하는 **AI 에이전트**입니다.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
@@ -11,8 +11,7 @@
 
 **JisangFolio**는 저의 이력서를 기반으로 면접관의 질문에 답변하는 인터랙티브 AI 챗봇입니다.
 
-일반적인 RAG(Retrieval-Augmented Generation) 방식은 문서가 방대할 때 유용하지만, 이력서와 같은 단일 문서에는 불필요한 복잡성을 초래할 수 있습니다.
-따라서 본 프로젝트는 **Gemini 2.0 Flash** 모델의 **Long Context Window** 능력을 활용하여, 별도의 벡터 데이터베이스 없이 문서를 통째로 이해하고 답변하는 **Lightweight Architecture**를 채택했습니다.
+본 프로젝트는 **Gemini 2.0 Flash** 모델의 **Long Context Window** 능력을 활용하여, 문서를 통째로 이해하고 답변하는 **Lightweight Architecture**를 채택했습니다.
 
 ## 🏗 System Architecture (Lightweight & Fast)
 
