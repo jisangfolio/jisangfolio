@@ -13,10 +13,6 @@
 
 본 프로젝트는 **Gemini 2.0 Flash** 모델의 **Long Context Window** 능력을 활용하여, 문서를 통째로 이해하고 답변하는 **Lightweight Architecture**를 채택했습니다.
 
-## 🏗 System Architecture (Lightweight & Fast)
-
-불필요한 임베딩/검색 과정을 제거하고, LLM이 전체 맥락을 보고 정확하게 답변하도록 설계했습니다.
-
 ## 🛠 Tech
 
 UI/UX: Streamlit
