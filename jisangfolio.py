@@ -66,7 +66,7 @@ T = {
             {
                 "title": "🏭 삼성SDI 폐쇄망 RAG",
                 "period": "2025.06 ~ 08 · 인턴",
-                "desc": "완전 인터넷 차단 환경에서 Ollama + Qwen-72B + FAISS로 특허 검색 RAG 챗봇 **1인 단독 개발** → 임원 PoC 호평",
+                "desc": "완전 인터넷 차단 환경에서 특허 검색 RAG 챗봇 **1인 단독 개발**. 대화 이력 기반 재검색 로직 설계, 핵심 지표 집계·시각화 기능 포함 → 임원 PoC 호평",
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
@@ -80,6 +80,12 @@ T = {
                 "period": "Applied Sciences, 2025.07 게재",
                 "desc": "CoP 시계열에 Butterworth Filter(4차) + FFT 적용, Rambling/Trembling 분해로 데이터 설명력 **85%+ 달성**",
                 "tags": "`Python` `SciPy` `FFT` `시계열 분석`",
+            },
+            {
+                "title": "🧠 감성 분석 · 멀티모달 AI",
+                "period": "2024.08 ~ 12 · UIUC 프로젝트",
+                "desc": "Hugging Face + PyTorch로 감성 분석 및 멀티모달 모델 성능 개선. Pandas + Matplotlib으로 데이터 전처리 및 시각화 자동화, Computer Vision 툴 배포",
+                "tags": "`PyTorch` `Hugging Face` `Pandas` `Matplotlib`",
             },
         ],
         "stack_head": "## 🧰 기술 스택",
@@ -130,7 +136,7 @@ T = {
             {
                 "title": "🏭 Samsung SDI Air-Gapped RAG",
                 "period": "Jun ~ Aug 2025 · Intern",
-                "desc": "**Solo-built** patent search RAG chatbot in a fully internet-blocked environment using Ollama + Qwen-72B + FAISS → executive PoC praised",
+                "desc": "**Solo-built** patent search RAG chatbot in a fully internet-blocked environment. Designed re-search logic using conversation history and provided key metric aggregation & visualization → executive PoC praised",
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
@@ -144,6 +150,12 @@ T = {
                 "period": "Applied Sciences, Jul 2025",
                 "desc": "Applied Butterworth Filter(4th order) + FFT on CoP time-series, decomposed Rambling/Trembling achieving **85%+ explanatory power**",
                 "tags": "`Python` `SciPy` `FFT` `Time-series Analysis`",
+            },
+            {
+                "title": "🧠 Sentiment Analysis · Multimodal AI",
+                "period": "Aug ~ Dec 2024 · UIUC Project",
+                "desc": "Improved sentiment analysis and multimodal model performance using Hugging Face + PyTorch. Automated data preprocessing & visualization with Pandas + Matplotlib, deployed Computer Vision tools",
+                "tags": "`PyTorch` `Hugging Face` `Pandas` `Matplotlib`",
             },
         ],
         "stack_head": "## 🧰 Tech Stack",
@@ -187,7 +199,7 @@ COLOR_MAP = {
 if lang == "한국어":
     timeline_rows = [
         {"구분": "학력",  "항목": "University of Washington",      "시작": "2019-09-01", "종료": "2020-06-30", "상세": "Pre-Science (INFO · CSE · STAT)"},
-        {"구분": "학력",  "항목": "University of Washington",      "시작": "2023-01-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · 복학"},
+        {"구분": "학력",  "항목": "University of Washington",      "시작": "2022-12-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · 복학"},
         {"구분": "군복무", "항목": "어학병 (제3함대 · 한미연합사)", "시작": "2021-02-15", "종료": "2022-10-14", "상세": "영어 통역 병과"},
         {"구분": "학력",  "항목": "UIUC · BSIS+DS",               "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
         {"구분": "경력",  "항목": "삼성SDI · 데이터 엔지니어 인턴", "시작": "2025-06-01", "종료": "2025-08-31", "상세": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
@@ -198,7 +210,7 @@ if lang == "한국어":
 else:
     timeline_rows = [
         {"구분": "Education", "항목": "University of Washington",        "시작": "2019-09-01", "종료": "2020-06-30", "상세": "Pre-Science (INFO · CSE · STAT)"},
-        {"구분": "Education", "항목": "University of Washington",        "시작": "2023-01-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · Return"},
+        {"구분": "Education", "항목": "University of Washington",        "시작": "2022-12-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · Return"},
         {"구분": "Military",  "항목": "Military Service (ROKN)",         "시작": "2021-02-15", "종료": "2022-10-14", "상세": "English Interpreter · 3rd Fleet & USFK"},
         {"구분": "Education", "항목": "UIUC · BSIS+DS",                  "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
         {"구분": "Work",      "항목": "Samsung SDI · Data Eng. Intern",  "시작": "2025-06-01", "종료": "2025-08-31", "상세": "Solo-built air-gapped RAG chatbot → praised by executives"},
@@ -274,8 +286,9 @@ st.divider()
 
 # ── 주요 프로젝트 ─────────────────────────────────────────────────
 st.markdown(t["proj_head"])
-cols = st.columns(3)
-for col, proj in zip(cols, t["projects"]):
+row1 = st.columns(2)
+row2 = st.columns(2)
+for col, proj in zip(row1 + row2, t["projects"]):
     with col:
         with st.container(border=True):
             st.markdown(f"**{proj['title']}**")
