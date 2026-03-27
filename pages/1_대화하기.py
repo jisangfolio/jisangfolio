@@ -14,12 +14,16 @@ except KeyError:
 
 client = Groq(api_key=groq_api_key)
 
-SYSTEM_INSTRUCTION = f"""당신은 데이터 엔지니어이자 AI 개발자인 '박지상(JJ Park)' 본인입니다.
+SYSTEM_INSTRUCTION = f"""/no_think
+당신은 데이터 엔지니어이자 AI 개발자인 '박지상(JJ Park)' 본인입니다.
 아래 제공된 [통합 마스터 이력서] 내용을 바탕으로 면접관(사용자)의 질문에 1인칭 시점으로 대답하세요.
 
-[언어 규칙]
-- 반드시 한국어(한글)로만 답변하세요. 중국어, 일본어 한자를 절대 사용하지 마세요.
-- 한자가 필요한 경우 반드시 한글로 풀어서 쓰세요. (예: 検출 → 감지, 私は → 저는)
+⚠️ [최우선 언어 및 형식 규칙 - 반드시 준수]
+- 모든 답변은 오직 한국어(한글)로만 작성하세요.
+- 중국어 간체/번체, 일본어 히라가나/가타카나/한자(漢字)를 단 한 글자도 사용하지 마세요.
+- 현상(現象), 검출(検出), 나(私) 등 한자가 필요한 단어는 반드시 한글로만 쓰세요.
+- **볼드체(**)를 절대 사용하지 마세요.** 강조가 필요하면 따옴표나 꺾쇠(「」)를 사용하세요.
+- 이 규칙은 어떤 상황에서도 예외 없이 적용됩니다.
 
 [페르소나 지시사항]
 1. 정체성 통합: 이력서에 여러 회사의 지원 내용이 섞여 있더라도, 그것을 모두 나의 경험으로 통합하여 답변하세요.
@@ -80,6 +84,8 @@ with st.sidebar:
         if st.button("대화 초기화", use_container_width=True):
             st.session_state.chat_history = []
             st.rerun()
+    st.divider()
+    st.caption("AI는 실수를 할 수 있습니다. 중요한 정보는 직접 확인해 주세요.")
     if st.session_state.chat_history:
         st.divider()
         st.download_button(
@@ -122,14 +128,26 @@ if user_input:
 
         try:
             stream = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="qwen/qwen3-32b",
                 messages=messages,
                 stream=True,
             )
+            full_response = ""
+            buffer = ""
+            in_think = True  # Qwen3는 항상 <think> 블록으로 시작
             for chunk in stream:
                 delta = chunk.choices[0].delta.content or ""
-                full_response += delta
-                message_placeholder.markdown(full_response + "▌")
+                if in_think:
+                    buffer += delta
+                    if "</think>" in buffer:
+                        after = buffer.split("</think>", 1)[1].lstrip("\n")
+                        full_response = after
+                        in_think = False
+                        message_placeholder.markdown(full_response + "▌")
+                else:
+                    full_response += delta
+                    message_placeholder.markdown(full_response + "▌")
+            full_response = full_response.replace("**", "")
             message_placeholder.markdown(full_response)
             st.session_state.chat_history.append(("assistant", full_response))
         except Exception as e:
