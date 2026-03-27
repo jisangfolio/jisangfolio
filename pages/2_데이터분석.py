@@ -152,6 +152,7 @@ if user_input and retriever:
 
     prompt = ChatPromptTemplate.from_template(
         """당신은 업로드된 데이터를 기반으로 답변하는 AI 데이터 분석가입니다.
+반드시 한국어(한글)로만 답변하세요. 중국어, 일본어 한자를 절대 사용하지 마세요.
 
 [이전 대화 (있을 경우 참고)]:
 {history}
