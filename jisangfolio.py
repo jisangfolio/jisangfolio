@@ -1,93 +1,259 @@
 import streamlit as st
-import google.generativeai as genai
-import time
+import plotly.express as px
+import pandas as pd
+import os
 
-# 1. 페이지 설정
-st.set_page_config(page_title="JisangFolio", page_icon="🧑‍💻")
+st.set_page_config(
+    page_title="JisangFolio",
+    page_icon="🧑‍💻",
+    layout="centered"
+)
 
-try:
-    google_api_key = st.secrets["google_api_key"]
-    resume_text = st.secrets["resume_text"] 
-except KeyError:
-    st.error("⚠️ Secrets(API 키 또는 이력서 텍스트)가 설정되지 않았습니다.")
-    st.stop()
+# --- 사이드바: 언어 선택 + 링크 ---
+with st.sidebar:
+    lang = st.radio("Language / 언어", ["한국어", "English"], horizontal=True)
+    st.divider()
+    st.markdown("**박지상 (Jisang Park)**")
+    st.markdown("✉️ jisang.park916@gmail.com")
+    st.markdown("🔗 [LinkedIn](https://linkedin.com/in/jisangpark)")
+    st.divider()
 
-genai.configure(api_key=google_api_key)
-model = genai.GenerativeModel("gemini-2.0-flash")
+    resume_path = os.path.join(os.path.dirname(__file__), "resume.pdf")
+    if os.path.exists(resume_path):
+        with open(resume_path, "rb") as f:
+            st.download_button(
+                label="📄 이력서 다운로드" if lang == "한국어" else "📄 Download Resume",
+                data=f,
+                file_name="Jisang_Park_Resume.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+    else:
+        st.caption("(resume.pdf를 프로젝트 루트에 넣으면 다운로드 버튼이 활성화됩니다)")
 
-# 3. 세션 상태 초기화
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-    
-# ✨ 세션에 이력서 저장
-if "resume_text" not in st.session_state:
-    st.session_state.resume_text = resume_text
+# ── 언어별 텍스트 ────────────────────────────────────────────────
+T = {
+    "한국어": {
+        "title": "박지상 (Jisang Park)",
+        "subtitle": "Data Engineer · AI Researcher",
+        "location": "📍 KETI 자율형IoT연구센터 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "tagline_head": "## 📖 읽지 말고 대화하는 이력서",
+        "tagline_body": (
+            "정적인 PDF 이력서의 한계를 넘어, 저의 모든 경험과 역량을 AI가 직접 전달합니다.  \n"
+            "채용 담당자가 궁금한 것을 바로 물어볼 수 있는 인터랙티브 포트폴리오입니다."
+        ),
+        "how_head": "## ⚙️ 어떻게 작동하나요?",
+        "arch": [
+            "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 전체 이력서 텍스트",
+            "✨ **Gemini 2.0 Flash**\n\nLong Context Window로 이력서 전문을 한 번에 이해",
+            "💬 **1인칭 스트리밍**\n\n박지상 본인처럼 면접 질문에 실시간으로 답변",
+        ],
+        "rag_note": "",
+        "timeline_head": "## 📅 경력 타임라인",
+        "proj_head": "## 🛠️ 주요 프로젝트",
+        "projects": [
+            {
+                "title": "🏭 삼성SDI 폐쇄망 RAG",
+                "period": "2025.06 ~ 08 · 인턴",
+                "desc": "완전 인터넷 차단 환경에서 Ollama + Qwen-72B + FAISS로 특허 검색 RAG 챗봇 **1인 단독 개발** → 임원 PoC 호평",
+                "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
+            },
+            {
+                "title": "🔬 KETI 멀티모달 AI 에이전트",
+                "period": "2026.02 ~ 현재 · AI 연구원",
+                "desc": "CNN+Transformer 기반 멀티모달 에이전트, Rule-based Agent로 환각 제어, NGSI-LD IoT 데이터 처리, MLOps 파이프라인",
+                "tags": "`PyTorch` `Triton` `Kubeflow` `MLflow` `MQTT`",
+            },
+            {
+                "title": "📊 TEBO 균형 분석 · SCIE 논문",
+                "period": "Applied Sciences, 2025.07 게재",
+                "desc": "CoP 시계열에 Butterworth Filter(4차) + FFT 적용, Rambling/Trembling 분해로 데이터 설명력 **85%+ 달성**",
+                "tags": "`Python` `SciPy` `FFT` `시계열 분석`",
+            },
+        ],
+        "stack_head": "## 🧰 기술 스택",
+        "stacks": [
+            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Gemini · PyTorch  \nRule-based Agent · Prompt Engineering"),
+            ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
+            ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
+        ],
+        "cta_head": "## 💬 직접 물어보세요",
+        "cta_body": "AI와 대화하듯 저의 경험, 기술, 프로젝트를 질문해 보세요.",
+        "cta_btn": "대화 시작하기 →",
+    },
+    "English": {
+        "title": "Jisang Park (박지상)",
+        "subtitle": "Data Engineer · AI Researcher",
+        "location": "📍 KETI IoT Research Center &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "tagline_head": "## 📖 A Resume You Talk To",
+        "tagline_body": (
+            "Going beyond static PDF resumes — my AI delivers my experience and skills in real conversation.  \n"
+            "Ask anything you'd want to know in an interview, and get an answer instantly."
+        ),
+        "how_head": "## ⚙️ How Does It Work?",
+        "arch": [
+            "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets",
+            "✨ **Gemini 2.0 Flash**\n\nUnderstands the entire resume via Long Context Window",
+            "💬 **1st-person Streaming**\n\nAnswers interview questions in real-time as Jisang himself",
+        ],
+        "rag_note": "",
+        "timeline_head": "## 📅 Career Timeline",
+        "proj_head": "## 🛠️ Key Projects",
+        "projects": [
+            {
+                "title": "🏭 Samsung SDI Air-Gapped RAG",
+                "period": "Jun ~ Aug 2025 · Intern",
+                "desc": "**Solo-built** patent search RAG chatbot in a fully internet-blocked environment using Ollama + Qwen-72B + FAISS → executive PoC praised",
+                "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
+            },
+            {
+                "title": "🔬 KETI Multimodal AI Agent",
+                "period": "Feb 2026 ~ Present · AI Researcher",
+                "desc": "CNN+Transformer multimodal agent, hallucination control via Rule-based Agent, NGSI-LD IoT data processing, MLOps pipeline",
+                "tags": "`PyTorch` `Triton` `Kubeflow` `MLflow` `MQTT`",
+            },
+            {
+                "title": "📊 TEBO Balance Analysis · SCIE Paper",
+                "period": "Applied Sciences, Jul 2025",
+                "desc": "Applied Butterworth Filter(4th order) + FFT on CoP time-series, decomposed Rambling/Trembling achieving **85%+ explanatory power**",
+                "tags": "`Python` `SciPy` `FFT` `Time-series Analysis`",
+            },
+        ],
+        "stack_head": "## 🧰 Tech Stack",
+        "stacks": [
+            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Gemini · PyTorch  \nRule-based Agent · Prompt Engineering"),
+            ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
+            ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
+        ],
+        "cta_head": "## 💬 Ask Me Anything",
+        "cta_body": "Chat with my AI to explore my experience, skills, and projects — just like an interview.",
+        "cta_btn": "Start Chatting →",
+    },
+}
 
-# 4. 메인 로직
-def show_chat():
-    st.title("🧑‍💻 안녕하세요, 제 이름은 박지상입니다.")
-    st.caption("저의 모든 경험과 역량을 통합한 AI가 답변해 드립니다! 무엇이든 물어보세요.")
+t = T[lang]
 
-    # 사이드바: 프로필 및 링크
-    with st.sidebar:
-        st.header("Profile")
-        st.markdown("""
-        **박지상 (Jisang Park)**
-        - UIUC Info Science + Data Science (BSIS+DS)
-        - Data Engineer / AI Researcher
-        - Email: jisang.park916@gmail.com
-        """)
+# ── 타임라인 데이터 (공통) ─────────────────────────────────────────
+COLOR_MAP = {
+    "학력" if lang == "한국어" else "Education": "#4C9BE8",
+    "군복무" if lang == "한국어" else "Military": "#A0A0A0",
+    "경력" if lang == "한국어" else "Work": "#2ECC71",
+    "논문" if lang == "한국어" else "Research": "#F39C12",
+}
 
-    # 채팅 기록 표시
-    for role, message in st.session_state.chat_history:
-        avatar = "🧐" if role == "user" else "🧑‍💻"
-        with st.chat_message(role, avatar=avatar):
-            st.markdown(message)
+if lang == "한국어":
+    timeline_rows = [
+        {"구분": "학력",  "항목": "University of Washington",      "시작": "2019-09-01", "종료": "2020-06-30", "상세": "Pre-Science (INFO · CSE · STAT)"},
+        {"구분": "학력",  "항목": "University of Washington",      "시작": "2023-01-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · 복학"},
+        {"구분": "군복무", "항목": "어학병 (제3함대 · 한미연합사)", "시작": "2021-02-15", "종료": "2022-10-14", "상세": "영어 통역 병과"},
+        {"구분": "학력",  "항목": "UIUC · BSIS+DS",               "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
+        {"구분": "경력",  "항목": "삼성SDI · 데이터 엔지니어 인턴", "시작": "2025-06-01", "종료": "2025-08-31", "상세": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
+        {"구분": "논문",  "항목": "TEBO · SCIE 논문 게재",          "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP 분석 설명력 85%+"},
+        {"구분": "경력",  "항목": "KETI · AI 에이전트 연구원",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "멀티모달 AI 에이전트 · MLOps · NGSI-LD IoT"},
+    ]
+    col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
+else:
+    timeline_rows = [
+        {"구분": "Education", "항목": "University of Washington",        "시작": "2019-09-01", "종료": "2020-06-30", "상세": "Pre-Science (INFO · CSE · STAT)"},
+        {"구분": "Education", "항목": "University of Washington",        "시작": "2023-01-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · Return"},
+        {"구분": "Military",  "항목": "Military Service (ROKN)",         "시작": "2021-02-15", "종료": "2022-10-14", "상세": "English Interpreter · 3rd Fleet & USFK"},
+        {"구분": "Education", "항목": "UIUC · BSIS+DS",                  "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
+        {"구분": "Work",      "항목": "Samsung SDI · Data Eng. Intern",  "시작": "2025-06-01", "종료": "2025-08-31", "상세": "Solo-built air-gapped RAG chatbot → praised by executives"},
+        {"구분": "Research",  "항목": "TEBO · SCIE Publication",         "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP analysis 85%+ explanatory power"},
+        {"구분": "Work",      "항목": "KETI · AI Agent Researcher",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "Multimodal AI Agent · MLOps · NGSI-LD IoT"},
+    ]
+    col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
 
-    # 사용자 입력 처리
-    if user_input := st.chat_input("질문 예시: 삼성SDI에서 어떤 프로젝트를 했나요?"):
-        
-        st.session_state.chat_history.append(("user", user_input))
-        with st.chat_message("user", avatar="🧐"):
-            st.markdown(user_input)
+df = pd.DataFrame(timeline_rows)
+df[col_시작] = pd.to_datetime(df[col_시작])
+df[col_종료] = pd.to_datetime(df[col_종료])
 
-        with st.chat_message("assistant", avatar="🧑‍💻"):
-            message_placeholder = st.empty()
-            full_response = ""
-            
-            prompt = f"""
-            당신은 데이터 엔지니어이자 AI 개발자인 **'박지상(JJ Park)' 본인**입니다.
-            아래 제공된 [통합 마스터 이력서] 내용을 바탕으로 면접관(사용자)의 질문에 대해 **1인칭 시점**으로 대답하세요.
+# ── 헤더 ──────────────────────────────────────────────────────────
+st.title(t["title"])
+st.caption(t["subtitle"])
+st.markdown(t["location"], unsafe_allow_html=True)
 
-            [페르소나 지시사항]
-            1. 정체성 통합: 이력서에 여러 회사의 지원 내용이 섞여 있더라도, 그것을 모두 나의 경험으로 통합하여 답변하세요.
-            2. 말투: "저는 ~했습니다."와 같이 자신감 있고 정중한 해요체를 사용하세요.
-            3. 답변 스타일: 
-               - 질문에 대한 핵심 결론을 먼저 말하세요 (두괄식).
-               - 경험을 이야기할 때는 [문제 정의 -> 해결 과정 -> 결과] 순서로 논리적으로 설명하세요.
-               - 구체적인 기술 스택(Python, LangChain, RAG 등)이나 성과(논문 게재, 시간 단축 등)를 언급하여 전문성을 보여주세요.
-            4. 모르는 내용: 이력서에 없는 내용은 지어내지 말고, "그 부분은 문서에 없지만, 저의 평소 생각으로는..." 식으로 유연하게 대처하거나 솔직하게 말하세요.
+st.divider()
 
-            [통합 마스터 이력서 내용]
-            {st.session_state.resume_text}
+# ── 태그라인 ──────────────────────────────────────────────────────
+st.markdown(t["tagline_head"])
+st.markdown(t["tagline_body"])
 
-            [면접관 질문]
-            {user_input}
-            """
-            
-            try:
-                response = model.generate_content(prompt, stream=True)
-                for chunk in response:
-                    if chunk.text:
-                        full_response += chunk.text
-                        message_placeholder.markdown(full_response + "▌")
-                        time.sleep(0.01)
-                message_placeholder.markdown(full_response)
-                
-                st.session_state.chat_history.append(("assistant", full_response))
-                
-            except Exception as e:
-                st.error(f"답변 생성 중 오류가 발생했습니다: {e}")
+st.divider()
 
-if __name__ == "__main__":
-    show_chat()
+# ── 작동 원리 ─────────────────────────────────────────────────────
+st.markdown(t["how_head"])
+col1, col2, col3, col4, col5 = st.columns([3, 1, 3, 1, 3])
+with col1:
+    st.info(t["arch"][0])
+with col2:
+    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+with col3:
+    st.info(t["arch"][1])
+with col4:
+    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+with col5:
+    st.info(t["arch"][2])
+st.markdown(t["rag_note"])
+
+st.divider()
+
+# ── 경력 타임라인 ─────────────────────────────────────────────────
+st.markdown(t["timeline_head"])
+
+fig = px.timeline(
+    df,
+    x_start=col_시작,
+    x_end=col_종료,
+    y=col_항목,
+    color=col_구분,
+    color_discrete_map=COLOR_MAP,
+    hover_name=col_항목,
+    hover_data={col_상세: True, col_시작: "|%Y.%m", col_종료: "|%Y.%m", col_구분: False, col_항목: False},
+    labels={col_항목: "", col_구분: ""},
+)
+fig.update_yaxes(autorange="reversed")
+fig.update_layout(
+    height=320,
+    margin=dict(l=0, r=10, t=10, b=10),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    xaxis_title="",
+    yaxis_title="",
+    font=dict(size=12),
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.15)"),
+)
+fig.update_traces(marker_line_width=0)
+st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+
+# ── 주요 프로젝트 ─────────────────────────────────────────────────
+st.markdown(t["proj_head"])
+cols = st.columns(3)
+for col, proj in zip(cols, t["projects"]):
+    with col:
+        with st.container(border=True):
+            st.markdown(f"**{proj['title']}**")
+            st.caption(proj["period"])
+            st.markdown(proj["desc"])
+            st.caption(proj["tags"])
+
+st.divider()
+
+# ── 기술 스택 ─────────────────────────────────────────────────────
+st.markdown(t["stack_head"])
+cols = st.columns(3)
+for col, (header, body) in zip(cols, t["stacks"]):
+    with col:
+        st.markdown(header)
+        st.markdown(body)
+
+st.divider()
+
+# ── CTA ───────────────────────────────────────────────────────────
+st.markdown(t["cta_head"])
+st.markdown(t["cta_body"])
+if st.button(t["cta_btn"], type="primary", use_container_width=True):
+    st.switch_page("pages/1_대화하기.py")
