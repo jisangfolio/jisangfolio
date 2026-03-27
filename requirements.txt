@@ -2,3 +2,8 @@ streamlit
 google-generativeai
 plotly
 pandas
+langchain-core
+langchain-text-splitters
+langchain-community
+langchain-google-genai
+faiss-cpu
