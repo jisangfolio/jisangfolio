@@ -1,21 +1,20 @@
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
 import time
 from datetime import datetime
 
 st.set_page_config(page_title="JisangFolio · 대화하기", page_icon="💬")
 
 try:
-    google_api_key = st.secrets["google_api_key"]
+    groq_api_key = st.secrets["groq_api_key"]
     resume_text = st.secrets["resume_text"]
 except KeyError:
     st.error("⚠️ Secrets(API 키 또는 이력서 텍스트)가 설정되지 않았습니다.")
     st.stop()
 
-genai.configure(api_key=google_api_key)
+client = Groq(api_key=groq_api_key)
 
-# system_instruction으로 이력서 + 페르소나를 한 번만 주입
-system_instruction = f"""당신은 데이터 엔지니어이자 AI 개발자인 '박지상(JJ Park)' 본인입니다.
+SYSTEM_INSTRUCTION = f"""당신은 데이터 엔지니어이자 AI 개발자인 '박지상(JJ Park)' 본인입니다.
 아래 제공된 [통합 마스터 이력서] 내용을 바탕으로 면접관(사용자)의 질문에 1인칭 시점으로 대답하세요.
 
 [페르소나 지시사항]
@@ -31,22 +30,18 @@ system_instruction = f"""당신은 데이터 엔지니어이자 AI 개발자인 
 {resume_text}
 """
 
-model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=system_instruction)
-
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "pending_question" not in st.session_state:
-    st.session_state.pending_question = None
-
-# --- 추천 질문 목록 ---
 SUGGESTED = [
     "삼성SDI에서 어떤 프로젝트를 했나요?",
-    "왜 RAG 대신 Long Context를 썼나요?",
     "KETI에서 환각을 어떻게 제어했나요?",
     "논문 주제가 뭔가요?",
     "가장 어려웠던 기술적 도전은?",
     "5년 후 목표는 무엇인가요?",
 ]
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
 
 def format_chat_for_export(history):
     lines = [f"JisangFolio 대화 기록 ({datetime.now().strftime('%Y-%m-%d %H:%M')})", "=" * 40, ""]
@@ -73,7 +68,6 @@ with st.sidebar:
             st.session_state.pending_question = q
             st.rerun()
     st.divider()
-
     col1, col2 = st.columns(2)
     with col1:
         if st.button("← 소개 페이지", use_container_width=True):
@@ -82,7 +76,6 @@ with st.sidebar:
         if st.button("대화 초기화", use_container_width=True):
             st.session_state.chat_history = []
             st.rerun()
-
     if st.session_state.chat_history:
         st.divider()
         st.download_button(
@@ -116,21 +109,23 @@ if user_input:
         message_placeholder = st.empty()
         full_response = ""
 
+        # 멀티턴: system + 전체 대화 히스토리
+        messages = [{"role": "system", "content": SYSTEM_INSTRUCTION}]
+        for role, msg in st.session_state.chat_history[:-1]:
+            groq_role = "user" if role == "user" else "assistant"
+            messages.append({"role": groq_role, "content": msg})
+        messages.append({"role": "user", "content": user_input})
+
         try:
-            # 이전 대화 히스토리를 Gemini 형식으로 변환
-            gemini_history = []
-            for role, msg in st.session_state.chat_history[:-1]:  # 마지막(현재) 질문 제외
-                gemini_role = "user" if role == "user" else "model"
-                gemini_history.append({"role": gemini_role, "parts": [{"text": msg}]})
-
-            chat = model.start_chat(history=gemini_history)
-            response = chat.send_message(user_input, stream=True)
-
-            for chunk in response:
-                if chunk.text:
-                    full_response += chunk.text
-                    message_placeholder.markdown(full_response + "▌")
-                    time.sleep(0.01)
+            stream = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content or ""
+                full_response += delta
+                message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
             st.session_state.chat_history.append(("assistant", full_response))
         except Exception as e:

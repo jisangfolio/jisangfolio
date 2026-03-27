@@ -1,9 +1,10 @@
 streamlit
-google-generativeai
+groq
 plotly
 pandas
 langchain-core
 langchain-text-splitters
 langchain-community
-langchain-google-genai
+langchain-groq
 faiss-cpu
+sentence-transformers

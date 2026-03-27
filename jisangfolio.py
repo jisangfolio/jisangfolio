@@ -56,7 +56,7 @@ T = {
         "how_head": "## ⚙️ 어떻게 작동하나요?",
         "arch": [
             "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 전체 이력서 텍스트",
-            "✨ **Gemini 2.0 Flash**\n\nLong Context Window로 이력서 전문을 한 번에 이해",
+            "✨ **Groq · Llama 3.3 70B**\n\n이력서 전문을 시스템 프롬프트에 주입, 빠른 스트리밍 답변",
             "💬 **1인칭 스트리밍**\n\n박지상 본인처럼 면접 질문에 실시간으로 답변",
         ],
         "rag_note": "",
@@ -90,7 +90,7 @@ T = {
         ],
         "stack_head": "## 🧰 기술 스택",
         "stacks": [
-            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Gemini · PyTorch  \nRule-based Agent · Prompt Engineering"),
+            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
         ],
@@ -98,14 +98,14 @@ T = {
         "personal_projects": [
             {
                 "title": "🧑‍💻 JisangFolio",
-                "desc": "지금 보고 계신 이 포트폴리오입니다. Gemini 2.0 Flash Long Context Window를 활용해 RAG 없이 이력서 전문을 프롬프트에 주입, 1인칭 AI 면접 챗봇을 구현했습니다.",
-                "tags": "`Gemini 2.0 Flash` `Streamlit` `Python`",
+                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 AI 면접 챗봇을 구현했습니다.",
+                "tags": "`Groq · Llama 3.3 70B` `Streamlit` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
                 "title": "📂 JisangData (AnyData)",
-                "desc": "CSV/Excel 파일을 업로드하면 RAG 기반으로 데이터에 대해 질문할 수 있는 챗봇입니다. Gemini Embeddings + FAISS + LangChain으로 구성, Rate Limit 대응 배치 처리를 적용했습니다.",
-                "tags": "`LangChain` `FAISS` `Gemini` `Streamlit`",
+                "desc": "CSV/Excel 파일을 업로드하면 RAG 기반으로 데이터에 대해 질문할 수 있는 챗봇입니다. HuggingFace Embeddings + FAISS + LangChain으로 구성, Rate Limit 대응 배치 처리를 적용했습니다.",
+                "tags": "`LangChain` `FAISS` `HuggingFace` `Streamlit`",
                 "link": None,
             },
         ],
@@ -126,7 +126,7 @@ T = {
         "how_head": "## ⚙️ How Does It Work?",
         "arch": [
             "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets",
-            "✨ **Gemini 2.0 Flash**\n\nUnderstands the entire resume via Long Context Window",
+            "✨ **Groq · Llama 3.3 70B**\n\nFull resume injected into system prompt, fast streaming responses",
             "💬 **1st-person Streaming**\n\nAnswers interview questions in real-time as Jisang himself",
         ],
         "rag_note": "",
@@ -160,7 +160,7 @@ T = {
         ],
         "stack_head": "## 🧰 Tech Stack",
         "stacks": [
-            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Gemini · PyTorch  \nRule-based Agent · Prompt Engineering"),
+            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
         ],
@@ -168,14 +168,14 @@ T = {
         "personal_projects": [
             {
                 "title": "🧑‍💻 JisangFolio",
-                "desc": "This portfolio itself. Uses Gemini 2.0 Flash Long Context Window to inject the full resume into the prompt without RAG, enabling a 1st-person AI interview chatbot.",
-                "tags": "`Gemini 2.0 Flash` `Streamlit` `Python`",
+                "desc": "This portfolio itself. Injects the full resume into the system prompt without RAG, enabling a 1st-person AI interview chatbot.",
+                "tags": "`Groq · Llama 3.3 70B` `Streamlit` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
                 "title": "📂 JisangData (AnyData)",
-                "desc": "Upload a CSV/Excel file and chat with your data using RAG. Built with Gemini Embeddings + FAISS + LangChain, with batch processing to handle rate limits.",
-                "tags": "`LangChain` `FAISS` `Gemini` `Streamlit`",
+                "desc": "Upload a CSV/Excel file and chat with your data using RAG. Built with HuggingFace Embeddings + FAISS + LangChain, with batch processing to handle rate limits.",
+                "tags": "`LangChain` `FAISS` `HuggingFace` `Streamlit`",
                 "link": None,
             },
         ],
