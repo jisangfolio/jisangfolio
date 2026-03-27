@@ -194,6 +194,7 @@ COLOR_MAP = {
     "군복무" if lang == "한국어" else "Military": "#A0A0A0",
     "경력" if lang == "한국어" else "Work": "#2ECC71",
     "논문" if lang == "한국어" else "Research": "#F39C12",
+    "활동" if lang == "한국어" else "Activity": "#9B59B6",
 }
 
 if lang == "한국어":
@@ -204,6 +205,7 @@ if lang == "한국어":
         {"구분": "학력",  "항목": "UIUC · BSIS+DS",               "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
         {"구분": "경력",  "항목": "삼성SDI · 데이터 엔지니어 인턴", "시작": "2025-06-01", "종료": "2025-08-31", "상세": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
         {"구분": "논문",  "항목": "TEBO · SCIE 논문 게재",          "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP 분석 설명력 85%+"},
+        {"구분": "활동",  "항목": "KSA 웹팀 (UIUC)",               "시작": "2024-08-01", "종료": "2025-06-30", "상세": "한인 학생회 웹사이트 사용성 및 성능 개선"},
         {"구분": "경력",  "항목": "KETI · AI 에이전트 연구원",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "멀티모달 AI 에이전트 · MLOps · NGSI-LD IoT"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
@@ -215,6 +217,7 @@ else:
         {"구분": "Education", "항목": "UIUC · BSIS+DS",                  "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
         {"구분": "Work",      "항목": "Samsung SDI · Data Eng. Intern",  "시작": "2025-06-01", "종료": "2025-08-31", "상세": "Solo-built air-gapped RAG chatbot → praised by executives"},
         {"구분": "Research",  "항목": "TEBO · SCIE Publication",         "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP analysis 85%+ explanatory power"},
+        {"구분": "Activity",  "항목": "KSA Web Team (UIUC)",              "시작": "2024-08-01", "종료": "2025-06-30", "상세": "Improved usability and performance of Korean Student Association website"},
         {"구분": "Work",      "항목": "KETI · AI Agent Researcher",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "Multimodal AI Agent · MLOps · NGSI-LD IoT"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
