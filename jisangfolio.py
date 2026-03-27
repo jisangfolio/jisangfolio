@@ -9,6 +9,17 @@ st.set_page_config(
     layout="centered"
 )
 
+# SNS 공유용 OG 메타태그
+st.markdown("""
+<meta property="og:title" content="JisangFolio - 읽지 말고 대화하는 이력서">
+<meta property="og:description" content="박지상의 AI 인터랙티브 포트폴리오. AI와 대화하며 경험과 역량을 확인하세요.">
+<meta property="og:url" content="https://jisangfolio.streamlit.app">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JisangFolio - 읽지 말고 대화하는 이력서">
+<meta name="twitter:description" content="박지상의 AI 인터랙티브 포트폴리오. AI와 대화하며 경험과 역량을 확인하세요.">
+""", unsafe_allow_html=True)
+
 # --- 사이드바: 언어 선택 + 링크 ---
 with st.sidebar:
     lang = st.radio("Language / 언어", ["한국어", "English"], horizontal=True)
@@ -77,9 +88,25 @@ T = {
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
         ],
+        "personal_head": "## 💡 개인 프로젝트",
+        "personal_projects": [
+            {
+                "title": "🧑‍💻 JisangFolio",
+                "desc": "지금 보고 계신 이 포트폴리오입니다. Gemini 2.0 Flash Long Context Window를 활용해 RAG 없이 이력서 전문을 프롬프트에 주입, 1인칭 AI 면접 챗봇을 구현했습니다.",
+                "tags": "`Gemini 2.0 Flash` `Streamlit` `Python`",
+                "link": "https://jisangfolio.streamlit.app",
+            },
+            {
+                "title": "📂 JisangData (AnyData)",
+                "desc": "CSV/Excel 파일을 업로드하면 RAG 기반으로 데이터에 대해 질문할 수 있는 챗봇입니다. Gemini Embeddings + FAISS + LangChain으로 구성, Rate Limit 대응 배치 처리를 적용했습니다.",
+                "tags": "`LangChain` `FAISS` `Gemini` `Streamlit`",
+                "link": None,
+            },
+        ],
         "cta_head": "## 💬 직접 물어보세요",
         "cta_body": "AI와 대화하듯 저의 경험, 기술, 프로젝트를 질문해 보세요.",
         "cta_btn": "대화 시작하기 →",
+        "data_btn": "📂 데이터 분석 해보기",
     },
     "English": {
         "title": "Jisang Park (박지상)",
@@ -125,9 +152,25 @@ T = {
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
         ],
+        "personal_head": "## 💡 Personal Projects",
+        "personal_projects": [
+            {
+                "title": "🧑‍💻 JisangFolio",
+                "desc": "This portfolio itself. Uses Gemini 2.0 Flash Long Context Window to inject the full resume into the prompt without RAG, enabling a 1st-person AI interview chatbot.",
+                "tags": "`Gemini 2.0 Flash` `Streamlit` `Python`",
+                "link": "https://jisangfolio.streamlit.app",
+            },
+            {
+                "title": "📂 JisangData (AnyData)",
+                "desc": "Upload a CSV/Excel file and chat with your data using RAG. Built with Gemini Embeddings + FAISS + LangChain, with batch processing to handle rate limits.",
+                "tags": "`LangChain` `FAISS` `Gemini` `Streamlit`",
+                "link": None,
+            },
+        ],
         "cta_head": "## 💬 Ask Me Anything",
         "cta_body": "Chat with my AI to explore my experience, skills, and projects — just like an interview.",
         "cta_btn": "Start Chatting →",
+        "data_btn": "📂 Try Data Analysis",
     },
 }
 
@@ -252,8 +295,28 @@ for col, (header, body) in zip(cols, t["stacks"]):
 
 st.divider()
 
+# ── 개인 프로젝트 ─────────────────────────────────────────────────
+st.markdown(t["personal_head"])
+cols = st.columns(2)
+for col, proj in zip(cols, t["personal_projects"]):
+    with col:
+        with st.container(border=True):
+            if proj["link"]:
+                st.markdown(f"**[{proj['title']}]({proj['link']})**")
+            else:
+                st.markdown(f"**{proj['title']}**")
+            st.markdown(proj["desc"])
+            st.caption(proj["tags"])
+
+st.divider()
+
 # ── CTA ───────────────────────────────────────────────────────────
 st.markdown(t["cta_head"])
 st.markdown(t["cta_body"])
-if st.button(t["cta_btn"], type="primary", use_container_width=True):
-    st.switch_page("pages/1_대화하기.py")
+btn_col1, btn_col2 = st.columns(2)
+with btn_col1:
+    if st.button(t["cta_btn"], type="primary", use_container_width=True):
+        st.switch_page("pages/1_대화하기.py")
+with btn_col2:
+    if st.button(t["data_btn"], use_container_width=True):
+        st.switch_page("pages/2_데이터분석.py")
