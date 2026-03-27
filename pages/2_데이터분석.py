@@ -1,4 +1,3 @@
-import os
 import time
 import streamlit as st
 import pandas as pd
@@ -7,18 +6,18 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
 
 st.set_page_config(page_title="JisangFolio · 데이터 분석", page_icon="📂")
 
 try:
-    os.environ["GOOGLE_API_KEY"] = st.secrets["google_api_key"]
+    groq_api_key = st.secrets["groq_api_key"]
 except KeyError:
-    st.error("⚠️ Secrets에 google_api_key가 설정되지 않았습니다.")
+    st.error("⚠️ Secrets에 groq_api_key가 설정되지 않았습니다.")
     st.stop()
 
-GEMINI_MODEL = "gemini-2.0-flash"
-EMBEDDING_MODEL = "models/gemini-embedding-001"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # --- 사이드바 ---
 with st.sidebar:
@@ -72,7 +71,7 @@ def build_vectorstore(file_bytes: bytes, file_name: str):
         return None, None
 
     # 4. 임베딩 (rate limit 대응: 에러 시에만 backoff)
-    embedding = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
+    embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     progress_bar = st.progress(0, text="임베딩 생성 중...")
     vectorstore = None
     batch_size = 10
@@ -134,7 +133,7 @@ else:
 for msg in st.session_state["messages"]:
     st.chat_message(msg.role).write(msg.content)
 
-llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=0)
+llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0)
 user_input = st.chat_input("이 데이터에 대해 궁금한 점을 물어보세요")
 
 if user_input and retriever:

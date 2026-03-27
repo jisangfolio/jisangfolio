@@ -5,14 +5,14 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Google Gemini](https://img.shields.io/badge/LLM-Gemini_2.0_Flash-8E75B2?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Groq](https://img.shields.io/badge/LLM-Groq_Llama_3.3_70B-F55036?logo=groq&logoColor=white)](https://groq.com/)
 [![Plotly](https://img.shields.io/badge/Chart-Plotly-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
 
 ## 🚀 Project Overview
 
 **JisangFolio**는 저의 이력서를 기반으로 면접관의 질문에 답변하는 인터랙티브 AI 포트폴리오입니다.
 
-**Gemini 2.0 Flash**의 Long Context Window를 활용해 이력서 전문을 프롬프트에 직접 주입, 별도의 RAG 파이프라인 없이 높은 답변 품질을 달성하는 Lightweight Architecture를 채택했습니다.
+**Groq (Llama 3.3 70B)**를 활용해 이력서 전문을 시스템 프롬프트에 직접 주입, 별도의 RAG 파이프라인 없이 빠른 스트리밍 답변을 제공하는 Lightweight Architecture를 채택했습니다.
 
 ## 📄 Pages
 
@@ -32,7 +32,7 @@
 ## 🛠 Tech Stack
 
 - **UI/UX**: Streamlit
-- **LLM**: Google Gemini 2.0 Flash
+- **LLM**: Groq (Llama 3.3 70B)
 - **Visualization**: Plotly
 - **Language**: Python
 
@@ -40,7 +40,7 @@
 graph LR
     A[📄 Resume Text\nStreamlit Secrets] --> B{System Prompt\nContext Injection}
     C[🙋 User Question] --> B
-    B --> D[✨ Google Gemini 2.0 Flash]
+    B --> D[✨ Groq · Llama 3.3 70B]
     D -->|Streaming| E[💬 1인칭 답변]
 ```
 
@@ -53,7 +53,7 @@ pip install -r requirements.txt
 
 2. `.streamlit/secrets.toml` 설정
 ```toml
-google_api_key = "YOUR_GEMINI_API_KEY"
+groq_api_key = "YOUR_GROQ_API_KEY"
 resume_text = "YOUR_RESUME_TEXT"
 ```
 
