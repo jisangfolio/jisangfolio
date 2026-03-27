@@ -17,7 +17,7 @@ except KeyError:
     st.error("⚠️ Secrets에 groq_api_key가 설정되지 않았습니다.")
     st.stop()
 
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "qwen/qwen3-32b"
 
 # --- 사이드바 ---
 with st.sidebar:
@@ -28,6 +28,8 @@ with st.sidebar:
     st.divider()
     st.header("파일 업로드")
     uploaded_file = st.file_uploader("CSV 또는 Excel 파일 업로드", type=["csv", "xlsx"])
+    st.divider()
+    st.caption("AI는 실수를 할 수 있습니다. 중요한 정보는 직접 확인해 주세요.")
 
 # --- 파일 처리 ---
 # 캐시 키를 파일 내용(bytes)으로 설정 → 같은 이름 다른 파일도 올바르게 구분
@@ -151,7 +153,8 @@ if user_input and retriever:
     )
 
     prompt = ChatPromptTemplate.from_template(
-        """당신은 업로드된 데이터를 기반으로 답변하는 AI 데이터 분석가입니다.
+        """/no_think
+당신은 업로드된 데이터를 기반으로 답변하는 AI 데이터 분석가입니다.
 반드시 한국어(한글)로만 답변하세요. 중국어, 일본어 한자를 절대 사용하지 마세요.
 
 [이전 대화 (있을 경우 참고)]:
@@ -173,14 +176,25 @@ if user_input and retriever:
     with st.chat_message("assistant"):
         response_container = st.empty()
         full_response = ""
+        buffer = ""
+        in_think = True
         with st.spinner("분석 중..."):
             for chunk in (prompt | llm).stream({
                 "question": user_input,
                 "context": context_text,
                 "history": history_text,
             }):
-                full_response += chunk.content
-                response_container.markdown(full_response)
+                delta = chunk.content
+                if in_think:
+                    buffer += delta
+                    if "</think>" in buffer:
+                        after = buffer.split("</think>", 1)[1].lstrip("\n")
+                        full_response = after
+                        in_think = False
+                        response_container.markdown(full_response)
+                else:
+                    full_response += delta
+                    response_container.markdown(full_response)
         st.session_state["messages"].append(ChatMessage(role="assistant", content=full_response))
 
 elif user_input and not retriever:
