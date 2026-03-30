@@ -40,7 +40,7 @@ SYSTEM_INSTRUCTION = f"""/no_think
 
 SUGGESTED = [
     "삼성SDI에서 어떤 프로젝트를 했나요?",
-    "KETI에서 환각을 어떻게 제어했나요?",
+    "KETI에서 어떤 연구를 하고 있나요?",
     "논문 주제가 뭔가요?",
     "가장 어려웠던 기술적 도전은?",
     "5년 후 목표는 무엇인가요?",
@@ -67,7 +67,7 @@ with st.sidebar:
     **박지상 (Jisang Park)**
     - UIUC Info Science + Data Science
     - Data Engineer / AI Researcher
-    - ✉️ jisang.park916@gmail.com
+    - ✉️ jjpark324434@gmail.com
     """)
     st.divider()
     st.markdown("**💡 질문 예시 (클릭하면 바로 전송)**")
