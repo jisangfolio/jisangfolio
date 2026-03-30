@@ -25,7 +25,7 @@ with st.sidebar:
     lang = st.radio("Language / 언어", ["한국어", "English"], horizontal=True)
     st.divider()
     st.markdown("**박지상 (Jisang Park)**")
-    st.markdown("✉️ jisang.park916@gmail.com")
+    st.markdown("✉️ jjpark324434@gmail.com")
     st.markdown("🔗 [LinkedIn](https://linkedin.com/in/jisangpark)")
     st.divider()
 
@@ -58,7 +58,7 @@ T = {
         "how_head": "## ⚙️ 어떻게 작동하나요?",
         "arch": [
             "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 전체 이력서 텍스트",
-            "✨ **Groq · Llama 3.3 70B**\n\n이력서 전문을 시스템 프롬프트에 주입, 빠른 스트리밍 답변",
+            "✨ **Groq · Qwen3 32B**\n\n이력서 전문을 시스템 프롬프트에 주입, 빠른 스트리밍 답변",
             "💬 **1인칭 스트리밍**\n\n박지상 본인처럼 면접 질문에 실시간으로 답변",
         ],
         "rag_note": "",
@@ -72,10 +72,10 @@ T = {
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
-                "title": "🔬 KETI 멀티모달 AI 에이전트",
+                "title": "🔬 KETI 자율형 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "CNN+Transformer 기반 멀티모달 에이전트, Rule-based Agent로 환각 제어, NGSI-LD IoT 데이터 처리, MLOps 파이프라인",
-                "tags": "`PyTorch` `Triton` `Kubeflow` `MLflow` `MQTT`",
+                "desc": "LLM 결합형 디지털 트윈 인프라 구축: NGSI-LD 기반 실시간 데이터 적재·조회, MQTT/HTTP 하이브리드 통신 설계, Ports & Adapters 아키텍처로 자율 상황 판단 에이전트 PoC 수행. 도시냉각 AI 모델(3D U-Net)을 ONNX 변환 후 Triton 서빙 배포까지 완료",
+                "tags": "`PyTorch` `Triton` `ONNX` `NGSI-LD` `MQTT` `Docker`",
             },
             {
                 "title": "📊 TEBO 균형 분석 · SCIE 논문",
@@ -101,7 +101,7 @@ T = {
             {
                 "title": "🧑‍💻 JisangFolio",
                 "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 AI 면접 챗봇을 구현했습니다.",
-                "tags": "`Groq · Llama 3.3 70B` `Streamlit` `Python`",
+                "tags": "`Groq · Qwen3 32B` `Streamlit` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
@@ -128,7 +128,7 @@ T = {
         "how_head": "## ⚙️ How Does It Work?",
         "arch": [
             "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets",
-            "✨ **Groq · Llama 3.3 70B**\n\nFull resume injected into system prompt, fast streaming responses",
+            "✨ **Groq · Qwen3 32B**\n\nFull resume injected into system prompt, fast streaming responses",
             "💬 **1st-person Streaming**\n\nAnswers interview questions in real-time as Jisang himself",
         ],
         "rag_note": "",
@@ -142,10 +142,10 @@ T = {
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
-                "title": "🔬 KETI Multimodal AI Agent",
+                "title": "🔬 KETI Autonomous AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
-                "desc": "CNN+Transformer multimodal agent, hallucination control via Rule-based Agent, NGSI-LD IoT data processing, MLOps pipeline",
-                "tags": "`PyTorch` `Triton` `Kubeflow` `MLflow` `MQTT`",
+                "desc": "Building LLM-integrated digital twin infrastructure: real-time NGSI-LD data ingestion/query, MQTT/HTTP hybrid communication, Ports & Adapters architecture for autonomous situation-assessment agent PoC. Deployed urban cooling AI model (3D U-Net) via ONNX conversion + Triton serving",
+                "tags": "`PyTorch` `Triton` `ONNX` `NGSI-LD` `MQTT` `Docker`",
             },
             {
                 "title": "📊 TEBO Balance Analysis · SCIE Paper",
@@ -171,7 +171,7 @@ T = {
             {
                 "title": "🧑‍💻 JisangFolio",
                 "desc": "This portfolio itself. Injects the full resume into the system prompt without RAG, enabling a 1st-person AI interview chatbot.",
-                "tags": "`Groq · Llama 3.3 70B` `Streamlit` `Python`",
+                "tags": "`Groq · Qwen3 32B` `Streamlit` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {

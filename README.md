@@ -5,26 +5,30 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Groq](https://img.shields.io/badge/LLM-Groq_Llama_3.3_70B-F55036?logo=groq&logoColor=white)](https://groq.com/)
+[![Groq](https://img.shields.io/badge/LLM-Groq_Qwen3_32B-F55036?logo=groq&logoColor=white)](https://groq.com/)
 [![Plotly](https://img.shields.io/badge/Chart-Plotly-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
 
 ## 🚀 Project Overview
 
 **JisangFolio**는 저의 이력서를 기반으로 면접관의 질문에 답변하는 인터랙티브 AI 포트폴리오입니다.
 
-**Groq (Llama 3.3 70B)**를 활용해 이력서 전문을 시스템 프롬프트에 직접 주입, 별도의 RAG 파이프라인 없이 빠른 스트리밍 답변을 제공하는 Lightweight Architecture를 채택했습니다.
+**Groq (Qwen3 32B)**를 활용해 이력서 전문을 시스템 프롬프트에 직접 주입, 별도의 RAG 파이프라인 없이 빠른 스트리밍 답변을 제공하는 Lightweight Architecture를 채택했습니다.
 
 ## 📄 Pages
 
 | 페이지 | 설명 |
 |--------|------|
 | **소개** (`jisangfolio.py`) | 프로필 · 작동 원리 · 경력 타임라인 · 주요 프로젝트 · 기술 스택 |
-| **대화하기** (`pages/1_대화하기.py`) | AI 면접 챗봇 · 추천 질문 버튼 |
+| **대화하기** (`pages/1_대화하기.py`) | AI 면접 챗봇 · 추천 질문 · 멀티턴 대화 · 대화 내보내기 |
+| **데이터분석** (`pages/2_데이터분석.py`) | CSV/Excel 업로드 → RAG 기반 데이터 분석 챗봇 |
 
 ## ✨ Features
 
 - **AI 면접 챗봇**: 1인칭 페르소나로 면접 질문에 실시간 스트리밍 답변
+- **멀티턴 대화**: 이전 대화 맥락을 유지하며 꼬리 질문까지 자연스럽게 처리
 - **추천 질문**: 사이드바 버튼 클릭으로 바로 질문 전송
+- **대화 내보내기**: 대화 기록을 텍스트 파일로 다운로드
+- **CSV/Excel 데이터 분석**: 파일 업로드 후 RAG 기반 질문 응답
 - **경력 타임라인**: Plotly Gantt 차트로 학력·경력·군복무·논문 시각화
 - **한국어 / English 전환**: 소개 페이지 전체 언어 토글
 - **이력서 다운로드**: PDF 다운로드 버튼
@@ -32,16 +36,28 @@
 ## 🛠 Tech Stack
 
 - **UI/UX**: Streamlit
-- **LLM**: Groq (Llama 3.3 70B)
+- **LLM**: Groq (Qwen3 32B)
+- **RAG & Vector DB**: LangChain · FAISS · HuggingFace Embeddings
+- **Data Processing**: Pandas
 - **Visualization**: Plotly
 - **Language**: Python
 
 ```mermaid
 graph LR
-    A[📄 Resume Text\nStreamlit Secrets] --> B{System Prompt\nContext Injection}
-    C[🙋 User Question] --> B
-    B --> D[✨ Groq · Llama 3.3 70B]
-    D -->|Streaming| E[💬 1인칭 답변]
+    subgraph 대화하기
+        A[📄 Resume Text\nStreamlit Secrets] --> B{System Prompt\nContext Injection}
+        C[🙋 User Question] --> B
+        B --> D[✨ Groq · Qwen3 32B]
+        D -->|Streaming| E[💬 1인칭 답변]
+    end
+
+    subgraph 데이터분석
+        F[📂 CSV/Excel Upload] --> G[HuggingFace Embeddings\n+ FAISS Vector DB]
+        H[🙋 User Question] --> I{RAG Retrieval\n+ LangChain}
+        G --> I
+        I --> J[✨ Groq · Qwen3 32B]
+        J -->|Streaming| K[📊 분석 답변]
+    end
 ```
 
 ## ⚙️ Setup
@@ -69,5 +85,5 @@ streamlit run jisangfolio.py
 
 ## 📬 Contact
 
-- Email: jisang.park916@gmail.com
+- Email: jjpark324434@gmail.com
 - LinkedIn: [linkedin.com/in/jisangpark](https://linkedin.com/in/jisangpark)
