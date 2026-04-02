@@ -74,8 +74,8 @@ T = {
             {
                 "title": "🔬 KETI 자율형 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "LLM 결합형 디지털 트윈 인프라 구축: NGSI-LD 기반 실시간 데이터 적재·조회, MQTT/HTTP 하이브리드 통신 설계, Ports & Adapters 아키텍처로 자율 상황 판단 에이전트 PoC 수행. 도시냉각 AI 모델(3D U-Net)을 ONNX 변환 후 Triton 서빙 배포까지 완료",
-                "tags": "`PyTorch` `Triton` `ONNX` `NGSI-LD` `MQTT` `Docker`",
+                "desc": "LLM 결합형 디지털 트윈 인프라 구축: NGSI-LD 기반 실시간 데이터 적재·조회, MQTT/HTTP 하이브리드 통신 설계, Ports & Adapters 아키텍처로 자율 상황 판단 에이전트 PoC 수행. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙 배포, 2차 학습으로 R² 0.95 달성. MLflow 실험 관리 자동화",
+                "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `NGSI-LD` `Docker`",
             },
             {
                 "title": "📊 TEBO 균형 분석 · SCIE 논문",
@@ -144,8 +144,8 @@ T = {
             {
                 "title": "🔬 KETI Autonomous AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
-                "desc": "Building LLM-integrated digital twin infrastructure: real-time NGSI-LD data ingestion/query, MQTT/HTTP hybrid communication, Ports & Adapters architecture for autonomous situation-assessment agent PoC. Deployed urban cooling AI model (3D U-Net) via ONNX conversion + Triton serving",
-                "tags": "`PyTorch` `Triton` `ONNX` `NGSI-LD` `MQTT` `Docker`",
+                "desc": "Building LLM-integrated digital twin infrastructure: real-time NGSI-LD data ingestion/query, MQTT/HTTP hybrid communication, Ports & Adapters architecture for autonomous situation-assessment agent PoC. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLflow experiment tracking automation",
+                "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `NGSI-LD` `Docker`",
             },
             {
                 "title": "📊 TEBO Balance Analysis · SCIE Paper",
