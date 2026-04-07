@@ -134,7 +134,7 @@ if user_input:
             )
             full_response = ""
             buffer = ""
-            in_think = True  # Qwen3는 항상 <think> 블록으로 시작
+            in_think = True
             for chunk in stream:
                 delta = chunk.choices[0].delta.content or ""
                 if in_think:
@@ -142,6 +142,10 @@ if user_input:
                     if "</think>" in buffer:
                         after = buffer.split("</think>", 1)[1].lstrip("\n")
                         full_response = after
+                        in_think = False
+                        message_placeholder.markdown(full_response + "▌")
+                    elif len(buffer) > 20 and "<think>" not in buffer:
+                        full_response = buffer
                         in_think = False
                         message_placeholder.markdown(full_response + "▌")
                 else:
