@@ -76,8 +76,8 @@ T = {
             {
                 "title": "🔬 KETI 자율형 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "LLM 결합형 디지털 트윈 인프라 구축: NGSI-LD 기반 실시간 데이터 적재·조회, MQTT/HTTP 하이브리드 통신 설계, Ports & Adapters 아키텍처로 자율 상황 판단 에이전트 PoC 수행. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙 배포, 2차 학습으로 R² 0.95 달성. MLflow 실험 관리 자동화",
-                "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `NGSI-LD` `Docker`",
+                "desc": "LLM 결합형 디지털 트윈 인프라 구축: NGSI-LD 기반 실시간 데이터 적재·조회, MQTT/HTTP 하이브리드 통신 설계, Ports & Adapters 아키텍처로 자율 상황 판단 에이전트 PoC 수행. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙 배포, 2차 학습으로 R² 0.95 달성. MLOps 파이프라인 4/7 구축 완료: MLflow Tracking·Registry + MinIO 저장소 + Triton 서빙",
+                "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
                 "title": "🏭 삼성SDI 폐쇄망 RAG",
@@ -96,7 +96,7 @@ T = {
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
-            ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · Docker  \nNGSI-LD · MQTT · HTTP"),
+            ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · MinIO · Docker  \nNGSI-LD · MQTT · HTTP"),
         ],
         "personal_head": "## 💡 개인 프로젝트",
         "personal_projects": [
@@ -108,8 +108,8 @@ T = {
             },
             {
                 "title": "📂 JisangData",
-                "desc": "CSV/Excel 파일을 업로드하면 RAG 기반으로 데이터에 대해 질문할 수 있는 챗봇입니다. HuggingFace Embeddings + FAISS + LangChain으로 구성, Rate Limit 대응 배치 처리를 적용했습니다.",
-                "tags": "`LangChain` `FAISS` `HuggingFace` `Streamlit`",
+                "desc": "CSV/Excel 파일을 업로드하면 AI가 질문 유형을 자동 판별합니다. 집계·통계 질문은 pandas 코드를 생성·실행하고, 검색·요약 질문은 RAG로 답변합니다.",
+                "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas 코드 생성` `Streamlit`",
                 "link": "page:데이터분석",
             },
         ],
@@ -147,8 +147,8 @@ T = {
             {
                 "title": "🔬 KETI Autonomous AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
-                "desc": "Building LLM-integrated digital twin infrastructure: real-time NGSI-LD data ingestion/query, MQTT/HTTP hybrid communication, Ports & Adapters architecture for autonomous situation-assessment agent PoC. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLflow experiment tracking automation",
-                "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `NGSI-LD` `Docker`",
+                "desc": "Building LLM-integrated digital twin infrastructure: real-time NGSI-LD data ingestion/query, MQTT/HTTP hybrid communication, Ports & Adapters architecture for autonomous situation-assessment agent PoC. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLOps pipeline 4/7 complete: MLflow Tracking·Registry + MinIO storage + Triton serving",
+                "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
                 "title": "🏭 Samsung SDI Air-Gapped RAG",
@@ -167,7 +167,7 @@ T = {
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
-            ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · Docker  \nNGSI-LD · MQTT · HTTP"),
+            ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · MinIO · Docker  \nNGSI-LD · MQTT · HTTP"),
         ],
         "personal_head": "## 💡 Personal Projects",
         "personal_projects": [
@@ -179,8 +179,8 @@ T = {
             },
             {
                 "title": "📂 JisangData",
-                "desc": "Upload a CSV/Excel file and chat with your data using RAG. Built with HuggingFace Embeddings + FAISS + LangChain, with batch processing to handle rate limits.",
-                "tags": "`LangChain` `FAISS` `HuggingFace` `Streamlit`",
+                "desc": "Upload a CSV/Excel file and the AI auto-classifies your question: aggregation/statistics queries generate and execute pandas code, while search/summary queries use RAG.",
+                "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas Code Gen` `Streamlit`",
                 "link": "page:데이터분석",
             },
         ],
