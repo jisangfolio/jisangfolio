@@ -27,6 +27,7 @@ with st.sidebar:
     st.markdown("**박지상 (Jisang Park)**")
     st.markdown("✉️ jjpark324434@gmail.com")
     st.markdown("🔗 [LinkedIn](https://linkedin.com/in/jisangpark)")
+    st.markdown("💻 [GitHub](https://github.com/jisangfolio)")
     st.divider()
 
     resume_path = os.path.join(os.path.dirname(__file__), "resume.pdf")
@@ -50,6 +51,13 @@ T = {
         "title": "박지상 (Jisang Park)",
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI 자율형IoT연구센터 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "highlights_head": "## 한눈에 보는 핵심 성과",
+        "highlights": [
+            ("SCIE 1편", "국제 저널 논문 게재"),
+            ("R² 0.95", "도시냉각 AI 모델 정확도"),
+            ("MAE 51%↓", "2차 학습 성능 개선"),
+            ("10년", "미국 거주 · 실무 영어"),
+        ],
         "tagline_head": "## 📖 읽지 말고 대화하는 이력서",
         "tagline_body": (
             "정적인 PDF 이력서의 한계를 넘어, 저의 모든 경험과 역량을 AI가 직접 전달합니다.  \n"
@@ -66,16 +74,16 @@ T = {
         "proj_head": "## 🛠️ 주요 프로젝트",
         "projects": [
             {
-                "title": "🏭 삼성SDI 폐쇄망 RAG",
-                "period": "2025.06 ~ 08 · 인턴",
-                "desc": "완전 인터넷 차단 환경에서 특허 검색 RAG 챗봇 **1인 단독 개발**. 대화 이력 기반 재검색 로직 설계, 핵심 지표 집계·시각화 기능 포함 → 임원 PoC 호평",
-                "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
-            },
-            {
                 "title": "🔬 KETI 자율형 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
                 "desc": "LLM 결합형 디지털 트윈 인프라 구축: NGSI-LD 기반 실시간 데이터 적재·조회, MQTT/HTTP 하이브리드 통신 설계, Ports & Adapters 아키텍처로 자율 상황 판단 에이전트 PoC 수행. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙 배포, 2차 학습으로 R² 0.95 달성. MLflow 실험 관리 자동화",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `NGSI-LD` `Docker`",
+            },
+            {
+                "title": "🏭 삼성SDI 폐쇄망 RAG",
+                "period": "2025.06 ~ 08 · 인턴",
+                "desc": "완전 인터넷 차단 환경에서 특허 검색 RAG 챗봇 **1인 단독 개발**. 대화 이력 기반 재검색 로직 설계, 핵심 지표 집계·시각화 기능 포함 → 임원 PoC 호평",
+                "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
                 "title": "📊 TEBO 균형 분석 · SCIE 논문",
@@ -83,18 +91,12 @@ T = {
                 "desc": "CoP 시계열에 Butterworth Filter(4차) + FFT 적용, Rambling/Trembling 분해로 데이터 설명력 **85%+ 달성**",
                 "tags": "`Python` `SciPy` `FFT` `시계열 분석`",
             },
-            {
-                "title": "🧠 감성 분석 · 멀티모달 AI",
-                "period": "2024.08 ~ 12 · UIUC 프로젝트",
-                "desc": "Hugging Face + PyTorch로 감성 분석 및 멀티모달 모델 성능 개선. Pandas + Matplotlib으로 데이터 전처리 및 시각화 자동화, Computer Vision 툴 배포",
-                "tags": "`PyTorch` `Hugging Face` `Pandas` `Matplotlib`",
-            },
         ],
         "stack_head": "## 🧰 기술 스택",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
-            ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
+            ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · Docker  \nNGSI-LD · MQTT · HTTP"),
         ],
         "personal_head": "## 💡 개인 프로젝트",
         "personal_projects": [
@@ -105,10 +107,10 @@ T = {
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
-                "title": "📂 JisangData (AnyData)",
+                "title": "📂 JisangData",
                 "desc": "CSV/Excel 파일을 업로드하면 RAG 기반으로 데이터에 대해 질문할 수 있는 챗봇입니다. HuggingFace Embeddings + FAISS + LangChain으로 구성, Rate Limit 대응 배치 처리를 적용했습니다.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Streamlit`",
-                "link": None,
+                "link": "page:데이터분석",
             },
         ],
         "cta_head": "## 💬 직접 물어보세요",
@@ -120,6 +122,13 @@ T = {
         "title": "Jisang Park (박지상)",
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI IoT Research Center &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "highlights_head": "## Key Achievements at a Glance",
+        "highlights": [
+            ("1 SCIE", "International Journal Paper"),
+            ("R² 0.95", "Urban Cooling AI Accuracy"),
+            ("MAE 51%↓", "2nd Training Improvement"),
+            ("10 yrs", "US Residency · Fluent English"),
+        ],
         "tagline_head": "## 📖 A Resume You Talk To",
         "tagline_body": (
             "Going beyond static PDF resumes — my AI delivers my experience and skills in real conversation.  \n"
@@ -136,16 +145,16 @@ T = {
         "proj_head": "## 🛠️ Key Projects",
         "projects": [
             {
-                "title": "🏭 Samsung SDI Air-Gapped RAG",
-                "period": "Jun ~ Aug 2025 · Intern",
-                "desc": "**Solo-built** patent search RAG chatbot in a fully internet-blocked environment. Designed re-search logic using conversation history and provided key metric aggregation & visualization → executive PoC praised",
-                "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
-            },
-            {
                 "title": "🔬 KETI Autonomous AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
                 "desc": "Building LLM-integrated digital twin infrastructure: real-time NGSI-LD data ingestion/query, MQTT/HTTP hybrid communication, Ports & Adapters architecture for autonomous situation-assessment agent PoC. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLflow experiment tracking automation",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `NGSI-LD` `Docker`",
+            },
+            {
+                "title": "🏭 Samsung SDI Air-Gapped RAG",
+                "period": "Jun ~ Aug 2025 · Intern",
+                "desc": "**Solo-built** patent search RAG chatbot in a fully internet-blocked environment. Designed re-search logic using conversation history and provided key metric aggregation & visualization → executive PoC praised",
+                "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
                 "title": "📊 TEBO Balance Analysis · SCIE Paper",
@@ -153,18 +162,12 @@ T = {
                 "desc": "Applied Butterworth Filter(4th order) + FFT on CoP time-series, decomposed Rambling/Trembling achieving **85%+ explanatory power**",
                 "tags": "`Python` `SciPy` `FFT` `Time-series Analysis`",
             },
-            {
-                "title": "🧠 Sentiment Analysis · Multimodal AI",
-                "period": "Aug ~ Dec 2024 · UIUC Project",
-                "desc": "Improved sentiment analysis and multimodal model performance using Hugging Face + PyTorch. Automated data preprocessing & visualization with Pandas + Matplotlib, deployed Computer Vision tools",
-                "tags": "`PyTorch` `Hugging Face` `Pandas` `Matplotlib`",
-            },
         ],
         "stack_head": "## 🧰 Tech Stack",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
-            ("**MLOps / Infra**", "Kubeflow · MLflow  \nNVIDIA Triton Inference Server  \nNGSI-LD · MQTT · HTTP"),
+            ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · Docker  \nNGSI-LD · MQTT · HTTP"),
         ],
         "personal_head": "## 💡 Personal Projects",
         "personal_projects": [
@@ -175,10 +178,10 @@ T = {
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
-                "title": "📂 JisangData (AnyData)",
+                "title": "📂 JisangData",
                 "desc": "Upload a CSV/Excel file and chat with your data using RAG. Built with HuggingFace Embeddings + FAISS + LangChain, with batch processing to handle rate limits.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Streamlit`",
-                "link": None,
+                "link": "page:데이터분석",
             },
         ],
         "cta_head": "## 💬 Ask Me Anything",
@@ -208,7 +211,7 @@ if lang == "한국어":
         {"구분": "경력",  "항목": "삼성SDI · 데이터 엔지니어 인턴", "시작": "2025-06-01", "종료": "2025-08-31", "상세": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
         {"구분": "논문",  "항목": "TEBO · SCIE 논문 게재",          "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP 분석 설명력 85%+"},
         {"구분": "활동",  "항목": "KSA 웹팀 (UIUC)",               "시작": "2024-08-01", "종료": "2025-06-30", "상세": "한인 학생회 웹사이트 사용성 및 성능 개선"},
-        {"구분": "경력",  "항목": "KETI · AI 에이전트 연구원",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "멀티모달 AI 에이전트 · MLOps · NGSI-LD IoT"},
+        {"구분": "경력",  "항목": "KETI · AI 에이전트 연구원",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "디지털 트윈 · MLOps · LLM 자율 제어 · NGSI-LD IoT"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
 else:
@@ -220,7 +223,7 @@ else:
         {"구분": "Work",      "항목": "Samsung SDI · Data Eng. Intern",  "시작": "2025-06-01", "종료": "2025-08-31", "상세": "Solo-built air-gapped RAG chatbot → praised by executives"},
         {"구분": "Research",  "항목": "TEBO · SCIE Publication",         "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP analysis 85%+ explanatory power"},
         {"구분": "Activity",  "항목": "KSA Web Team (UIUC)",              "시작": "2024-08-01", "종료": "2025-06-30", "상세": "Improved usability and performance of Korean Student Association website"},
-        {"구분": "Work",      "항목": "KETI · AI Agent Researcher",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "Multimodal AI Agent · MLOps · NGSI-LD IoT"},
+        {"구분": "Work",      "항목": "KETI · AI Agent Researcher",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "Digital Twin · MLOps · LLM Autonomous Control · NGSI-LD IoT"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
 
@@ -235,26 +238,18 @@ st.markdown(t["location"], unsafe_allow_html=True)
 
 st.divider()
 
-# ── 태그라인 ──────────────────────────────────────────────────────
-st.markdown(t["tagline_head"])
-st.markdown(t["tagline_body"])
-
-st.divider()
-
-# ── 작동 원리 ─────────────────────────────────────────────────────
-st.markdown(t["how_head"])
-col1, col2, col3, col4, col5 = st.columns([3, 1, 3, 1, 3])
-with col1:
-    st.info(t["arch"][0])
-with col2:
-    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
-with col3:
-    st.info(t["arch"][1])
-with col4:
-    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
-with col5:
-    st.info(t["arch"][2])
-st.markdown(t["rag_note"])
+# ── 핵심 성과 요약 ────────────────────────────────────────────────
+st.markdown(t["highlights_head"])
+h_cols = st.columns(4)
+for col, (value, label) in zip(h_cols, t["highlights"]):
+    with col:
+        st.markdown(
+            f"<div style='text-align:center;'>"
+            f"<div style='font-size:1.8rem; font-weight:700; color:#4C9BE8;'>{value}</div>"
+            f"<div style='font-size:0.85rem; color:gray;'>{label}</div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
 st.divider()
 
@@ -291,9 +286,15 @@ st.divider()
 
 # ── 주요 프로젝트 ─────────────────────────────────────────────────
 st.markdown(t["proj_head"])
-row1 = st.columns(2)
+# Row 1: KETI (full width)
+with st.container(border=True):
+    st.markdown(f"**{t['projects'][0]['title']}**")
+    st.caption(t["projects"][0]["period"])
+    st.markdown(t["projects"][0]["desc"])
+    st.caption(t["projects"][0]["tags"])
+# Row 2: Samsung SDI + TEBO (side by side)
 row2 = st.columns(2)
-for col, proj in zip(row1 + row2, t["projects"]):
+for col, proj in zip(row2, t["projects"][1:]):
     with col:
         with st.container(border=True):
             st.markdown(f"**{proj['title']}**")
@@ -313,18 +314,46 @@ for col, (header, body) in zip(cols, t["stacks"]):
 
 st.divider()
 
+# ── 태그라인 ──────────────────────────────────────────────────────
+st.markdown(t["tagline_head"])
+st.markdown(t["tagline_body"])
+
+st.divider()
+
+# ── 작동 원리 ─────────────────────────────────────────────────────
+st.markdown(t["how_head"])
+col1, col2, col3, col4, col5 = st.columns([3, 1, 3, 1, 3])
+with col1:
+    st.info(t["arch"][0])
+with col2:
+    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+with col3:
+    st.info(t["arch"][1])
+with col4:
+    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+with col5:
+    st.info(t["arch"][2])
+st.markdown(t["rag_note"])
+
+st.divider()
+
 # ── 개인 프로젝트 ─────────────────────────────────────────────────
 st.markdown(t["personal_head"])
 cols = st.columns(2)
 for col, proj in zip(cols, t["personal_projects"]):
     with col:
         with st.container(border=True):
-            if proj["link"]:
+            if proj["link"] and proj["link"].startswith("page:"):
+                st.markdown(f"**{proj['title']}**")
+            elif proj["link"]:
                 st.markdown(f"**[{proj['title']}]({proj['link']})**")
             else:
                 st.markdown(f"**{proj['title']}**")
             st.markdown(proj["desc"])
             st.caption(proj["tags"])
+            if proj["link"] and proj["link"].startswith("page:"):
+                if st.button("사용해 보기 →" if lang == "한국어" else "Try it →", key=proj["title"], use_container_width=True):
+                    st.switch_page("pages/2_데이터분석.py")
 
 st.divider()
 
