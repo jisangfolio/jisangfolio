@@ -20,7 +20,7 @@
 |--------|------|
 | **소개** (`jisangfolio.py`) | 프로필 · 작동 원리 · 경력 타임라인 · 주요 프로젝트 · 기술 스택 |
 | **대화하기** (`pages/1_대화하기.py`) | AI 면접 챗봇 · 추천 질문 · 멀티턴 대화 · 대화 내보내기 |
-| **데이터분석** (`pages/2_데이터분석.py`) | CSV/Excel 업로드 → RAG 기반 데이터 분석 챗봇 |
+| **데이터분석** (`pages/2_데이터분석.py`) | CSV/Excel 업로드 → LLM 라우터가 질문 유형 자동 판별 → 집계/통계는 pandas 코드 생성·실행, 검색/요약은 RAG |
 
 ## ✨ Features
 
@@ -28,7 +28,7 @@
 - **멀티턴 대화**: 이전 대화 맥락을 유지하며 꼬리 질문까지 자연스럽게 처리
 - **추천 질문**: 사이드바 버튼 클릭으로 바로 질문 전송
 - **대화 내보내기**: 대화 기록을 텍스트 파일로 다운로드
-- **CSV/Excel 데이터 분석**: 파일 업로드 후 RAG 기반 질문 응답
+- **CSV/Excel 데이터 분석**: LLM이 질문 유형 자동 판별 → pandas 코드 생성·실행 (코드 UI 표시) 또는 RAG 검색, 실패 시 자동 폴백
 - **경력 타임라인**: Plotly Gantt 차트로 학력·경력·군복무·논문 시각화
 - **한국어 / English 전환**: 소개 페이지 전체 언어 토글
 - **이력서 다운로드**: PDF 다운로드 버튼
@@ -53,10 +53,14 @@ graph LR
 
     subgraph 데이터분석
         F[📂 CSV/Excel Upload] --> G[HuggingFace Embeddings\n+ FAISS Vector DB]
-        H[🙋 User Question] --> I{RAG Retrieval\n+ LangChain}
+        H[🙋 User Question] --> L{LLM Router\n질문 유형 판별}
+        L -->|집계/통계| M[🐼 Pandas 코드 생성]
+        M --> N[코드 실행 + 결과 표시]
+        L -->|검색/요약| I{RAG Retrieval\n+ LangChain}
         G --> I
         I --> J[✨ Groq · Qwen3 32B]
         J -->|Streaming| K[📊 분석 답변]
+        N -->|실패 시 폴백| I
     end
 ```
 
