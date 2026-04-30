@@ -134,18 +134,22 @@ if user_input:
             )
             full_response = ""
             buffer = ""
-            in_think = True
+            in_think = None  # None=미결정, True=thinking 블록 내, False=일반 응답
             for chunk in stream:
                 delta = chunk.choices[0].delta.content or ""
-                if in_think:
+                if in_think is None:
+                    buffer += delta
+                    if "<think>" in buffer:
+                        in_think = True
+                    elif len(buffer) >= 50:
+                        in_think = False
+                        full_response = buffer
+                        message_placeholder.markdown(full_response + "▌")
+                elif in_think:
                     buffer += delta
                     if "</think>" in buffer:
                         after = buffer.split("</think>", 1)[1].lstrip("\n")
                         full_response = after
-                        in_think = False
-                        message_placeholder.markdown(full_response + "▌")
-                    elif len(buffer) > 20 and "<think>" not in buffer:
-                        full_response = buffer
                         in_think = False
                         message_placeholder.markdown(full_response + "▌")
                 else:

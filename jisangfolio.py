@@ -63,11 +63,20 @@ T = {
             "정적인 PDF 이력서의 한계를 넘어, 저의 모든 경험과 역량을 AI가 직접 전달합니다.  \n"
             "채용 담당자가 궁금한 것을 바로 물어볼 수 있는 인터랙티브 포트폴리오입니다."
         ),
-        "how_head": "## ⚙️ 어떻게 작동하나요?",
+        "how_head": "## ⚙️ 이 포트폴리오, 직접 만들었습니다",
+        "how_intro": "단순 소개 페이지가 아닙니다. 두 개의 독립적인 AI 파이프라인이 실시간으로 작동하고 있습니다.",
+        "arch_tab1": "💬 채팅 파이프라인",
+        "arch_tab2": "📂 데이터 분석 파이프라인",
         "arch": [
-            "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 전체 이력서 텍스트",
-            "✨ **Groq · Qwen3 32B**\n\n이력서 전문을 시스템 프롬프트에 주입, 빠른 스트리밍 답변",
-            "💬 **1인칭 스트리밍**\n\n박지상 본인처럼 면접 질문에 실시간으로 답변",
+            "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 이력서 전문\n_(~3K 토큰 · RAG 불필요)_",
+            "✨ **Groq · Qwen3 32B**\n\n시스템 프롬프트 전문 주입\n`/no_think` · `<think>` 스트리밍 필터",
+            "💬 **1인칭 스트리밍**\n\n멀티턴 대화 이력 유지\n박지상 본인처럼 실시간 답변",
+        ],
+        "arch_data": [
+            "📤 **파일 업로드**\n\nCSV/Excel → DataFrame\nchunk_size=1000 분할 + FAISS 임베딩",
+            "🔀 **LLM 라우터**\n\n질문 유형 자동 판별\n`PANDAS` or `RAG` 2분기",
+            "⚙️ **PANDAS 경로**\n\n코드 생성 → 샌드박스 exec\n실패 시 RAG 자동 폴백",
+            "🔍 **RAG 경로**\n\nFAISS + HuggingFace 임베딩\n멀티턴 컨텍스트 포함 답변",
         ],
         "rag_note": "",
         "timeline_head": "## 📅 경력 타임라인",
@@ -76,7 +85,7 @@ T = {
             {
                 "title": "🔬 KETI 자율형 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "LLM 결합형 디지털 트윈 인프라 구축: NGSI-LD 기반 실시간 데이터 적재·조회, MQTT/HTTP 하이브리드 통신 설계, Ports & Adapters 아키텍처로 자율 상황 판단 에이전트 PoC 수행. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙 배포, 2차 학습으로 R² 0.95 달성. MLOps 파이프라인 4/7 구축 완료: MLflow Tracking·Registry + MinIO 저장소 + Triton 서빙",
+                "desc": "송산그린시티 디지털 트윈 3파트(데이터 플랫폼·SWMM·Unity) 통합 연동 완료. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙, 2차 학습으로 R² 0.95 달성. MLOps 12개 프로세스 중 4개 구현 + 8개 기술 선정: MLflow Tracking·Registry + MinIO + Triton 서빙",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
@@ -102,13 +111,13 @@ T = {
         "personal_projects": [
             {
                 "title": "🧑‍💻 JisangFolio",
-                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 AI 면접 챗봇을 구현했습니다.",
-                "tags": "`Groq · Qwen3 32B` `Streamlit` `Python`",
+                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(~3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 AI 챗봇을 구현했습니다. Qwen3 thinking 모드를 `/no_think` + 스트리밍 필터로 제어합니다.",
+                "tags": "`Groq · Qwen3 32B` `Streamlit` `Python` `스트리밍 필터`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
                 "title": "📂 JisangData",
-                "desc": "CSV/Excel 파일을 업로드하면 AI가 질문 유형을 자동 판별합니다. 집계·통계 질문은 pandas 코드를 생성·실행하고, 검색·요약 질문은 RAG로 답변합니다.",
+                "desc": "LLM 라우터가 질문 유형을 판별해 집계·통계 질문은 pandas 코드를 생성·샌드박스 실행하고, 검색·요약 질문은 FAISS RAG로 처리합니다. 코드 실행 실패 시 RAG 자동 폴백.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas 코드 생성` `Streamlit`",
                 "link": "page:데이터분석",
             },
@@ -134,11 +143,20 @@ T = {
             "Going beyond static PDF resumes — my AI delivers my experience and skills in real conversation.  \n"
             "Ask anything you'd want to know in an interview, and get an answer instantly."
         ),
-        "how_head": "## ⚙️ How Does It Work?",
+        "how_head": "## ⚙️ This Portfolio Is a Project",
+        "how_intro": "Not just an introduction page — two independent AI pipelines running live.",
+        "arch_tab1": "💬 Chat Pipeline",
+        "arch_tab2": "📂 Data Analysis Pipeline",
         "arch": [
-            "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets",
-            "✨ **Groq · Qwen3 32B**\n\nFull resume injected into system prompt, fast streaming responses",
-            "💬 **1st-person Streaming**\n\nAnswers interview questions in real-time as Jisang himself",
+            "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets\n_(~3K tokens · RAG not needed)_",
+            "✨ **Groq · Qwen3 32B**\n\nFull resume in system prompt\n`/no_think` · `<think>` streaming filter",
+            "💬 **1st-person Streaming**\n\nMulti-turn conversation history\nAnswers as Jisang in real-time",
+        ],
+        "arch_data": [
+            "📤 **File Upload**\n\nCSV/Excel → DataFrame\nchunk_size=1000 split + FAISS embedding",
+            "🔀 **LLM Router**\n\nAuto-classifies question type\n`PANDAS` or `RAG`",
+            "⚙️ **PANDAS Path**\n\nCode gen → sandboxed exec\nAuto-fallback to RAG on error",
+            "🔍 **RAG Path**\n\nFAISS + HuggingFace embeddings\nMulti-turn context in answer",
         ],
         "rag_note": "",
         "timeline_head": "## 📅 Career Timeline",
@@ -147,7 +165,7 @@ T = {
             {
                 "title": "🔬 KETI Autonomous AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
-                "desc": "Building LLM-integrated digital twin infrastructure: real-time NGSI-LD data ingestion/query, MQTT/HTTP hybrid communication, Ports & Adapters architecture for autonomous situation-assessment agent PoC. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLOps pipeline 4/7 complete: MLflow Tracking·Registry + MinIO storage + Triton serving",
+                "desc": "Songsan Green City digital twin integration (Data Platform·SWMM·Unity) completed. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLOps: 4/12 processes implemented + 8/12 selected — MLflow Tracking·Registry + MinIO + Triton serving",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
@@ -173,13 +191,13 @@ T = {
         "personal_projects": [
             {
                 "title": "🧑‍💻 JisangFolio",
-                "desc": "This portfolio itself. Injects the full resume into the system prompt without RAG, enabling a 1st-person AI interview chatbot.",
-                "tags": "`Groq · Qwen3 32B` `Streamlit` `Python`",
+                "desc": "This portfolio itself. Full resume (~3K tokens) injected into the system prompt — no RAG needed. Qwen3 thinking mode controlled via `/no_think` + streaming filter.",
+                "tags": "`Groq · Qwen3 32B` `Streamlit` `Python` `Streaming Filter`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
                 "title": "📂 JisangData",
-                "desc": "Upload a CSV/Excel file and the AI auto-classifies your question: aggregation/statistics queries generate and execute pandas code, while search/summary queries use RAG.",
+                "desc": "An LLM router classifies each question: aggregation/stats queries generate and sandbox-execute pandas code; search/summary queries use FAISS RAG. Auto-fallback to RAG on code error.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas Code Gen` `Streamlit`",
                 "link": "page:데이터분석",
             },
@@ -322,18 +340,26 @@ st.divider()
 
 # ── 작동 원리 ─────────────────────────────────────────────────────
 st.markdown(t["how_head"])
-col1, col2, col3, col4, col5 = st.columns([3, 1, 3, 1, 3])
-with col1:
-    st.info(t["arch"][0])
-with col2:
-    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
-with col3:
-    st.info(t["arch"][1])
-with col4:
-    st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
-with col5:
-    st.info(t["arch"][2])
-st.markdown(t["rag_note"])
+st.caption(t["how_intro"])
+tab1, tab2 = st.tabs([t["arch_tab1"], t["arch_tab2"]])
+with tab1:
+    col1, col2, col3, col4, col5 = st.columns([3, 1, 3, 1, 3])
+    with col1:
+        st.info(t["arch"][0])
+    with col2:
+        st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+    with col3:
+        st.info(t["arch"][1])
+    with col4:
+        st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+    with col5:
+        st.info(t["arch"][2])
+with tab2:
+    d1, d2, d3, d4, d5, d6, d7 = st.columns([3, 1, 3, 1, 3, 1, 3])
+    for box, content in zip([d1, d3, d5, d7], t["arch_data"]):
+        box.info(content)
+    for arrow in [d2, d4, d6]:
+        arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
 
 st.divider()
 

@@ -246,11 +246,19 @@ if user_input and retriever:
                 )
                 full_response = ""
                 response_container = st.empty()
-                in_think = True
+                in_think = None
                 buffer = ""
                 for chunk in (fallback_prompt | llm).stream({"question": user_input, "context": context_text}):
                     delta = chunk.content
-                    if in_think:
+                    if in_think is None:
+                        buffer += delta
+                        if "<think>" in buffer:
+                            in_think = True
+                        elif len(buffer) >= 50:
+                            in_think = False
+                            full_response = buffer
+                            response_container.markdown(full_response)
+                    elif in_think:
                         buffer += delta
                         if "</think>" in buffer:
                             full_response = buffer.split("</think>", 1)[1].lstrip("\n")
@@ -322,7 +330,7 @@ if user_input and retriever:
             response_container = st.empty()
             full_response = ""
             buffer = ""
-            in_think = True
+            in_think = None
             with st.spinner("분석 중..."):
                 for chunk in (prompt | llm).stream({
                     "question": user_input,
@@ -330,7 +338,15 @@ if user_input and retriever:
                     "history": history_text,
                 }):
                     delta = chunk.content
-                    if in_think:
+                    if in_think is None:
+                        buffer += delta
+                        if "<think>" in buffer:
+                            in_think = True
+                        elif len(buffer) >= 50:
+                            in_think = False
+                            full_response = buffer
+                            response_container.markdown(full_response)
+                    elif in_think:
                         buffer += delta
                         if "</think>" in buffer:
                             after = buffer.split("</think>", 1)[1].lstrip("\n")
