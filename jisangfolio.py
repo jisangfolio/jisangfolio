@@ -310,6 +310,13 @@ with st.container(border=True):
     st.caption(t["projects"][0]["period"])
     st.markdown(t["projects"][0]["desc"])
     st.caption(t["projects"][0]["tags"])
+    grafana_path = os.path.join(os.path.dirname(__file__), "mlops_grafana.png")
+    if os.path.exists(grafana_path):
+        st.image(
+            grafana_path,
+            caption="Prometheus + Grafana 모니터링 대시보드 (Triton 실시간 메트릭)" if lang == "한국어" else "Prometheus + Grafana Monitoring Dashboard (Triton live metrics)",
+            use_container_width=True,
+        )
 # Row 2: Samsung SDI + TEBO (side by side)
 row2 = st.columns(2)
 for col, proj in zip(row2, t["projects"][1:]):
