@@ -50,7 +50,7 @@ T = {
     "한국어": {
         "title": "박지상 (Jisang Park)",
         "subtitle": "Data Engineer · AI Researcher",
-        "location": "📍 KETI 자율형IoT연구센터 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "highlights_head": "## 한눈에 보는 핵심 성과",
         "highlights": [
             ("SCIE 1편", "국제 저널 논문 게재"),
@@ -83,7 +83,7 @@ T = {
         "proj_head": "## 🛠️ 주요 프로젝트",
         "projects": [
             {
-                "title": "🔬 KETI 자율형 AI 에이전트 연구",
+                "title": "🔬 KETI AX연구본부 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
                 "desc": "송산그린시티 디지털 트윈 3파트(데이터 플랫폼·SWMM·Unity) 통합 연동 완료. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙, 2차 학습으로 R² 0.95 달성. MLOps 12개 프로세스 중 4개 구현 + 8개 기술 선정: MLflow Tracking·Registry + MinIO + Triton 서빙",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
@@ -130,7 +130,7 @@ T = {
     "English": {
         "title": "Jisang Park (박지상)",
         "subtitle": "Data Engineer · AI Researcher",
-        "location": "📍 KETI IoT Research Center &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "location": "📍 KETI AX Research Division &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "highlights_head": "## Key Achievements at a Glance",
         "highlights": [
             ("1 SCIE", "International Journal Paper"),
@@ -163,7 +163,7 @@ T = {
         "proj_head": "## 🛠️ Key Projects",
         "projects": [
             {
-                "title": "🔬 KETI Autonomous AI Agent Research",
+                "title": "🔬 KETI AX Research Division · AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
                 "desc": "Songsan Green City digital twin integration (Data Platform·SWMM·Unity) completed. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLOps: 4/12 processes implemented + 8/12 selected — MLflow Tracking·Registry + MinIO + Triton serving",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
