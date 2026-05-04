@@ -1,4 +1,5 @@
 import time
+import os
 import streamlit as st
 import pandas as pd
 from langchain_core.messages import ChatMessage
@@ -18,6 +19,14 @@ except KeyError:
     st.stop()
 
 GROQ_MODEL = "qwen/qwen3-32b"
+SAMPLE_PATH = os.path.join(os.path.dirname(__file__), "..", "tebo_sample.xlsx")
+SAMPLE_NAME = "tebo_sample.xlsx"
+TEBO_SAMPLE_QUESTIONS = [
+    "Study별 평균 Path_Length를 비교해줘",
+    "Condition별 데이터 수를 시각화해줘",
+    "Rambling_Y_LF_Power 상위 5명은?",
+    "Rambling과 Trembling의 전체 평균 차이는?",
+]
 
 # --- 사이드바 ---
 with st.sidebar:
@@ -28,6 +37,13 @@ with st.sidebar:
     st.divider()
     st.header("파일 업로드")
     uploaded_file = st.file_uploader("CSV 또는 Excel 파일 업로드", type=["csv", "xlsx"])
+    if not uploaded_file:
+        st.divider()
+        st.markdown("**💡 샘플 질문 (TEBO 데이터)**")
+        for q in TEBO_SAMPLE_QUESTIONS:
+            if st.button(q, use_container_width=True, key=f"tebo_{q}"):
+                st.session_state["data_pending"] = q
+                st.rerun()
     st.divider()
     st.caption("AI는 실수를 할 수 있습니다. 중요한 정보는 직접 확인해 주세요.")
 
@@ -187,6 +203,8 @@ if "data_messages" not in st.session_state:
     ]
 if "current_file" not in st.session_state:
     st.session_state["current_file"] = None
+if "data_pending" not in st.session_state:
+    st.session_state["data_pending"] = None
 
 if uploaded_file:
     file_bytes = uploaded_file.getvalue()
@@ -200,6 +218,25 @@ if uploaded_file:
 
     if retriever:
         st.success(f"✅ '{uploaded_file.name}' 분석 완료! ({len(df)}개의 데이터)")
+
+elif os.path.exists(SAMPLE_PATH):
+    with open(SAMPLE_PATH, "rb") as f:
+        sample_bytes = f.read()
+    df, retriever = build_vectorstore(sample_bytes, SAMPLE_NAME)
+
+    if st.session_state["current_file"] != SAMPLE_NAME:
+        st.session_state["data_messages"] = [
+            ChatMessage(role="assistant", content=(
+                "📊 TEBO 논문 샘플 데이터가 로드됐습니다!\n\n"
+                "이 데이터는 박지상이 SCIE 저널(Applied Sciences, 2025)에 게재한 "
+                "균형 분석 연구의 실제 결과물입니다. "
+                "745건의 CoP Rambling/Trembling 분석 데이터로, 왼쪽 예시 질문을 클릭하거나 직접 물어보세요."
+            ))
+        ]
+        st.session_state["current_file"] = SAMPLE_NAME
+
+    if retriever:
+        st.info("📊 샘플 데이터: TEBO 균형 분석 연구 (SCIE 논문) · 745건 · 23개 변수")
 else:
     st.info("👈 왼쪽 사이드바에서 CSV 또는 Excel 파일을 업로드해주세요.")
     df, retriever = None, None
@@ -209,6 +246,9 @@ for msg in st.session_state["data_messages"]:
 
 llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0)
 user_input = st.chat_input("이 데이터에 대해 궁금한 점을 물어보세요")
+if not user_input and st.session_state["data_pending"]:
+    user_input = st.session_state["data_pending"]
+    st.session_state["data_pending"] = None
 
 if user_input and retriever:
     st.chat_message("user").write(user_input)

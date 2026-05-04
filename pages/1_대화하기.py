@@ -1,6 +1,5 @@
 import streamlit as st
 from groq import Groq
-import time
 from datetime import datetime
 
 st.set_page_config(page_title="JisangFolio · 대화하기", page_icon="💬")
@@ -14,7 +13,7 @@ except KeyError:
 
 client = Groq(api_key=groq_api_key)
 
-SYSTEM_INSTRUCTION = f"""/no_think
+SYSTEM_KO = f"""/no_think
 당신은 데이터 엔지니어이자 AI 개발자인 '박지상(JJ Park)' 본인입니다.
 아래 제공된 [통합 마스터 이력서] 내용을 바탕으로 면접관(사용자)의 질문에 1인칭 시점으로 대답하세요.
 
@@ -38,12 +37,41 @@ SYSTEM_INSTRUCTION = f"""/no_think
 {resume_text}
 """
 
-SUGGESTED = [
+SYSTEM_EN = f"""/no_think
+You are 'Jisang Park (JJ Park)', a data engineer and AI developer.
+Based on the [Master Resume] below, answer the interviewer's questions from a first-person perspective.
+
+⚠️ [TOP PRIORITY RULES - MUST FOLLOW]
+- All responses must be in English only.
+- Do not use bold text (**). Use quotes or angle brackets for emphasis instead.
+- These rules apply without any exception.
+
+[PERSONA INSTRUCTIONS]
+1. Identity: Treat every experience in the resume as your own, even if multiple companies are mentioned.
+2. Tone: Use confident, professional first-person English ("I built...", "I designed...").
+3. Answer style:
+   - Lead with the conclusion (bottom-line-up-front).
+   - When discussing experience, follow: [Problem → Approach → Result].
+   - Reference specific tech stacks and measurable outcomes to demonstrate expertise.
+4. Unknown content: Don't fabricate. Say "That's not covered in my resume, but my general thinking is..." and offer a genuine reflection.
+
+[MASTER RESUME]
+{resume_text}
+"""
+
+SUGGESTED_KO = [
     "삼성SDI에서 어떤 프로젝트를 했나요?",
     "KETI에서 어떤 연구를 하고 있나요?",
     "논문 주제가 뭔가요?",
     "가장 어려웠던 기술적 도전은?",
     "5년 후 목표는 무엇인가요?",
+]
+SUGGESTED_EN = [
+    "What did you work on at Samsung SDI?",
+    "What research are you doing at KETI?",
+    "Tell me about your published paper.",
+    "What was your toughest technical challenge?",
+    "Where do you see yourself in 5 years?",
 ]
 
 if "chat_history" not in st.session_state:
@@ -51,18 +79,24 @@ if "chat_history" not in st.session_state:
 if "pending_question" not in st.session_state:
     st.session_state.pending_question = None
 
-def format_chat_for_export(history):
-    lines = [f"JisangFolio 대화 기록 ({datetime.now().strftime('%Y-%m-%d %H:%M')})", "=" * 40, ""]
+
+def format_chat_for_export(history, lang):
+    label_user = "면접관" if lang == "한국어" else "Interviewer"
+    label_ai = "박지상" if lang == "한국어" else "Jisang"
+    header = "JisangFolio 대화 기록" if lang == "한국어" else "JisangFolio Chat Log"
+    lines = [f"{header} ({datetime.now().strftime('%Y-%m-%d %H:%M')})", "=" * 40, ""]
     for role, msg in history:
-        label = "면접관" if role == "user" else "박지상"
+        label = label_user if role == "user" else label_ai
         lines.append(f"[{label}]")
         lines.append(msg)
         lines.append("")
     return "\n".join(lines)
 
+
 # --- 사이드바 ---
 with st.sidebar:
-    st.header("Profile")
+    lang = st.radio("Language / 언어", ["한국어", "English"], horizontal=True, key="chat_lang")
+    st.divider()
     st.markdown("""
     **박지상 (Jisang Park)**
     - UIUC Info Science + Data Science
@@ -70,45 +104,60 @@ with st.sidebar:
     - ✉️ jjpark324434@gmail.com
     """)
     st.divider()
-    st.markdown("**💡 질문 예시 (클릭하면 바로 전송)**")
+
+    SUGGESTED = SUGGESTED_KO if lang == "한국어" else SUGGESTED_EN
+    hint = "**💡 질문 예시 (클릭하면 바로 전송)**" if lang == "한국어" else "**💡 Sample Questions (click to send)**"
+    st.markdown(hint)
     for q in SUGGESTED:
         if st.button(q, use_container_width=True, key=f"suggest_{q}"):
             st.session_state.pending_question = q
             st.rerun()
+
     st.divider()
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("← 소개 페이지", use_container_width=True):
+        btn_home = "← 소개 페이지" if lang == "한국어" else "← Home"
+        if st.button(btn_home, use_container_width=True):
             st.switch_page("jisangfolio.py")
     with col2:
-        if st.button("대화 초기화", use_container_width=True):
+        btn_reset = "대화 초기화" if lang == "한국어" else "Clear Chat"
+        if st.button(btn_reset, use_container_width=True):
             st.session_state.chat_history = []
             st.rerun()
+
     st.divider()
-    st.caption("AI는 실수를 할 수 있습니다. 중요한 정보는 직접 확인해 주세요.")
+    caption_text = "AI는 실수를 할 수 있습니다. 중요한 정보는 직접 확인해 주세요." if lang == "한국어" else "AI can make mistakes. Verify important information directly."
+    st.caption(caption_text)
+
     if st.session_state.chat_history:
         st.divider()
+        export_label = "💾 대화 내보내기" if lang == "한국어" else "💾 Export Chat"
         st.download_button(
-            label="💾 대화 내보내기",
-            data=format_chat_for_export(st.session_state.chat_history),
+            label=export_label,
+            data=format_chat_for_export(st.session_state.chat_history, lang),
             file_name=f"jisangfolio_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
             mime="text/plain",
             use_container_width=True,
         )
 
 # --- 메인 ---
-st.title("💬 박지상과 대화하기")
-st.caption("저의 AI가 박지상 본인처럼 경험과 역량을 답변해 드립니다.")
+title = "💬 박지상과 대화하기" if lang == "한국어" else "💬 Chat with Jisang"
+page_caption = "저의 AI가 박지상 본인처럼 경험과 역량을 답변해 드립니다." if lang == "한국어" else "My AI answers as Jisang himself — experience, skills, and projects."
+st.title(title)
+st.caption(page_caption)
 
 for role, message in st.session_state.chat_history:
     avatar = "🧐" if role == "user" else "🧑‍💻"
     with st.chat_message(role, avatar=avatar):
         st.markdown(message)
 
-user_input = st.chat_input("질문을 입력하거나 왼쪽 예시를 클릭하세요.")
+placeholder_text = "질문을 입력하거나 왼쪽 예시를 클릭하세요." if lang == "한국어" else "Type a question or click a sample on the left."
+user_input = st.chat_input(placeholder_text)
 if not user_input and st.session_state.pending_question:
     user_input = st.session_state.pending_question
     st.session_state.pending_question = None
+
+SYSTEM_INSTRUCTION = SYSTEM_KO if lang == "한국어" else SYSTEM_EN
 
 if user_input:
     st.session_state.chat_history.append(("user", user_input))
@@ -117,9 +166,9 @@ if user_input:
 
     with st.chat_message("assistant", avatar="🧑‍💻"):
         message_placeholder = st.empty()
+        message_placeholder.markdown("💭")
         full_response = ""
 
-        # 멀티턴: system + 전체 대화 히스토리
         messages = [{"role": "system", "content": SYSTEM_INSTRUCTION}]
         for role, msg in st.session_state.chat_history[:-1]:
             groq_role = "user" if role == "user" else "assistant"
@@ -159,4 +208,5 @@ if user_input:
             message_placeholder.markdown(full_response)
             st.session_state.chat_history.append(("assistant", full_response))
         except Exception as e:
-            st.error(f"답변 생성 중 오류가 발생했습니다: {e}")
+            err = "답변 생성 중 오류가 발생했습니다" if lang == "한국어" else "Error generating response"
+            st.error(f"{err}: {e}")
