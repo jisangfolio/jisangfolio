@@ -8,6 +8,7 @@
 [![Groq](https://img.shields.io/badge/LLM-Groq_Qwen3_32B-F55036?logo=groq&logoColor=white)](https://groq.com/)
 [![Plotly](https://img.shields.io/badge/Chart-Plotly-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
 [![FAISS](https://img.shields.io/badge/VectorDB-FAISS-009688?logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
+[![MCP](https://img.shields.io/badge/MCP-Server-blueviolet?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
 
 ## 🚀 Project Overview
 
@@ -95,6 +96,40 @@ streamlit run jisangfolio.py
 ```
 
 > **샘플 데이터**: `tebo_sample.xlsx`가 프로젝트 루트에 있으면 데이터분석 페이지에서 업로드 없이 바로 체험 가능합니다.
+
+## 🔌 MCP Server
+
+JisangFolio는 **Model Context Protocol(MCP) 서버**를 내장하고 있습니다.  
+Claude Desktop에 연결하면 Claude가 박지상의 포트폴리오 데이터를 직접 툴로 호출할 수 있습니다.
+
+**지원 툴**
+
+| 툴 | 설명 |
+|---|---|
+| `get_profile` | 기본 프로필 · 학력 · 연락처 |
+| `get_experience` | KETI · 삼성SDI 경력 (`company` 파라미터 지원) |
+| `get_projects` | 주요 프로젝트 · 개인 프로젝트 |
+| `get_skills` | 카테고리별 기술 스택 |
+| `get_publications` | SCIE 논문 및 기여 내용 |
+| `ask_jisang` | 자유 질문 → Groq + Qwen3 32B 1인칭 동적 답변 |
+
+**연결 방법** (`~/Library/Application Support/Claude/claude_desktop_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "jisangfolio": {
+      "command": "python",
+      "args": ["/Users/jjpark/Desktop/info/jisangfolio/jisangfolio_mcp.py"],
+      "env": {
+        "GROQ_API_KEY": "your_groq_api_key"
+      }
+    }
+  }
+}
+```
+
+Claude Desktop 재시작 후 "박지상의 MLOps 경험 알려줘" 또는 "ask_jisang으로 질문해줘" 형태로 사용하면 됩니다.
 
 ## 📬 Contact
 
