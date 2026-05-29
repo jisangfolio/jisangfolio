@@ -144,7 +144,7 @@ NGSI-LD, MQTT, REST API, Postman, SWMM
 Python (고급), R, SQL
 
 [Tools]
-Git, GitHub, Gitea, Docker, VSCode, Claude Code (바이브코딩)
+Git, GitHub, Gitea, Docker, VSCode, Claude Code
 """
 
 

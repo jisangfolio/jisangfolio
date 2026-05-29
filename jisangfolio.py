@@ -57,9 +57,10 @@ T = {
             "채용 담당자가 궁금한 것을 바로 물어볼 수 있는 인터랙티브 포트폴리오입니다."
         ),
         "how_head": "## ⚙️ 이 포트폴리오, 직접 만들었습니다",
-        "how_intro": "단순 소개 페이지가 아닙니다. 두 개의 독립적인 AI 파이프라인이 실시간으로 작동하고 있습니다.",
+        "how_intro": "단순 소개 페이지가 아닙니다. 세 개의 독립적인 AI 파이프라인이 실시간으로 작동하고 있습니다.",
         "arch_tab1": "💬 채팅 파이프라인",
         "arch_tab2": "📂 데이터 분석 파이프라인",
+        "arch_tab3": "🔌 MCP 서버 파이프라인",
         "arch": [
             "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 이력서 전문\n_(~3K 토큰 · RAG 불필요)_",
             "✨ **Groq · Qwen3 32B**\n\n시스템 프롬프트 전문 주입\n`/no_think` · `<think>` 스트리밍 필터",
@@ -70,6 +71,11 @@ T = {
             "🔀 **LLM 라우터**\n\n질문 유형 자동 판별\n`PANDAS` or `RAG` 2분기",
             "⚙️ **PANDAS 경로**\n\n코드 생성 → 샌드박스 exec\n실패 시 RAG 자동 폴백",
             "🔍 **RAG 경로**\n\nFAISS + HuggingFace 임베딩\n멀티턴 컨텍스트 포함 답변",
+        ],
+        "arch_mcp": [
+            "🤖 **MCP 클라이언트**\n\nClaude Desktop · Cursor · Cline\nstdio로 서버 연결",
+            "🔌 **fastmcp 서버**\n\n프로필·경력·프로젝트·기술·논문\n6개 툴 노출",
+            "✨ **동적 Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\n1인칭 실시간 답변",
         ],
         "rag_note": "",
         "timeline_head": "## 📅 경력 타임라인",
@@ -114,6 +120,12 @@ T = {
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas 코드 생성` `Streamlit`",
                 "link": "page:데이터분석",
             },
+            {
+                "title": "🔌 JisangFolio MCP Server",
+                "desc": "Claude Desktop에서 제 포트폴리오를 직접 조회하는 MCP 서버입니다. FastMCP로 프로필·경력·프로젝트·기술·논문 조회 툴과 1인칭 Q&A(`ask_jisang`) 툴을 구현했습니다.",
+                "tags": "`fastmcp` `MCP` `Claude Desktop` `Groq`",
+                "link": "",
+            },
         ],
         "cta_head": "## 💬 직접 물어보세요",
         "cta_body": "AI와 대화하듯 저의 경험, 기술, 프로젝트를 질문해 보세요.",
@@ -130,9 +142,10 @@ T = {
             "Ask anything you'd want to know in an interview, and get an answer instantly."
         ),
         "how_head": "## ⚙️ This Portfolio Is a Project",
-        "how_intro": "Not just an introduction page — two independent AI pipelines running live.",
+        "how_intro": "Not just an introduction page — three independent AI pipelines running live.",
         "arch_tab1": "💬 Chat Pipeline",
         "arch_tab2": "📂 Data Analysis Pipeline",
+        "arch_tab3": "🔌 MCP Server Pipeline",
         "arch": [
             "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets\n_(~3K tokens · RAG not needed)_",
             "✨ **Groq · Qwen3 32B**\n\nFull resume in system prompt\n`/no_think` · `<think>` streaming filter",
@@ -144,6 +157,11 @@ T = {
             "⚙️ **PANDAS Path**\n\nCode gen → sandboxed exec\nAuto-fallback to RAG on error",
             "🔍 **RAG Path**\n\nFAISS + HuggingFace embeddings\nMulti-turn context in answer",
         ],
+        "arch_mcp": [
+            "🤖 **MCP Client**\n\nClaude Desktop · Cursor · Cline\nConnects via stdio",
+            "🔌 **fastmcp Server**\n\nProfile·Experience·Projects·Skills·Publications\n6 tools exposed",
+            "✨ **Dynamic Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\nFirst-person real-time answers",
+        ],
         "rag_note": "",
         "timeline_head": "## 📅 Career Timeline",
         "proj_head": "## 🛠️ Key Projects",
@@ -151,7 +169,7 @@ T = {
             {
                 "title": "🔬 KETI AX Research Division · AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
-                "desc": "Songsan Green City digital twin integration (Data Platform·SWMM·Unity) completed. Urban cooling AI model (3D U-Net) ONNX → Triton serving, R² 0.95 after 2nd training. MLOps: 4/12 processes implemented + 8/12 selected — MLflow Tracking·Registry + MinIO + Triton serving",
+                "desc": "MLOps serving infrastructure for urban cooling AI (primary): PKNU-provided PyTorch 3D U-Net → ONNX → Triton GPU serving in production (~200ms inference vs. tens of minutes for CFD). MLflow Tracking·Registry for v1↔v2 comparison — MAE 0.53→0.26°C, R² 0.82→0.95 (MAE 51%↓). Architecture design & tooling selection for a self-hosted stack (MLflow·MinIO·Gitea·Triton). (Separately) Songsan Green City digital twin — production integration & validation of 3 parts.",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
@@ -186,6 +204,12 @@ T = {
                 "desc": "An LLM router classifies each question: aggregation/stats queries generate and sandbox-execute pandas code; search/summary queries use FAISS RAG. Auto-fallback to RAG on code error.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas Code Gen` `Streamlit`",
                 "link": "page:데이터분석",
+            },
+            {
+                "title": "🔌 JisangFolio MCP Server",
+                "desc": "An MCP server that lets Claude Desktop query my portfolio directly. Built with FastMCP — tools for profile/experience/projects/skills/publications plus a first-person Q&A tool (`ask_jisang`).",
+                "tags": "`fastmcp` `MCP` `Claude Desktop` `Groq`",
+                "link": "",
             },
         ],
         "cta_head": "## 💬 Ask Me Anything",
@@ -319,7 +343,7 @@ st.divider()
 # ── 작동 원리 ─────────────────────────────────────────────────────
 st.markdown(t["how_head"])
 st.caption(t["how_intro"])
-tab1, tab2 = st.tabs([t["arch_tab1"], t["arch_tab2"]])
+tab1, tab2, tab3 = st.tabs([t["arch_tab1"], t["arch_tab2"], t["arch_tab3"]])
 with tab1:
     col1, col2, col3, col4, col5 = st.columns([3, 1, 3, 1, 3])
     with col1:
@@ -338,12 +362,18 @@ with tab2:
         box.info(content)
     for arrow in [d2, d4, d6]:
         arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+with tab3:
+    m1, m2, m3, m4, m5 = st.columns([3, 1, 3, 1, 3])
+    for box, content in zip([m1, m3, m5], t["arch_mcp"]):
+        box.info(content)
+    for arrow in [m2, m4]:
+        arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
 
 st.divider()
 
 # ── 개인 프로젝트 ─────────────────────────────────────────────────
 st.markdown(t["personal_head"])
-cols = st.columns(2)
+cols = st.columns(len(t["personal_projects"]))
 for col, proj in zip(cols, t["personal_projects"]):
     with col:
         with st.container(border=True):
