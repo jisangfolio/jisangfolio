@@ -182,5 +182,6 @@ Cursor·Cline·Continue·Windsurf도 거의 동일한 `command + args + env` 구
 ## 📬 Contact
 
 - Email: jjpark324434@gmail.com
+- GitHub: [github.com/jisangfolio](https://github.com/jisangfolio)
 - LinkedIn: [linkedin.com/in/jisangpark](https://linkedin.com/in/jisangpark)
 - Portfolio: [jisangfolio.streamlit.app](https://jisangfolio.streamlit.app)
