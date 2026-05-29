@@ -51,13 +51,6 @@ T = {
         "title": "박지상 (Jisang Park)",
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
-        "highlights_head": "## 한눈에 보는 핵심 성과",
-        "highlights": [
-            ("SCIE 1편", "국제 저널 논문 게재"),
-            ("R² 0.95", "도시냉각 AI 모델 정확도"),
-            ("MAE 51%↓", "2차 학습 성능 개선"),
-            ("10년", "미국 거주 · 실무 영어"),
-        ],
         "tagline_head": "## 📖 읽지 말고 대화하는 이력서",
         "tagline_body": (
             "정적인 PDF 이력서의 한계를 넘어, 저의 모든 경험과 역량을 AI가 직접 전달합니다.  \n"
@@ -85,7 +78,7 @@ T = {
             {
                 "title": "🔬 KETI AX연구본부 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "송산그린시티 디지털 트윈 3파트(데이터 플랫폼·SWMM·Unity) 통합 연동 완료. 도시냉각 AI 모델(3D U-Net) ONNX 변환 → Triton 서빙, 2차 학습으로 R² 0.95 달성. MLOps 12개 프로세스 중 4개 구현 + 8개 기술 선정: MLflow Tracking·Registry + MinIO + Triton 서빙",
+                "desc": "MLOps 도시냉각 AI 서빙 인프라 구축(주력): 부경대 제공 PyTorch 3D U-Net을 ONNX 변환 → Triton GPU 서빙으로 운영 배포(CFD 수십 분 대비 추론 ~200ms). MLflow Tracking·Registry 도입으로 v1↔v2 비교 검증 — MAE 0.53→0.26°C, R² 0.82→0.95(MAE 51%↓). 자체호스팅 스택(MLflow·MinIO·Gitea·Triton) 아키텍처 설계·기술 선정. (별도) 송산그린시티 디지털 트윈 3파트 운영 환경 연동·검증.",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
@@ -131,13 +124,6 @@ T = {
         "title": "Jisang Park (박지상)",
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX Research Division &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
-        "highlights_head": "## Key Achievements at a Glance",
-        "highlights": [
-            ("1 SCIE", "International Journal Paper"),
-            ("R² 0.95", "Urban Cooling AI Accuracy"),
-            ("MAE 51%↓", "2nd Training Improvement"),
-            ("10 yrs", "US Residency · Fluent English"),
-        ],
         "tagline_head": "## 📖 A Resume You Talk To",
         "tagline_body": (
             "Going beyond static PDF resumes — my AI delivers my experience and skills in real conversation.  \n"
@@ -253,21 +239,6 @@ df[col_종료] = pd.to_datetime(df[col_종료])
 st.title(t["title"])
 st.caption(t["subtitle"])
 st.markdown(t["location"], unsafe_allow_html=True)
-
-st.divider()
-
-# ── 핵심 성과 요약 ────────────────────────────────────────────────
-st.markdown(t["highlights_head"])
-h_cols = st.columns(4)
-for col, (value, label) in zip(h_cols, t["highlights"]):
-    with col:
-        st.markdown(
-            f"<div style='text-align:center;'>"
-            f"<div style='font-size:1.8rem; font-weight:700; color:#4C9BE8;'>{value}</div>"
-            f"<div style='font-size:0.85rem; color:gray;'>{label}</div>"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
 
 st.divider()
 
