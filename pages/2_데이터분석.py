@@ -6,9 +6,9 @@ from langchain_core.messages import ChatMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
+# 무거운 torch/faiss 의존성(FAISS·HuggingFaceEmbeddings)은 임베딩이 실제로
+# 필요한 시점까지 지연 import — 페이지 첫 렌더를 가볍게 유지한다.
 
 st.set_page_config(page_title="JisangFolio · 데이터 분석", page_icon="📂")
 
@@ -51,6 +51,8 @@ with st.sidebar:
 @st.cache_resource(show_spinner="업로드된 파일을 분석 중...")
 def build_vectorstore(file_bytes: bytes, file_name: str):
     import io
+    from langchain_community.vectorstores import FAISS
+    from langchain_community.embeddings import HuggingFaceEmbeddings
     try:
         if file_name.endswith(".csv"):
             try:

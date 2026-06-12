@@ -56,6 +56,12 @@ T = {
             "정적인 PDF 이력서의 한계를 넘어, 저의 모든 경험과 역량을 AI가 직접 전달합니다.  \n"
             "채용 담당자가 궁금한 것을 바로 물어볼 수 있는 인터랙티브 포트폴리오입니다."
         ),
+        "hero_q_hint": "💡 아래를 클릭하면 AI가 바로 답해드립니다",
+        "hero_questions": [
+            "MLOps 인프라를 어떻게 구축했나요?",
+            "삼성SDI에서 어떤 일을 했나요?",
+            "가장 큰 기술적 도전은?",
+        ],
         "how_head": "## ⚙️ 이 포트폴리오, 직접 만들었습니다",
         "how_intro": "단순 소개 페이지가 아닙니다. 세 개의 독립적인 AI 파이프라인이 실시간으로 작동하고 있습니다.",
         "arch_tab1": "💬 채팅 파이프라인",
@@ -141,6 +147,12 @@ T = {
             "Going beyond static PDF resumes — my AI delivers my experience and skills in real conversation.  \n"
             "Ask anything you'd want to know in an interview, and get an answer instantly."
         ),
+        "hero_q_hint": "💡 Click below and my AI answers instantly",
+        "hero_questions": [
+            "How did you build the MLOps infra?",
+            "What did you do at Samsung SDI?",
+            "Your toughest technical challenge?",
+        ],
         "how_head": "## ⚙️ This Portfolio Is a Project",
         "how_intro": "Not just an introduction page — three independent AI pipelines running live.",
         "arch_tab1": "💬 Chat Pipeline",
@@ -266,6 +278,28 @@ st.markdown(t["location"], unsafe_allow_html=True)
 
 st.divider()
 
+# ── 히어로 후킹 (첫 화면에서 바로 대화 입구 노출) ──────────────────
+st.markdown(t["tagline_head"])
+st.markdown(t["tagline_body"])
+
+hero_c1, hero_c2 = st.columns([2, 1])
+with hero_c1:
+    if st.button(t["cta_btn"], type="primary", use_container_width=True, key="hero_chat"):
+        st.switch_page("pages/1_대화하기.py")
+with hero_c2:
+    if st.button(t["data_btn"], use_container_width=True, key="hero_data"):
+        st.switch_page("pages/2_데이터분석.py")
+
+st.caption(t["hero_q_hint"])
+q_cols = st.columns(len(t["hero_questions"]))
+for q_col, q in zip(q_cols, t["hero_questions"]):
+    with q_col:
+        if st.button(q, use_container_width=True, key=f"hero_q_{q}"):
+            st.session_state.pending_question = q
+            st.switch_page("pages/1_대화하기.py")
+
+st.divider()
+
 # ── 경력 타임라인 ─────────────────────────────────────────────────
 st.markdown(t["timeline_head"])
 
@@ -334,12 +368,6 @@ for col, (header, body) in zip(cols, t["stacks"]):
 
 st.divider()
 
-# ── 태그라인 ──────────────────────────────────────────────────────
-st.markdown(t["tagline_head"])
-st.markdown(t["tagline_body"])
-
-st.divider()
-
 # ── 작동 원리 ─────────────────────────────────────────────────────
 st.markdown(t["how_head"])
 st.caption(t["how_intro"])
@@ -396,8 +424,8 @@ st.markdown(t["cta_head"])
 st.markdown(t["cta_body"])
 btn_col1, btn_col2 = st.columns(2)
 with btn_col1:
-    if st.button(t["cta_btn"], type="primary", use_container_width=True):
+    if st.button(t["cta_btn"], type="primary", use_container_width=True, key="cta_chat"):
         st.switch_page("pages/1_대화하기.py")
 with btn_col2:
-    if st.button(t["data_btn"], use_container_width=True):
+    if st.button(t["data_btn"], use_container_width=True, key="cta_data"):
         st.switch_page("pages/2_데이터분석.py")
