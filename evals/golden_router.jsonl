@@ -1,0 +1,20 @@
+{"id": "r01", "q": "Study별 평균 Path_Length를 비교해줘", "expected": "PANDAS"}
+{"id": "r02", "q": "Condition별 데이터 수를 시각화해줘", "expected": "PANDAS"}
+{"id": "r03", "q": "Rambling_Y_LF_Power 상위 5명은 누구야?", "expected": "PANDAS"}
+{"id": "r04", "q": "전체 참가자의 평균 나이는?", "expected": "PANDAS"}
+{"id": "r05", "q": "Rambling과 Trembling 값의 상관관계를 보여줘", "expected": "PANDAS"}
+{"id": "r06", "q": "가장 Path_Length가 큰 행은?", "expected": "PANDAS"}
+{"id": "r07", "q": "그룹별 표준편차를 계산해줘", "expected": "PANDAS"}
+{"id": "r08", "q": "조건별 비율을 막대그래프로 그려줘", "expected": "PANDAS"}
+{"id": "r09", "q": "결측치가 몇 개나 있어?", "expected": "PANDAS"}
+{"id": "r10", "q": "값이 100 이상인 행만 필터링해줘", "expected": "PANDAS"}
+{"id": "r11", "q": "이 데이터는 무슨 연구에 대한 거야?", "expected": "RAG"}
+{"id": "r12", "q": "Rambling이 생체역학적으로 무슨 의미야?", "expected": "RAG"}
+{"id": "r13", "q": "이 실험의 목적을 요약해줘", "expected": "RAG"}
+{"id": "r14", "q": "첫 번째 참가자의 특징을 설명해줘", "expected": "RAG"}
+{"id": "r15", "q": "데이터에서 특이한 점이 있으면 알려줘", "expected": "RAG"}
+{"id": "r16", "q": "이 컬럼들이 각각 무엇을 측정한 거야?", "expected": "RAG"}
+{"id": "r17", "q": "고령자 균형 연구와 이 데이터가 어떻게 연결돼?", "expected": "RAG"}
+{"id": "r18", "q": "이 데이터로 어떤 결론을 내릴 수 있어?", "expected": "RAG"}
+{"id": "r19", "q": "Trembling이 높은 사람은 어떤 상태라고 볼 수 있어?", "expected": "RAG"}
+{"id": "r20", "q": "이 연구의 핵심 발견을 한 문장으로 정리해줘", "expected": "RAG"}

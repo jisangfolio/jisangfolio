@@ -7,6 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_groq import ChatGroq
+from prompts import ROUTER_PROMPT_TEMPLATE
 # 무거운 torch/faiss 의존성(FAISS·HuggingFaceEmbeddings)은 임베딩이 실제로
 # 필요한 시점까지 지연 import — 페이지 첫 렌더를 가볍게 유지한다.
 
@@ -127,22 +128,8 @@ def get_df_info(df: pd.DataFrame) -> str:
 
 def classify_question(llm, question: str, df_info: str) -> str:
     """질문이 pandas 집계(코드 생성)로 처리해야 하는지, RAG 검색으로 처리해야 하는지 LLM이 판단합니다."""
-    prompt = ChatPromptTemplate.from_template(
-        """/no_think
-아래 DataFrame 정보와 사용자 질문을 보고, 답변 방식을 하나만 골라 출력하세요.
-
-[DataFrame 정보]
-{df_info}
-
-[질문]
-{question}
-
-[판단 기준]
-- PANDAS: 평균, 합계, 최대, 최소, 정렬, 필터링, 그룹별 집계, 통계, 그래프, 카운트, 비율, 상관관계 등 전체 데이터를 대상으로 계산이 필요한 질문
-- RAG: 특정 항목 검색, 내용 요약, 의미 기반 질문 등 텍스트 검색으로 답할 수 있는 질문
-
-PANDAS 또는 RAG 중 하나만 출력하세요. 다른 말은 하지 마세요."""
-    )
+    # 라우터 프롬프트는 prompts.py(SSOT)에서 공유 — 평가 하니스(evals/)가 동일 프롬프트로 정확도 측정
+    prompt = ChatPromptTemplate.from_template(ROUTER_PROMPT_TEMPLATE)
     result = (prompt | llm).invoke({"question": question, "df_info": df_info})
     answer = result.content.strip().upper()
     if "PANDAS" in answer:
