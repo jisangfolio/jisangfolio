@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import streamlit.components.v1 as components
 import os
 
 st.set_page_config(
@@ -64,6 +65,14 @@ T = {
         ],
         "how_head": "## ⚙️ 이 포트폴리오, 직접 만들었습니다",
         "how_intro": "단순 소개 페이지가 아닙니다. 세 개의 독립적인 AI 파이프라인이 실시간으로 작동하고 있습니다.",
+        "graph_head": "## 🕸️ 이 포트폴리오, 지식그래프로는 어떨까?",
+        "graph_bullets": (
+            "- **단일 소스(SSOT):** 프롬프트·후처리(`prompts.py`)를 앱 페이지와 평가 하니스가 공유 — 그래프에서 `build_system_prompt`이 여러 파이프라인을 잇는 허브로 나타납니다.  \n"
+            "- **회귀 평가 하니스:** 결정적 채점(사실 키워드·금지어) + LLM-judge로 챗봇 답변의 사실성을 릴리스마다 검증합니다.  \n"
+            "- 52개 노드 · 8개 커뮤니티 · 100% 코드 근거 (로컬 AST 추출, Graphify)."
+        ),
+        "graph_caption": "노드를 클릭하면 이웃 관계를 탐색할 수 있습니다. (vis-network 인터랙티브 · 이 사이트 코드의 실제 콜그래프)",
+        "graph_missing": "(codegraph.html을 프로젝트 루트에 넣으면 코드 지식그래프가 표시됩니다)",
         "arch_tab1": "💬 채팅 파이프라인",
         "arch_tab2": "📂 데이터 분석 파이프라인",
         "arch_tab3": "🔌 MCP 서버 파이프라인",
@@ -155,6 +164,14 @@ T = {
         ],
         "how_head": "## ⚙️ This Portfolio Is a Project",
         "how_intro": "Not just an introduction page — three independent AI pipelines running live.",
+        "graph_head": "## 🕸️ This Portfolio, as a Knowledge Graph?",
+        "graph_bullets": (
+            "- **Single Source of Truth:** prompts & post-processing (`prompts.py`) are shared by the app pages and the eval harness — in the graph, `build_system_prompt` appears as the hub linking multiple pipelines.  \n"
+            "- **Regression eval harness:** deterministic checks (fact keywords · banned terms) + an LLM judge verify the chatbot's factual accuracy on every release.  \n"
+            "- 52 nodes · 8 communities · 100% code-grounded (local AST extraction, Graphify)."
+        ),
+        "graph_caption": "Click any node to explore its neighbors. (Interactive vis-network · the real call graph of this site's code)",
+        "graph_missing": "(place codegraph.html in the project root to display the code knowledge graph)",
         "arch_tab1": "💬 Chat Pipeline",
         "arch_tab2": "📂 Data Analysis Pipeline",
         "arch_tab3": "🔌 MCP Server Pipeline",
@@ -396,6 +413,19 @@ with tab3:
         box.info(content)
     for arrow in [m2, m4]:
         arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+
+st.divider()
+
+# ── 코드 지식그래프 (Graphify) ────────────────────────────────────
+st.markdown(t["graph_head"])
+st.markdown(t["graph_bullets"])
+graph_path = os.path.join(os.path.dirname(__file__), "codegraph.html")
+if os.path.exists(graph_path):
+    with open(graph_path, "r", encoding="utf-8") as gf:
+        components.html(gf.read(), height=600, scrolling=False)
+    st.caption(t["graph_caption"])
+else:
+    st.caption(t["graph_missing"])
 
 st.divider()
 

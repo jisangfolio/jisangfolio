@@ -22,6 +22,7 @@
 
 - **포트폴리오 자체가 프로젝트** — Streamlit 페이지가 아니라, 살아 움직이는 멀티 파이프라인 데모
 - **회귀 평가 하니스 내장** — 결정적 채점 + LLM-as-judge로 챗봇 답변의 사실성을 오프라인 검증 (`evals/`)
+- **코드 지식그래프 임베드** — 코드베이스를 인터랙티브 그래프로 시각화(Graphify · 로컬 AST). `prompts.py`가 앱·평가를 잇는 단일 소스(SSOT) 허브임을 홈에서 바로 확인
 - **실제 운영 화면 포함** — KETI 연구의 Prometheus + Grafana 대시보드 스크린샷 임베드
 - **실제 SCIE 논문 데이터** — TEBO 균형 분석 745건이 데이터 분석 페이지에 즉시 로드
 - **MCP 호환** — Claude Desktop, Cursor, Cline 등에서 6개 툴로 노출되는 표준 프로토콜 서버
@@ -42,6 +43,7 @@ jisangfolio/
 │   └── golden_router.jsonl     #   라우터 골든셋 (20)
 ├── tebo_sample.xlsx            # TEBO 논문 샘플 데이터 (745건)
 ├── mlops_grafana.png           # KETI MLOps 대시보드 스크린샷
+├── codegraph.html              # 코드 지식그래프 (Graphify · 홈에 임베드)
 ├── resume.pdf                  # 이력서 PDF
 ├── requirements.txt
 └── README.md
@@ -51,7 +53,7 @@ jisangfolio/
 
 | 페이지 | 설명 |
 |--------|------|
-| **소개** (`jisangfolio.py`) | 프로필 · 경력 타임라인 · 주요 프로젝트 · 기술 스택 · 아키텍처 탭 |
+| **소개** (`jisangfolio.py`) | 프로필 · 경력 타임라인 · 주요 프로젝트 · 기술 스택 · 아키텍처 탭 · 코드 지식그래프 |
 | **대화하기** (`pages/1_대화하기.py`) | AI 면접 챗봇 · 한/영 전환 · 멀티턴 · 추천 질문 · 대화 내보내기 |
 | **데이터분석** (`pages/2_데이터분석.py`) | TEBO 샘플 데이터 내장 · LLM 라우터 · pandas 코드 생성 · RAG · 자동 폴백 |
 | **MCP 서버** (`jisangfolio_mcp.py`) | Claude Desktop·Cursor·Cline 등에서 사용 가능한 6개 툴 |
@@ -70,6 +72,7 @@ jisangfolio/
 - **경력 타임라인**: Plotly Gantt 차트로 학력·경력·군복무·논문 시각화
 - **MLOps 대시보드 스크린샷**: KETI 연구 Prometheus+Grafana 실제 운영 화면 포함
 - **회귀 평가 하니스**: `evals/`에서 챗봇·라우터 출력을 결정적 채점(사실 키워드·금지어·형식) + LLM-as-judge로 정량 검증 — 프롬프트/모델 변경 시 품질 회귀 방지
+- **코드 지식그래프**: 코드베이스를 인터랙티브 force-directed 그래프로 시각화(Graphify, 로컬 AST 추출 · 100% 코드 근거). `prompts.py`가 앱·평가를 잇는 단일 소스 허브임을 시각적으로 확인 — 노드 클릭으로 콜그래프 탐색
 - **이력서 PDF 다운로드**
 
 ## 🛠 Tech Stack
