@@ -27,7 +27,7 @@ def get_profile() -> str:
 학력: UIUC Information Science + Data Science (BSIS+DS), GPA 3.89/4.0, 2025.12 졸업
 이전: University of Washington, Seattle (Pre-Science, 2019~2024)
 군복무: 대한민국 해군 어학병 병장 만기제대 (2021.02~2022.10) — 광주함 함상근무 10개월, 한미연합사 영어 통역
-어학: 한국어(상), 영어(상, OPIc IH), 미국 거주 10년 (고교+대학 전과정)
+어학: 한국어(상), 영어(상, TOEIC 970 · OPIc IH), 미국 거주 10년 (고교+대학 전과정)
 연락처: jjpark324434@gmail.com | linkedin.com/in/jisangpark | github.com/jisangfolio
 포트폴리오: jisangfolio.streamlit.app
 """
@@ -49,15 +49,17 @@ def get_experience(company: str = "") -> str:
   - MQTT + HTTP 하이브리드 통신 구조 분석, Ports and Adapters 패턴 적용
   - 연동 구조도·시퀀스 다이어그램 정리 후 내부 발표
 
-▸ 연구2: MLOps 기반 도시냉각 AI 모델 서빙 인프라 구축 (2026.03~ 진행중)
-  - 한-싱가포르 국제공동연구 (총 16억원, 4년): 부산대·부경대·KETI·온품·A*STAR
-  - KETI 역할: "AI 모델 서빙 지원 도시 냉각 데이터 플랫폼 기술 개발"
-  - 부경대 제공 PyTorch 3D U-Net(+CBAM+Attention Gate) → ONNX 변환 → Triton 서빙
-  - 1차 학습(45건): MAE 0.53°C, R² 0.82 → 2차 학습(291건): MAE 0.26°C, R² 0.95 (MAE 51%↓)
-  - CFD 시뮬레이션 수십 분 → Triton 추론 ~200ms
-  - MLOps 6개 구현: MLflow Tracking·Registry + MinIO + Gitea + Gitea Actions CI + Triton
-  - Prometheus + Grafana 모니터링 (7패널): GPU 사용률·VRAM·전력·추론 rate·compute/queue 시간
-  - 자체호스팅 원칙(상부 방침): 외부 SaaS 회피 → GitHub→Gitea, S3→MinIO, 클라우드→Prometheus+Grafana
+▸ 연구2: 폐쇄망 자체호스팅 MLOps 플랫폼 구축 (2026.03~ 진행중)
+  - 여러 모델을 폐쇄망에서 서빙·관리하는 범용(모델-agnostic) MLOps 플랫폼을 오픈소스로 주도 설계·구축
+    (도시냉각 AI 연구 환경이 배경 — 부경대 3D U-Net·외부팀 PINN이 플랫폼 위에서 도는 활용 사례)
+  - 부경대 제공 PyTorch 3D U-Net(+CBAM+Attention Gate) → ONNX 변환 → Triton GPU 서빙
+  - 외부팀(U-Ecotron) PINN 3종을 같은 Triton에 배포 — voxel/point I/O 이종 모델 통합, 플랫폼 첫 외부 활용 사례
+  - 1차 학습(45건): MAE 0.53°C, R² 0.82 → 2차(291건 통합): MAE 0.26°C, R² 0.95 (MAE 51%↓)
+  - CFD 시뮬레이션 수십 분(부경대 제공) → Triton 추론 ~200ms
+  - MLOps 스택: MLflow(Tracking·Registry·아티팩트 서빙) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
+  - 신규(2026-06): Streamlit 운영 포털(6페이지)·Evidently 드리프트 대시보드(PoC)·ONNX 검증→배포 CI(수동 트리거)
+  - 아티팩트 저장은 MinIO 도입 후 AGPL 이슈로 제거 → MLflow 로컬 저장(--serve-artifacts)으로 대체
+  - 자체호스팅 원칙(상부 방침): 외부 SaaS/클라우드 회피 → GitHub→Gitea, 클라우드 모니터링→Prometheus+Grafana
   - 역할: 아키텍처 설계, 기술 선정, 환경 구축/운영, 실험 수행, 결과 분석, 발표자료 작성
 """
 
@@ -87,21 +89,21 @@ def get_projects() -> str:
     return """
 [주요 프로젝트]
 
-1. KETI MLOps 도시냉각 AI 서빙 인프라
-   - PyTorch 3D U-Net → ONNX → NVIDIA Triton 서빙 파이프라인
-   - MLflow·MinIO·Gitea·Gitea Actions·Prometheus·Grafana (MLOps 6/12 구현)
-   - 2차 학습으로 MAE 51% 개선, R² 0.95 달성
-   - 스택: PyTorch, ONNX, Triton, MLflow, MinIO, Gitea, Docker, WSL2, Prometheus, Grafana
+1. KETI 폐쇄망 자체호스팅 MLOps 플랫폼
+   - PyTorch 3D U-Net + 외부 PINN 3종 → ONNX → NVIDIA Triton 이종 모델 통합 서빙
+   - MLflow·Gitea·Gitea Actions·Prometheus·Grafana + Streamlit 운영 포털·Evidently 드리프트(PoC)
+   - 2차 학습(291건 통합)으로 MAE 51% 개선, R² 0.95 달성
+   - 스택: PyTorch, ONNX, Triton, MLflow, Gitea, Docker Compose, Prometheus, Grafana, Evidently, Streamlit
 
 2. 삼성SDI SPA — 폐쇄망 특허 RAG 챗봇
    - 완전 인터넷 차단 환경, 1인 단독 개발
    - Rule-based Agent + RAG 하이브리드, 임원 PoC 호평
    - 스택: Ollama, Qwen2.5-72B, LangChain, FAISS, Streamlit, Docker
 
-3. TEBO 균형 분석 · SCIE 논문
+3. TEBO 균형 분석 · SCIE 논문 (공동 저자)
    - Applied Sciences (SCIE) 2025.07 게재
-   - CoP 시계열 → Butterworth Filter + FFT → Rambling/Trembling 분해
-   - R² ≈ 0.85, Pearson r = 0.92 (p<0.001)
+   - CoP 시계열 → 4차 Butterworth(6Hz) + FFT → Rambling/Trembling 분해
+   - 개인 abstract 시뮬레이션: R² ≈ 0.85, Pearson r = 0.92 (p<0.001)
    - 스택: Python, NumPy, SciPy, Matplotlib
 
 [개인 프로젝트]
@@ -124,10 +126,11 @@ LangChain, RAG, FAISS, Prompt Engineering, Hugging Face, PyTorch, ONNX
 Rule-based Agent, Ollama, Groq, fastmcp (MCP 서버 개발)
 
 [MLOps / Infra]
-MLflow (Tracking + Model Registry), NVIDIA Triton Inference Server
-MinIO (S3 호환), Gitea (자체호스팅 Git), Gitea Actions (CI)
+MLflow (Tracking + Model Registry + 아티팩트 서빙), NVIDIA Triton Inference Server
+Gitea (자체호스팅 Git), Gitea Actions (CI), ONNX Runtime
 Prometheus, Grafana (PromQL, 대시보드 프로비저닝)
-Docker, WSL2, Docker Compose
+Evidently (데이터 드리프트, PoC), Streamlit (운영 포털)
+Docker, Docker Compose, MinIO (삼성SDI 오브젝트 스토리지)
 
 [Data Science]
 Pandas, NumPy, Matplotlib, SciPy, spaCy, Gensim
@@ -160,16 +163,17 @@ def get_publications() -> str:
 
 [개인 기여 요약]
 - CoP(압력중심) 시계열 데이터 분석 파이프라인 전체 단독 설계·구현
-- 4차 Butterworth 저역통과 필터(5Hz) → 센서 노이즈 제거
+- 4차 Butterworth 저역통과 필터(6Hz cutoff) → 센서 노이즈 필터링
 - Zero-crossing 기반 평형점 탐지 → Cubic spline 보간으로 Rambling 재구성
 - FFT → 0~0.3Hz 적분 → Low-frequency rambling power 산출
 - Young(n=1) / Healthy Older(n=37) / TCOA 임상군(n=22) 비교 분석
-- R² ≈ 0.85 (단일 Rambling 파워로 자세 동요 분산 85%+ 설명)
-- Pearson r = 0.92 (p<0.001)
+- ※게재 논문은 공동 저자 (주저자·교신저자 아님)
 
-[개인 초록]
+[개인 초록 — 단독 저자, 아래 시뮬레이션 수치의 출처]
 제목: "Postural Control in Healthy and TCOA Adults: Rambling-Component Analysis and Simulated CoP Trajectories"
 저자: JJ Park (단독)
+- 단일 Rambling 파워로 자세 동요 분산 85%+ 설명 (R² ≈ 0.85)
+- 시뮬레이션 면적 vs 실제 stabilogram: Pearson r = 0.92 (p<0.001)
 """
 
 

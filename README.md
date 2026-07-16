@@ -21,6 +21,7 @@
 ## 🌟 Highlights
 
 - **포트폴리오 자체가 프로젝트** — Streamlit 페이지가 아니라, 살아 움직이는 멀티 파이프라인 데모
+- **회귀 평가 하니스 내장** — 결정적 채점 + LLM-as-judge로 챗봇 답변의 사실성을 오프라인 검증 (`evals/`)
 - **실제 운영 화면 포함** — KETI 연구의 Prometheus + Grafana 대시보드 스크린샷 임베드
 - **실제 SCIE 논문 데이터** — TEBO 균형 분석 745건이 데이터 분석 페이지에 즉시 로드
 - **MCP 호환** — Claude Desktop, Cursor, Cline 등에서 6개 툴로 노출되는 표준 프로토콜 서버
@@ -34,6 +35,11 @@ jisangfolio/
 │   ├── 1_대화하기.py           # AI 챗봇 (한/영)
 │   └── 2_데이터분석.py         # JisangData (LLM 라우터 + RAG)
 ├── jisangfolio_mcp.py          # MCP 서버 (6 tools)
+├── prompts.py                  # 시스템 프롬프트 SSOT (앱·평가 공유)
+├── evals/                      # 회귀 평가 하니스 (결정적 + LLM judge)
+│   ├── run_evals.py            #   실행 → report.md 생성
+│   ├── golden_chat.jsonl       #   챗봇 골든셋 (16)
+│   └── golden_router.jsonl     #   라우터 골든셋 (20)
 ├── tebo_sample.xlsx            # TEBO 논문 샘플 데이터 (745건)
 ├── mlops_grafana.png           # KETI MLOps 대시보드 스크린샷
 ├── resume.pdf                  # 이력서 PDF
@@ -63,6 +69,7 @@ jisangfolio/
 - **MCP 서버**: `fastmcp` 기반 6개 툴 노출, 동적 질문은 Groq + Qwen3 32B로 처리
 - **경력 타임라인**: Plotly Gantt 차트로 학력·경력·군복무·논문 시각화
 - **MLOps 대시보드 스크린샷**: KETI 연구 Prometheus+Grafana 실제 운영 화면 포함
+- **회귀 평가 하니스**: `evals/`에서 챗봇·라우터 출력을 결정적 채점(사실 키워드·금지어·형식) + LLM-as-judge로 정량 검증 — 프롬프트/모델 변경 시 품질 회귀 방지
 - **이력서 PDF 다운로드**
 
 ## 🛠 Tech Stack
@@ -75,6 +82,7 @@ jisangfolio/
 | MCP Server | fastmcp |
 | Data Processing | Pandas |
 | Visualization | Plotly |
+| Eval | 회귀 평가 하니스 (결정적 채점 + LLM-as-judge) |
 | Language | Python |
 
 ```mermaid
