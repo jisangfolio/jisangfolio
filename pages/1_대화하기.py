@@ -2,8 +2,10 @@ import streamlit as st
 from groq import Groq
 from datetime import datetime
 from prompts import build_system_prompt, clean_response
+from ui import apply_style
 
 st.set_page_config(page_title="JisangFolio · 대화하기", page_icon="💬")
+apply_style()
 
 try:
     groq_api_key = st.secrets["groq_api_key"]

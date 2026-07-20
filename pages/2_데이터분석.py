@@ -8,10 +8,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_groq import ChatGroq
 from prompts import ROUTER_PROMPT_TEMPLATE
+from ui import apply_style
 # 무거운 torch/faiss 의존성(FAISS·HuggingFaceEmbeddings)은 임베딩이 실제로
 # 필요한 시점까지 지연 import — 페이지 첫 렌더를 가볍게 유지한다.
 
 st.set_page_config(page_title="JisangFolio · 데이터 분석", page_icon="📂")
+apply_style()
 
 try:
     groq_api_key = st.secrets["groq_api_key"]

@@ -3,12 +3,14 @@ import plotly.express as px
 import pandas as pd
 import streamlit.components.v1 as components
 import os
+from ui import apply_style
 
 st.set_page_config(
     page_title="JisangFolio",
     page_icon="🧑‍💻",
     layout="centered"
 )
+apply_style()
 
 # SNS 공유용 OG 메타태그
 st.markdown("""
@@ -269,8 +271,6 @@ st.title(t["title"])
 st.caption(t["subtitle"])
 st.markdown(t["location"], unsafe_allow_html=True)
 
-st.divider()
-
 # ── 히어로 후킹 (첫 화면에서 바로 대화 입구 노출) ──────────────────
 st.markdown(t["tagline_head"])
 
@@ -313,15 +313,15 @@ fig.update_layout(
 fig.update_traces(marker_line_width=0)
 st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-
 # ── 주요 프로젝트 ─────────────────────────────────────────────────
 st.markdown(t["proj_head"])
 # Row 1: KETI (full width)
 with st.container(border=True):
     st.markdown(f"**{t['projects'][0]['title']}**")
     st.caption(t["projects"][0]["period"])
-    st.markdown(t["projects"][0]["desc"])
+    _keti_lead, _sep, _keti_rest = t["projects"][0]["desc"].partition(". ")
+    st.markdown(f"**{_keti_lead}.**")
+    st.markdown(_keti_rest)
     st.caption(t["projects"][0]["tags"])
     grafana_path = os.path.join(os.path.dirname(__file__), "mlops_grafana.png")
     if os.path.exists(grafana_path):
@@ -339,8 +339,6 @@ for col, proj in zip(row2, t["projects"][1:]):
             st.caption(proj["period"])
             st.markdown(proj["desc"])
             st.caption(proj["tags"])
-
-st.divider()
 
 # ── 기술 스택 ─────────────────────────────────────────────────────
 st.markdown(t["stack_head"])
@@ -380,8 +378,6 @@ with tab3:
         box.info(content)
     for arrow in [m2, m4]:
         arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
-
-st.divider()
 
 # ── 코드 지식그래프 (Graphify) ────────────────────────────────────
 st.markdown(t["graph_head"])
