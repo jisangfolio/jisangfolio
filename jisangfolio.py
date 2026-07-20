@@ -44,7 +44,7 @@ with st.sidebar:
     else:
         st.caption("(resume.pdf를 프로젝트 루트에 넣으면 다운로드 버튼이 활성화됩니다)")
     st.divider()
-    st.caption("이 챗봇은 내(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있다. 정확한 건 이력서 PDF나 메일로 확인 바란다 :)")
+    st.caption("이 챗봇은 제(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있습니다. 정확한 건 이력서 PDF나 메일로 직접 확인 바랍니다 :)")
 
 # ── 언어별 텍스트 ────────────────────────────────────────────────
 T = {
@@ -54,15 +54,15 @@ T = {
         "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 대화하는 이력서",
         "how_head": "## 어떻게 돌아가나",
-        "how_intro": "챗봇·데이터분석·MCP 서버, 세 파이프라인이 각각 따로 돈다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있다.",
+        "how_intro": "챗봇·데이터분석·MCP 서버, 세 파이프라인이 각각 따로 돕니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
         "graph_head": "## 코드로 그린 지식그래프",
         "graph_bullets": (
-            "- **단일 소스(SSOT):** 프롬프트·후처리(`prompts.py`)를 앱 페이지와 평가 하니스가 공유한다 — 그래프에서 `build_system_prompt`이 여러 파이프라인을 잇는 허브로 나타난다.  \n"
-            "- **회귀 평가 하니스:** 결정적 채점(사실 키워드·금지어) + LLM-judge로 챗봇 답변의 사실성을 릴리스마다 검증한다.  \n"
-            "- 이 그래프는 손으로 그린 게 아니라 코드를 AST로 파싱해서 뽑았다. 노드 52개가 다 실제 함수·모듈이다 (Graphify)."
+            "- **단일 소스(SSOT):** 프롬프트·후처리(`prompts.py`)를 앱 페이지와 평가 하니스가 공유합니다 — 그래프에서 `build_system_prompt`이 여러 파이프라인을 잇는 허브로 나타납니다.  \n"
+            "- **회귀 평가 하니스:** 결정적 채점(사실 키워드·금지어) + LLM-judge로 챗봇 답변의 사실성을 릴리스마다 검증합니다.  \n"
+            "- 이 그래프는 손으로 그린 게 아니라 코드를 AST로 파싱해서 뽑았습니다. 노드 52개가 다 실제 함수·모듈입니다 (Graphify)."
         ),
-        "graph_caption": "노드를 클릭하면 이웃 관계를 탐색할 수 있다. (vis-network 인터랙티브 · 이 사이트 코드의 실제 콜그래프)",
-        "graph_missing": "(codegraph.html을 프로젝트 루트에 넣으면 코드 지식그래프가 표시된다)",
+        "graph_caption": "노드를 클릭하면 이웃 관계를 탐색할 수 있습니다. (vis-network 인터랙티브 · 이 사이트 코드의 실제 콜그래프)",
+        "graph_missing": "(codegraph.html을 프로젝트 루트에 넣으면 코드 지식그래프가 표시됩니다)",
         "arch_tab1": "💬 채팅 파이프라인",
         "arch_tab2": "📂 데이터 분석 파이프라인",
         "arch_tab3": "🔌 MCP 서버 파이프라인",
@@ -89,7 +89,7 @@ T = {
             {
                 "title": "KETI AX연구본부 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "폐쇄망 MLOps 플랫폼을 주도적으로 설계·구축했다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙(CFD 수십 분 대비 추론 약 200ms)하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합해 모델 무관 재사용성을 입증했다. MLflow(실험·레지스트리·거버넌스)·Gitea Actions CI(체크아웃 14분→4초)·Prometheus+Grafana(7패널)·Streamlit 운영 포털(6페이지)·Evidently 드리프트(PoC)를 docker-compose로 운영한다. 제공된 분할 데이터 통합(45-291건)으로 MAE 0.53→0.26°C·R² 0.82→0.95를 MLflow 비교 체계에서 측정했다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
+                "desc": "폐쇄망 MLOps 플랫폼을 주도적으로 설계·구축했습니다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙(CFD 수십 분 대비 추론 약 200ms)하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합해 모델 무관 재사용성을 입증했습니다. MLflow(실험·레지스트리·거버넌스)·Gitea Actions CI(체크아웃 14분→4초)·Prometheus+Grafana(7패널)·Streamlit 운영 포털(6페이지)·Evidently 드리프트(PoC)를 docker-compose로 운영합니다. 제공된 분할 데이터 통합(45-291건)으로 MAE 0.53→0.26°C·R² 0.82→0.95를 MLflow 비교 체계에서 측정했습니다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
                 "tags": "`Triton` `ONNX` `MLflow` `Gitea Actions` `Prometheus` `Grafana` `Docker` `PyTorch`",
             },
             {
@@ -101,7 +101,7 @@ T = {
             {
                 "title": "TEBO 균형 분석 · SCIE 논문",
                 "period": "Applied Sciences, 2025.07 게재",
-                "desc": "CoP 센서 시계열을 4차 Butterworth로 노이즈 필터링(6Hz cutoff)한 뒤 FFT로 Rambling/Trembling을 분해했다. 개인 분석에서 단일 Rambling 지표가 자세 동요 분산의 85% 이상을 설명했고, 게재는 SCIE 'Applied Sciences' 공저다.",
+                "desc": "CoP 센서 시계열을 4차 Butterworth로 노이즈 필터링(6Hz cutoff)한 뒤 FFT로 Rambling/Trembling을 분해했습니다. 개인 분석에서 단일 Rambling 지표가 자세 동요 분산의 85% 이상을 설명했고, 게재는 SCIE 'Applied Sciences' 공저입니다.",
                 "tags": "`Python` `SciPy` `FFT` `시계열 분석`",
             },
         ],
@@ -115,19 +115,19 @@ T = {
         "personal_projects": [
             {
                 "title": "JisangFolio",
-                "desc": "지금 보고 있는 이 포트폴리오다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸다. Qwen3 thinking은 `/no_think` + 스트리밍 필터로 제어한다.",
+                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸습니다. Qwen3 thinking은 `/no_think` + 스트리밍 필터로 제어합니다.",
                 "tags": "`Groq · Qwen3 32B` `Streamlit` `eval 하니스` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
                 "title": "JisangData",
-                "desc": "LLM 라우터가 질문 유형을 판별해 집계·통계 질문은 pandas 코드를 생성·샌드박스 실행하고, 검색·요약 질문은 FAISS RAG로 처리한다. 코드 실행 실패 시 RAG 자동 폴백.",
+                "desc": "LLM 라우터가 질문 유형을 판별해 집계·통계 질문은 pandas 코드를 생성·샌드박스 실행하고, 검색·요약 질문은 FAISS RAG로 처리합니다. 코드 실행 실패 시 RAG 자동 폴백.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas 코드 생성` `Streamlit`",
                 "link": "page:데이터분석",
             },
             {
                 "title": "JisangFolio MCP Server",
-                "desc": "Claude Desktop에서 내 포트폴리오를 직접 조회하는 MCP 서버다. FastMCP로 프로필·경력·프로젝트·기술·논문 조회 툴과 1인칭 Q&A(`ask_jisang`) 툴을 구현했다.",
+                "desc": "Claude Desktop에서 제 포트폴리오를 직접 조회하는 MCP 서버입니다. FastMCP로 프로필·경력·프로젝트·기술·논문 조회 툴과 1인칭 Q&A(`ask_jisang`) 툴을 구현했습니다.",
                 "tags": "`fastmcp` `MCP` `Claude Desktop` `Groq`",
                 "link": "",
             },

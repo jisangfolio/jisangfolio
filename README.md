@@ -1,7 +1,7 @@
 # 👨‍💻 JisangFolio
 
 > **"읽지 말고 대화하는 이력서."**
-> 이력서를 PDF로 또 보내는 게 싫어서, 아예 물어볼 수 있게 만든 포트폴리오입니다. 이력서 전문을 물고 있는 챗봇 + 데이터분석 데모 + MCP 서버로 구성돼 있어요.
+> 이력서를 PDF로 또 보내는 게 싫어서, 아예 물어볼 수 있게 만든 포트폴리오입니다. 이력서 전문을 물고 있는 챗봇 + 데이터분석 데모 + MCP 서버로 구성돼 있습니다.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)

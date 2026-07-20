@@ -46,7 +46,7 @@ with st.sidebar:
                 st.session_state["data_pending"] = q
                 st.rerun()
     st.divider()
-    st.caption("이 분석은 AI가 자동 생성한 코드로 돈다. 숫자가 중요하면 원본 데이터로 한 번 더 확인 바란다 :)")
+    st.caption("이 분석은 AI가 자동 생성한 코드로 돕니다. 숫자가 중요하면 원본 데이터로 한 번 더 확인 바랍니다 :)")
 
 # --- 파일 처리 ---
 @st.cache_resource(show_spinner="업로드된 파일을 분석 중...")
