@@ -74,15 +74,15 @@ T = {
         "arch_tab2": "데이터 분석 파이프라인",
         "arch_tab3": "MCP 서버 파이프라인",
         "arch": [
-            "**마스터 이력서 + 프로필 그래프**\n\n이력서 전문과 아래 프로필 관계도를 시스템 프롬프트에 함께 주입\n_(약 3K 토큰)_",
-            "**Groq · Qwen3 27B**\n\n시스템 프롬프트 전문 주입\n저지연 스트리밍 응답",
-            "**1인칭 스트리밍**\n\n멀티턴 대화 이력 유지\n박지상 본인처럼 실시간 답변",
+            "**Guardrail + GraphRAG**\n\n입력 가드(인젝션·스코프) 통과 후\n프로필 그래프에서 관련 서브그래프 탐색·주입",
+            "**Groq · Qwen3 27B**\n\n이력서 + 서브그래프 주입\n추론 OFF로 저지연",
+            "**1인칭 스트리밍 + 트레이스**\n\n실시간 답변 + 지연·라우팅을\n옵저버빌리티에 기록",
         ],
         "arch_data": [
             "**파일 업로드**\n\nCSV/Excel → DataFrame\nchunk_size=1000 분할 + FAISS 임베딩",
             "**LLM 라우터**\n\n질문 유형 자동 판별\n`PANDAS` or `RAG` 2분기",
             "**PANDAS 경로**\n\n코드 생성 → 샌드박스 exec\n실패 시 RAG 자동 폴백",
-            "**RAG 경로**\n\nFAISS + HuggingFace 임베딩\n멀티턴 컨텍스트 포함 답변",
+            "**RAG 경로**\n\n하이브리드: FAISS(dense) + BM25(sparse)\nReciprocal Rank Fusion으로 융합",
         ],
         "arch_mcp": [
             "**MCP 클라이언트**\n\nClaude Desktop · Cursor · Cline\nstdio로 서버 연결",
@@ -123,7 +123,7 @@ T = {
         "personal_projects": [
             {
                 "title": "JisangFolio",
-                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸습니다.",
+                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸습니다. 여기에 GraphRAG(그래프 탐색 검색)·가드레일·자체호스팅 LLM 옵저버빌리티·하이브리드 RAG·GitHub Actions CI까지 얹었습니다.",
                 "tags": "`Groq · Qwen3 27B` `Streamlit` `eval 하니스` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
@@ -166,15 +166,15 @@ T = {
         "arch_tab2": "Data Analysis Pipeline",
         "arch_tab3": "MCP Server Pipeline",
         "arch": [
-            "**Master Resume + Profile Graph**\n\nThe resume text and the profile graph below are injected into the system prompt\n_(~3K tokens)_",
-            "**Groq · Qwen3 27B**\n\nFull resume in system prompt\nLow-latency streaming",
-            "**1st-person Streaming**\n\nMulti-turn conversation history\nAnswers as Jisang in real-time",
+            "**Guardrail + GraphRAG**\n\nInput guard (injection·scope), then retrieve\n& inject a relevant profile subgraph",
+            "**Groq · Qwen3 27B**\n\nResume + subgraph injected\nreasoning off for low latency",
+            "**1st-person Streaming + Trace**\n\nReal-time answer + latency/routing\nlogged to observability",
         ],
         "arch_data": [
             "**File Upload**\n\nCSV/Excel → DataFrame\nchunk_size=1000 split + FAISS embedding",
             "**LLM Router**\n\nAuto-classifies question type\n`PANDAS` or `RAG`",
             "**PANDAS Path**\n\nCode gen → sandboxed exec\nAuto-fallback to RAG on error",
-            "**RAG Path**\n\nFAISS + HuggingFace embeddings\nMulti-turn context in answer",
+            "**RAG Path**\n\nHybrid: FAISS (dense) + BM25 (sparse)\nfused with Reciprocal Rank Fusion",
         ],
         "arch_mcp": [
             "**MCP Client**\n\nClaude Desktop · Cursor · Cline\nConnects via stdio",
@@ -215,7 +215,7 @@ T = {
         "personal_projects": [
             {
                 "title": "JisangFolio",
-                "desc": "This portfolio itself. The full resume (~3K tokens) is injected into the system prompt — no RAG needed — and I built a regression eval harness (rule-based scoring + a separate LLM judge) that keeps factual accuracy stable across prompt/model changes. It caught a stale resume copy leaking into the bot and lifted the pass rate from 62% to 94%.",
+                "desc": "This portfolio itself. The full resume (~3K tokens) is injected into the system prompt — no RAG needed — and I built a regression eval harness (rule-based scoring + a separate LLM judge) that keeps factual accuracy stable across prompt/model changes. It caught a stale resume copy leaking into the bot and lifted the pass rate from 62% to 94%. On top of that: GraphRAG, a guardrails layer, self-hosted LLM observability, hybrid RAG, and GitHub Actions CI.",
                 "tags": "`Groq · Qwen3 27B` `Streamlit` `eval harness` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
