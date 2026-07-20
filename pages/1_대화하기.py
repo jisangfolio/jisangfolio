@@ -139,6 +139,7 @@ if user_input:
                 model="qwen/qwen3.6-27b",
                 messages=messages,
                 stream=True,
+                reasoning_effort="none",  # thinking 끔 → 응답 속도 대폭 개선(빈 추론 토큰 생성 방지)
             )
             full_response = ""
             buffer = ""

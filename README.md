@@ -5,7 +5,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Groq](https://img.shields.io/badge/LLM-Groq_Qwen3_27B-F55036?logo=groq&logoColor=white)](https://groq.com/)
+[![Groq](https://img.shields.io/badge/LLM-Groq_Qwen3-27B-F55036?logo=groq&logoColor=white)](https://groq.com/)
 [![Plotly](https://img.shields.io/badge/Chart-Plotly-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
 [![FAISS](https://img.shields.io/badge/VectorDB-FAISS-009688?logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
 [![MCP](https://img.shields.io/badge/MCP-Server-blueviolet?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
@@ -14,7 +14,7 @@
 
 **JisangFolio**는 이력서를 기반으로 면접관의 질문에 답변하는 AI 인터랙티브 포트폴리오입니다. 챗봇·데이터분석·MCP 서버 세 파이프라인이 각각 따로 돕니다.
 
-- **채팅 파이프라인**: 이력서 전문(~3K 토큰)을 시스템 프롬프트에 직접 주입 — RAG 없이도 모든 경험을 정확하게 답변. Qwen3 thinking 모드를 `/no_think` + 스트리밍 필터로 제어.
+- **채팅 파이프라인**: 이력서 전문(~3K 토큰)을 시스템 프롬프트에 직접 주입 — RAG 없이도 모든 경험을 정확하게 답변.
 - **데이터 분석 파이프라인**: LLM 라우터가 질문 유형을 자동 판별해 집계·통계는 pandas 코드를 생성·샌드박스 실행, 검색·요약은 FAISS RAG로 처리.
 - **MCP 서버 파이프라인**: 포트폴리오 데이터를 Model Context Protocol 툴로 노출. Claude Desktop · Cursor · Claude Code 등 어떤 MCP 클라이언트에서도 박지상의 경험을 직접 조회 가능.
 
@@ -65,7 +65,7 @@ jisangfolio/
 
 - **AI 면접 챗봇**: 1인칭 페르소나로 면접 질문에 실시간 스트리밍 답변
 - **한국어 / English 전환**: 전 페이지(소개·대화하기) 완전 이중 언어 지원
-- **Thinking 필터**: Qwen3 `<think>` 블록을 스트리밍 단에서 필터링, 사고 과정 비노출 + `💭` 대기 표시
+- **스트리밍 표시**: 응답을 토큰 단위로 실시간 렌더링 + `💭` 대기 표시
 - **멀티턴 대화**: 이전 대화 맥락을 유지하며 꼬리 질문까지 처리
 - **추천 질문**: 사이드바 버튼 클릭으로 바로 전송
 - **대화 내보내기**: 대화 기록을 텍스트 파일로 다운로드

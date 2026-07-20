@@ -216,6 +216,7 @@ def ask_jisang(question: str) -> str:
             {"role": "user", "content": question},
         ],
         max_tokens=800,
+        reasoning_effort="none",  # thinking 끔 → 응답 속도 개선
     )
     content = response.choices[0].message.content or ""
     if "</think>" in content:
