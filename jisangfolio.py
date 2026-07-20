@@ -26,7 +26,7 @@ st.markdown("""
 
 # --- 사이드바: 언어 선택 + 링크 ---
 with st.sidebar:
-    lang = st.radio("Language / 언어", ["한국어", "English"], horizontal=True)
+    lang = st.radio("Language / 언어", ["English", "한국어"], horizontal=True)
     st.divider()
     st.markdown("**박지상 (Jisang Park)**")
     st.markdown("✉️ jjpark324434@gmail.com")
@@ -45,9 +45,9 @@ with st.sidebar:
                 use_container_width=True,
             )
     else:
-        st.caption("(resume.pdf를 프로젝트 루트에 넣으면 다운로드 버튼이 활성화됩니다)")
+        st.caption("(resume.pdf를 프로젝트 루트에 넣으면 다운로드 버튼이 활성화됩니다)" if lang == "한국어" else "(Add resume.pdf to the project root to enable the download button.)")
     st.divider()
-    st.caption("이 챗봇은 제(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있습니다. 정확한 건 이력서 PDF나 메일로 직접 확인 바랍니다 :)")
+    st.caption("이 챗봇은 제(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있습니다. 정확한 건 이력서 PDF나 메일로 직접 확인 바랍니다 :)" if lang == "한국어" else "This chatbot answers from my (Jisang's) resume, so it can occasionally get things wrong. For anything important, check the resume PDF or just email me :)")
 
 # ── 언어별 텍스트 ────────────────────────────────────────────────
 T = {
@@ -56,6 +56,13 @@ T = {
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 대화하는 이력서",
+        "hero_tagline": "온프레미스·폐쇄망 환경에서 MLOps 파이프라인과 RAG·LLM 서빙을 처음부터 끝까지 소유하는 엔지니어입니다.",
+        "about_head": "## 소개",
+        "about_body": "미국에서 정보과학과 데이터를 공부하다, 군대에서 통역병으로 2년을 보내고 돌아왔습니다. 지금은 KETI에서 도시가 얼마나 뜨거워질지 예측하는 AI를 GPU 위에 올려, 원래 수십 분 걸리던 계산을 약 200밀리초 안에 답하게 만들고 있습니다.\n\n화려한 모델보다 \"새벽 3시에 이 서버가 죽어도 누가 고칠 수 있는가\"를 더 오래 고민하는 쪽입니다. 배포·서빙·모니터링처럼 지루하지만 안 죽는 걸 만드는 일을 좋아합니다.",
+        "edu_head": "## 학력",
+        "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — Information Science + Data Science 학사 · GPA 3.89/4.0 · 2025.12  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**주요 이수 과목** (강의 프로젝트 수준): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means 직접구현) · INFO330 Database (T-SQL) · STAT207 · MATH227",
+        "contact_head": "## 연락처",
+        "contact_body": "읽지 말고, 물어보세요. 이력서에 대해 무엇이든 제 AI에게 직접 질문할 수 있습니다.",
         "how_head": "## 파이프라인",
         "how_intro": "챗봇·데이터분석·MCP 서버가 각각 별도의 파이프라인으로 돌아갑니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
         "graph_head": "## 코드베이스 구조 그래프",
@@ -143,6 +150,13 @@ T = {
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX Research Division &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## A Resume You Talk To",
+        "hero_tagline": "I own MLOps pipelines and RAG · LLM serving end to end — in on-prem, air-gapped environments where you can't lean on the cloud.",
+        "about_head": "## About",
+        "about_body": "I studied information science and data in the U.S., spent two years as a military interpreter, and came back to build things that don't fall over. At KETI I put an urban-cooling AI on a GPU so that a computation that used to take tens of minutes now answers in about 200 milliseconds.\n\nI care less about flashy models and more about \"who fixes this server when it dies at 3 a.m.\" I like the unglamorous work — deployment, serving, monitoring — that keeps things alive.",
+        "edu_head": "## Education",
+        "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — B.S., Information Science + Data Science · GPA 3.89/4.0 · Dec 2025  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**Selected coursework** (course projects): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means from scratch) · INFO330 Database (T-SQL) · STAT207 · MATH227",
+        "contact_head": "## Contact",
+        "contact_body": "Don't read it — ask it. You can ask my AI anything about my resume, live.",
         "how_head": "## Pipelines",
         "how_intro": "Three separate pipelines — chat, data analysis, and an MCP server — each doing its own thing. The tabs show why I split them up.",
         "graph_head": "## Codebase structure graph",
@@ -267,21 +281,37 @@ df = pd.DataFrame(timeline_rows)
 df[col_시작] = pd.to_datetime(df[col_시작])
 df[col_종료] = pd.to_datetime(df[col_종료])
 
-# ── 헤더 ──────────────────────────────────────────────────────────
-st.title(t["title"])
-st.caption(t["subtitle"])
-st.markdown(t["location"], unsafe_allow_html=True)
+# ── 히어로 (사진 + 소개 + CTA) ────────────────────────────────────
+import base64 as _b64m
+_hero_txt, _hero_photo = st.columns([2, 1])
+with _hero_txt:
+    st.caption(t["subtitle"])
+    st.title(t["title"])
+    st.markdown(t["location"], unsafe_allow_html=True)
+    st.markdown(t["hero_tagline"])
+    _hb1, _hb2 = st.columns(2)
+    with _hb1:
+        if st.button(t["cta_btn"], type="primary", use_container_width=True, key="hero_chat"):
+            st.switch_page("pages/1_Chat.py")
+    with _hb2:
+        if st.button(t["data_btn"], use_container_width=True, key="hero_data"):
+            st.switch_page("pages/2_Data_Analysis.py")
+with _hero_photo:
+    _photo_path = os.path.join(os.path.dirname(__file__), "profile.jpg")
+    if os.path.exists(_photo_path):
+        _enc = _b64m.b64encode(open(_photo_path, "rb").read()).decode()
+        st.markdown(
+            "<div style='text-align:center;padding-top:6px'><img src='data:image/jpeg;base64,"
+            + _enc
+            + "' style='width:180px;height:180px;object-fit:cover;border-radius:50%;border:1px solid #2a2f3a'/></div>",
+            unsafe_allow_html=True,
+        )
 
-# ── 히어로 후킹 (첫 화면에서 바로 대화 입구 노출) ──────────────────
-st.markdown(t["tagline_head"])
+st.divider()
 
-hero_c1, hero_c2 = st.columns([2, 1])
-with hero_c1:
-    if st.button(t["cta_btn"], type="primary", use_container_width=True, key="hero_chat"):
-        st.switch_page("pages/1_대화하기.py")
-with hero_c2:
-    if st.button(t["data_btn"], use_container_width=True, key="hero_data"):
-        st.switch_page("pages/2_데이터분석.py")
+# ── 소개 ──────────────────────────────────────────────────────────
+st.markdown(t["about_head"])
+st.markdown(t["about_body"])
 
 st.divider()
 
@@ -351,6 +381,12 @@ for col, (header, body) in zip(cols, t["stacks"]):
 
 st.divider()
 
+# ── 학력 ──────────────────────────────────────────────────────────
+st.markdown(t["edu_head"])
+st.markdown(t["edu_body"])
+
+st.divider()
+
 # ── 작동 원리 ─────────────────────────────────────────────────────
 st.markdown(t["how_head"])
 st.caption(t["how_intro"])
@@ -413,4 +449,15 @@ for col, proj in zip(cols, t["personal_projects"]):
             st.caption(proj["tags"])
             if proj["link"] and proj["link"].startswith("page:"):
                 if st.button("사용해 보기 →" if lang == "한국어" else "Try it →", key=proj["title"], use_container_width=True):
-                    st.switch_page("pages/2_데이터분석.py")
+                    st.switch_page("pages/2_Data_Analysis.py")
+
+st.divider()
+
+# ── 연락처 ────────────────────────────────────────────────────────
+st.markdown(t["contact_head"])
+st.markdown(t["contact_body"])
+_cc1, _cc2 = st.columns([1, 1])
+with _cc1:
+    if st.button(t["cta_btn"], type="primary", use_container_width=True, key="contact_chat"):
+        st.switch_page("pages/1_Chat.py")
+st.markdown("✉️ jjpark324434@gmail.com &nbsp;·&nbsp; [GitHub](https://github.com/jisangfolio) &nbsp;·&nbsp; [LinkedIn](https://linkedin.com/in/jisangpark)")

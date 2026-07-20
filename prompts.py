@@ -7,7 +7,7 @@
 import re
 from profile_graph import to_prompt_text
 
-# ── 챗봇 시스템 프롬프트 (pages/1_대화하기.py에서 추출) ────────────────
+# ── 챗봇 시스템 프롬프트 (pages/1_Chat.py에서 추출) ────────────────
 # 헤더는 "[통합 마스터 이력서 내용]\n" / "[MASTER RESUME]\n" 직후에 이력서 전문을
 # 이어 붙이는 구조. build_system_prompt()가 헤더 + 이력서 + "\n" 으로 조립한다.
 _SYSTEM_KO_HEADER = """/no_think
@@ -77,7 +77,7 @@ def build_system_prompt(lang: str, resume_text: str) -> str:
     return header + resume_text + graph
 
 
-# ── 데이터분석 라우터 프롬프트 (pages/2_데이터분석.py classify_question에서 추출) ──
+# ── 데이터분석 라우터 프롬프트 (pages/2_Data_Analysis.py classify_question에서 추출) ──
 # langchain ChatPromptTemplate.from_template() 과 str.format() 양쪽에서 동일하게
 # 동작하도록 {df_info}, {question} 두 변수만 사용한다.
 ROUTER_PROMPT_TEMPLATE = """/no_think

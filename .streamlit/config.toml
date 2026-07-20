@@ -1,0 +1,5 @@
+[theme]
+# 의도된 다크 테마 + 차분한 브랜드 accent(periwinkle) — 순정 빨강 대신
+base = "dark"
+primaryColor = "#7AA2F7"
+secondaryBackgroundColor = "#1A1E29"

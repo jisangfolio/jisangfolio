@@ -9,49 +9,49 @@ from langchain_core.documents import Document
 from langchain_groq import ChatGroq
 from prompts import ROUTER_PROMPT_TEMPLATE
 from ui import apply_style
-# 무거운 torch/faiss 의존성(FAISS·HuggingFaceEmbeddings)은 임베딩이 실제로
-# 필요한 시점까지 지연 import — 페이지 첫 렌더를 가볍게 유지한다.
+# Heavy torch/faiss deps (FAISS · HuggingFaceEmbeddings) are imported lazily,
+# only when embedding is actually needed — keeps first render light.
 
-st.set_page_config(page_title="JisangFolio · 데이터 분석", page_icon="📂")
+st.set_page_config(page_title="JisangFolio · Data Analysis", page_icon="📂")
 apply_style()
 
 try:
     groq_api_key = st.secrets["groq_api_key"]
 except KeyError:
-    st.error("⚠️ Secrets에 groq_api_key가 설정되지 않았습니다.")
+    st.error("⚠️ groq_api_key is not set in Secrets.")
     st.stop()
 
 GROQ_MODEL = "qwen/qwen3.6-27b"
 SAMPLE_PATH = os.path.join(os.path.dirname(__file__), "..", "tebo_sample.xlsx")
 SAMPLE_NAME = "tebo_sample.xlsx"
 TEBO_SAMPLE_QUESTIONS = [
-    "Study별 평균 Path_Length를 비교해줘",
-    "Condition별 데이터 수를 시각화해줘",
-    "Rambling_Y_LF_Power 상위 5명은?",
-    "Rambling과 Trembling의 전체 평균 차이는?",
+    "Compare the average Path_Length by Study",
+    "Visualize the record count by Condition",
+    "Who are the top 5 by Rambling_Y_LF_Power?",
+    "What's the overall mean difference between Rambling and Trembling?",
 ]
 
-# --- 사이드바 ---
+# --- Sidebar ---
 with st.sidebar:
-    if st.button("← 소개 페이지"):
+    if st.button("← Home"):
         st.switch_page("jisangfolio.py")
-    if st.button("💬 대화하기"):
-        st.switch_page("pages/1_대화하기.py")
+    if st.button("💬 Chat"):
+        st.switch_page("pages/1_Chat.py")
     st.divider()
-    st.header("파일 업로드")
-    uploaded_file = st.file_uploader("CSV 또는 Excel 파일 업로드", type=["csv", "xlsx"])
+    st.header("Upload a file")
+    uploaded_file = st.file_uploader("Upload a CSV or Excel file", type=["csv", "xlsx"])
     if not uploaded_file:
         st.divider()
-        st.markdown("**💡 샘플 질문 (TEBO 데이터)**")
+        st.markdown("**💡 Sample questions (TEBO data)**")
         for q in TEBO_SAMPLE_QUESTIONS:
             if st.button(q, use_container_width=True, key=f"tebo_{q}"):
                 st.session_state["data_pending"] = q
                 st.rerun()
     st.divider()
-    st.caption("이 분석은 AI가 자동 생성한 코드로 돕니다. 숫자가 중요하면 원본 데이터로 한 번 더 확인 바랍니다 :)")
+    st.caption("This analysis runs on AI-generated code. If the numbers matter, double-check against the source data :)")
 
-# --- 파일 처리 ---
-@st.cache_resource(show_spinner="업로드된 파일을 분석 중...")
+# --- File processing ---
+@st.cache_resource(show_spinner="Analyzing the uploaded file...")
 def build_vectorstore(file_bytes: bytes, file_name: str):
     import io
     from langchain_community.vectorstores import FAISS
@@ -65,11 +65,11 @@ def build_vectorstore(file_bytes: bytes, file_name: str):
         else:
             df = pd.read_excel(io.BytesIO(file_bytes))
     except Exception as e:
-        st.error(f"❌ 파일을 읽는 도중 오류가 발생했습니다: {e}")
+        st.error(f"❌ Failed to read the file: {e}")
         return None, None
 
     if df.empty:
-        st.error("❌ 파일에 데이터가 없습니다.")
+        st.error("❌ The file has no data.")
         return None, None
 
     documents = []
@@ -86,11 +86,11 @@ def build_vectorstore(file_bytes: bytes, file_name: str):
 
     splits = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100).split_documents(documents)
     if not splits:
-        st.error("❌ 데이터를 처리할 수 없습니다.")
+        st.error("❌ Could not process the data.")
         return None, None
 
     embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    progress_bar = st.progress(0, text="임베딩 생성 중...")
+    progress_bar = st.progress(0, text="Building embeddings...")
     vectorstore = None
     batch_size = 10
 
@@ -105,32 +105,32 @@ def build_vectorstore(file_bytes: bytes, file_name: str):
                 break
             except Exception as e:
                 if attempt == 3:
-                    st.error(f"임베딩 오류: {e}")
+                    st.error(f"Embedding error: {e}")
                     return None, None
                 time.sleep(2 ** attempt)
 
         percent = min((i + batch_size) / len(splits), 1.0)
-        progress_bar.progress(percent, text=f"임베딩 생성 중... ({int(percent * 100)}%)")
+        progress_bar.progress(percent, text=f"Building embeddings... ({int(percent * 100)}%)")
 
     progress_bar.empty()
-    st.sidebar.success(f"✅ 저장된 데이터 수: {vectorstore.index.ntotal}개")
+    st.sidebar.success(f"✅ Indexed records: {vectorstore.index.ntotal}")
 
     k = max(1, min(10, vectorstore.index.ntotal // 5))
     return df, vectorstore.as_retriever(search_kwargs={"k": k})
 
 
 def get_df_info(df: pd.DataFrame) -> str:
-    """LLM에게 전달할 DataFrame 요약 정보를 생성합니다."""
-    info_parts = [f"컬럼: {list(df.columns)}"]
-    info_parts.append(f"행 수: {len(df)}")
-    info_parts.append(f"데이터 타입:\n{df.dtypes.to_string()}")
-    info_parts.append(f"처음 3행:\n{df.head(3).to_string()}")
+    """Build a DataFrame summary to pass to the LLM."""
+    info_parts = [f"Columns: {list(df.columns)}"]
+    info_parts.append(f"Rows: {len(df)}")
+    info_parts.append(f"Dtypes:\n{df.dtypes.to_string()}")
+    info_parts.append(f"First 3 rows:\n{df.head(3).to_string()}")
     return "\n".join(info_parts)
 
 
 def classify_question(llm, question: str, df_info: str) -> str:
-    """질문이 pandas 집계(코드 생성)로 처리해야 하는지, RAG 검색으로 처리해야 하는지 LLM이 판단합니다."""
-    # 라우터 프롬프트는 prompts.py(SSOT)에서 공유 — 평가 하니스(evals/)가 동일 프롬프트로 정확도 측정
+    """The LLM decides whether to handle the question with pandas (codegen) or RAG search."""
+    # The router prompt is shared from prompts.py (SSOT) — the eval harness scores the same prompt.
     prompt = ChatPromptTemplate.from_template(ROUTER_PROMPT_TEMPLATE)
     result = (prompt | llm).invoke({"question": question, "df_info": df_info})
     answer = result.content.strip().upper()
@@ -140,57 +140,57 @@ def classify_question(llm, question: str, df_info: str) -> str:
 
 
 def generate_and_run_code(llm, question: str, df_info: str, df: pd.DataFrame):
-    """LLM이 pandas 코드를 생성하고 실행합니다. 코드와 결과를 함께 반환합니다."""
+    """The LLM generates pandas code and we run it. Returns the code and the result."""
     prompt = ChatPromptTemplate.from_template(
         """/no_think
-아래 DataFrame 정보를 참고하여 사용자 질문에 답하는 Python pandas 코드를 작성하세요.
+Using the DataFrame info below, write Python pandas code that answers the user's question.
 
-[DataFrame 정보]
+[DataFrame info]
 {df_info}
 
-[질문]
+[Question]
 {question}
 
-[규칙]
-1. 변수 `df`는 이미 로드되어 있습니다. import나 파일 읽기 코드를 쓰지 마세요.
-2. 최종 결과를 `result` 변수에 저장하세요.
-3. 시각화가 필요하면 `chart_df` 변수에 차트용 DataFrame을 저장하세요 (index=카테고리, values=수치). 시각화가 불필요하면 `chart_df`를 만들지 마세요.
-4. 숫자 컬럼에 문자가 섞여 있을 수 있으니 pd.to_numeric(errors='coerce')를 사용하세요.
-5. 코드만 출력하세요. 설명, 마크다운, 코드 블록(```) 없이 순수 Python 코드만 작성하세요.
-6. print()를 사용하지 마세요."""
+[Rules]
+1. The variable `df` is already loaded. Do not import anything or read files.
+2. Store the final result in a variable named `result`.
+3. If a visualization helps, store a chart DataFrame in `chart_df` (index=category, values=numbers). If no chart is needed, don't create `chart_df`.
+4. Numeric columns may contain stray text, so use pd.to_numeric(errors='coerce').
+5. Output code only — no explanation, no markdown, no code fences (```), just pure Python.
+6. Do not use print()."""
     )
 
     response = (prompt | llm).invoke({"question": question, "df_info": df_info})
     code = response.content.strip()
 
-    # 코드 블록 마커 제거
+    # Strip code-fence markers
     if code.startswith("```"):
         lines = code.split("\n")
         lines = [l for l in lines if not l.strip().startswith("```")]
         code = "\n".join(lines)
 
-    # <think> 블록 제거
+    # Strip <think> block
     if "<think>" in code:
         code = code.split("</think>")[-1].strip()
 
-    # 실행
+    # Execute
     local_vars = {"df": df.copy(), "pd": pd}
     try:
         exec(code, {"__builtins__": {"len": len, "sum": sum, "min": min, "max": max, "round": round, "sorted": sorted, "list": list, "dict": dict, "str": str, "int": int, "float": float, "abs": abs, "enumerate": enumerate, "zip": zip, "range": range, "type": type, "isinstance": isinstance, "True": True, "False": False, "None": None, "print": lambda *a, **kw: None}}, local_vars)
-        result = local_vars.get("result", "결과를 생성하지 못했습니다.")
+        result = local_vars.get("result", "Could not produce a result.")
         chart_df = local_vars.get("chart_df", None)
         return code, result, chart_df, None
     except Exception as e:
         return code, None, None, str(e)
 
 
-# --- 메인 ---
-st.title("📂 내 파일과 대화하기")
-st.caption("CSV 또는 Excel 파일을 업로드하면 AI가 데이터를 분석하고 질문에 답변해 드립니다.")
+# --- Main ---
+st.title("📂 Chat with your file")
+st.caption("Upload a CSV or Excel file and the AI analyzes it and answers your questions.")
 
 if "data_messages" not in st.session_state:
     st.session_state["data_messages"] = [
-        ChatMessage(role="assistant", content="CSV나 Excel 파일을 업로드해주시면 내용을 분석해 드릴게요.")
+        ChatMessage(role="assistant", content="Upload a CSV or Excel file and I'll analyze it for you.")
     ]
 if "current_file" not in st.session_state:
     st.session_state["current_file"] = None
@@ -203,12 +203,12 @@ if uploaded_file:
 
     if st.session_state["current_file"] != uploaded_file.name:
         st.session_state["data_messages"] = [
-            ChatMessage(role="assistant", content=f"'{uploaded_file.name}' 파일을 분석했습니다. 궁금한 점을 물어보세요!")
+            ChatMessage(role="assistant", content=f"Analyzed '{uploaded_file.name}'. Ask me anything!")
         ]
         st.session_state["current_file"] = uploaded_file.name
 
     if retriever:
-        st.success(f"✅ '{uploaded_file.name}' 분석 완료! ({len(df)}개의 데이터)")
+        st.success(f"✅ '{uploaded_file.name}' ready! ({len(df)} records)")
 
 elif os.path.exists(SAMPLE_PATH):
     with open(SAMPLE_PATH, "rb") as f:
@@ -218,25 +218,25 @@ elif os.path.exists(SAMPLE_PATH):
     if st.session_state["current_file"] != SAMPLE_NAME:
         st.session_state["data_messages"] = [
             ChatMessage(role="assistant", content=(
-                "📊 TEBO 논문 샘플 데이터가 로드됐습니다!\n\n"
-                "이 데이터는 박지상이 SCIE 저널(Applied Sciences, 2025)에 게재한 "
-                "균형 분석 연구의 실제 결과물입니다. "
-                "745건의 CoP Rambling/Trembling 분석 데이터로, 왼쪽 예시 질문을 클릭하거나 직접 물어보세요."
+                "📊 TEBO paper sample data loaded!\n\n"
+                "This is the actual output from Jisang's balance-analysis study "
+                "published in the SCIE journal Applied Sciences (2025) — "
+                "745 CoP Rambling/Trembling records. Click a sample question on the left or ask your own."
             ))
         ]
         st.session_state["current_file"] = SAMPLE_NAME
 
     if retriever:
-        st.info("📊 샘플 데이터: TEBO 균형 분석 연구 (SCIE 논문) · 745건 · 23개 변수")
+        st.info("📊 Sample data: TEBO balance-analysis study (SCIE paper) · 745 records · 23 variables")
 else:
-    st.info("👈 왼쪽 사이드바에서 CSV 또는 Excel 파일을 업로드해주세요.")
+    st.info("👈 Upload a CSV or Excel file from the sidebar.")
     df, retriever = None, None
 
 for msg in st.session_state["data_messages"]:
     st.chat_message(msg.role).write(msg.content)
 
 llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0)
-user_input = st.chat_input("이 데이터에 대해 궁금한 점을 물어보세요")
+user_input = st.chat_input("Ask anything about this data")
 if not user_input and st.session_state["data_pending"]:
     user_input = st.session_state["data_pending"]
     st.session_state["data_pending"] = None
@@ -249,31 +249,31 @@ if user_input and retriever:
     route = classify_question(llm, user_input, df_info)
 
     if route == "PANDAS":
-        # --- pandas 코드 생성 경로 ---
+        # --- pandas codegen path ---
         with st.chat_message("assistant"):
-            with st.spinner("코드를 생성하고 있습니다..."):
+            with st.spinner("Generating code..."):
                 code, result, chart_df, error = generate_and_run_code(llm, user_input, df_info, df)
 
-            # 생성된 코드 표시
-            st.caption("🔧 생성된 pandas 코드")
+            # Show generated code
+            st.caption("🔧 Generated pandas code")
             st.code(code, language="python")
 
             if error:
-                # 코드 실행 실패 시 RAG로 폴백
-                st.warning(f"⚠️ 코드 실행 중 오류가 발생하여 RAG 검색으로 전환합니다: {error}")
+                # Fall back to RAG if code execution fails
+                st.warning(f"⚠️ Code failed, switching to RAG search: {error}")
                 retrieved_docs = retriever.invoke(user_input)
                 context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
                 fallback_prompt = ChatPromptTemplate.from_template(
                     """/no_think
-당신은 업로드된 데이터를 기반으로 답변하는 AI 데이터 분석가입니다.
-반드시 한국어(한글)로만 답변하세요.
-문맥에 없는 내용은 지어내지 말고 "데이터에서 찾을 수 없습니다"라고 답하세요.
+You are an AI data analyst that answers based on the uploaded data.
+Answer in English only.
+Do not make up anything not in the context — say "I can't find that in the data" instead.
 
-[데이터 문맥]:
+[Data context]:
 {context}
 
-질문: {question}
-답변:"""
+Question: {question}
+Answer:"""
                 )
                 full_response = ""
                 response_container = st.empty()
@@ -300,7 +300,7 @@ if user_input and retriever:
                         response_container.markdown(full_response)
                 st.session_state["data_messages"].append(ChatMessage(role="assistant", content=full_response))
             else:
-                # 결과 표시
+                # Show result
                 if isinstance(result, pd.DataFrame):
                     st.dataframe(result, use_container_width=True)
                     result_text = f"```\n{result.to_string()}\n```"
@@ -308,10 +308,10 @@ if user_input and retriever:
                     st.dataframe(result.to_frame(), use_container_width=True)
                     result_text = f"```\n{result.to_string()}\n```"
                 else:
-                    st.markdown(f"**결과:** {result}")
+                    st.markdown(f"**Result:** {result}")
                     result_text = str(result)
 
-                # 차트 표시
+                # Show chart
                 if chart_df is not None:
                     try:
                         if isinstance(chart_df, pd.DataFrame):
@@ -322,39 +322,39 @@ if user_input and retriever:
                         pass
 
                 st.session_state["data_messages"].append(
-                    ChatMessage(role="assistant", content=f"🔧 pandas 코드로 분석했습니다.\n\n{result_text}")
+                    ChatMessage(role="assistant", content=f"🔧 Analyzed with pandas code.\n\n{result_text}")
                 )
     else:
-        # --- RAG 경로 ---
+        # --- RAG path ---
         retrieved_docs = retriever.invoke(user_input)
         context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
 
         history_msgs = [m for m in st.session_state["data_messages"][:-1]
-                        if "파일을 업로드" not in m.content and "분석했습니다" not in m.content]
+                        if "Analyzed" not in m.content and "loaded" not in m.content and "Upload a CSV" not in m.content]
         history_text = "\n".join(
-            f"{'사용자' if m.role == 'user' else 'AI'}: {m.content}"
+            f"{'User' if m.role == 'user' else 'AI'}: {m.content}"
             for m in history_msgs[-6:]
         )
 
         prompt = ChatPromptTemplate.from_template(
             """/no_think
-당신은 업로드된 데이터를 기반으로 답변하는 AI 데이터 분석가입니다.
-반드시 한국어(한글)로만 답변하세요. 중국어, 일본어 한자를 절대 사용하지 마세요.
+You are an AI data analyst that answers based on the uploaded data.
+Answer in English only. Never use Chinese or Japanese characters.
 
-[이전 대화 (있을 경우 참고)]:
+[Prior conversation (use if relevant)]:
 {history}
 
-[데이터 문맥]:
+[Data context]:
 {context}
 
-규칙:
-1. 문맥에 없는 내용은 지어내지 말고 "데이터에서 찾을 수 없습니다"라고 답하세요.
-2. 답변은 친절하고 전문적으로 작성하세요.
-3. 수치나 통계를 언급할 때는 구체적인 데이터를 근거로 하세요.
+Rules:
+1. Don't make up anything not in the context — say "I can't find that in the data" instead.
+2. Be friendly and professional.
+3. When citing numbers or stats, ground them in the actual data.
 
-질문: {question}
+Question: {question}
 
-답변:"""
+Answer:"""
         )
 
         with st.chat_message("assistant"):
@@ -362,7 +362,7 @@ if user_input and retriever:
             full_response = ""
             buffer = ""
             in_think = None
-            with st.spinner("분석 중..."):
+            with st.spinner("Analyzing..."):
                 for chunk in (prompt | llm).stream({
                     "question": user_input,
                     "context": context_text,
@@ -390,4 +390,4 @@ if user_input and retriever:
             st.session_state["data_messages"].append(ChatMessage(role="assistant", content=full_response))
 
 elif user_input and not retriever:
-    st.warning("먼저 파일을 업로드해주세요.")
+    st.warning("Please upload a file first.")

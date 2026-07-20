@@ -58,7 +58,7 @@ def load_secrets():
 
 
 def get_df_info(df):
-    """pages/2_데이터분석.py 의 get_df_info 와 동일한 요약 포맷."""
+    """pages/2_Data_Analysis.py 의 get_df_info 와 동일한 요약 포맷."""
     parts = [
         f"컬럼: {list(df.columns)}",
         f"행 수: {len(df)}",

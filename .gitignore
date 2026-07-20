@@ -1,3 +1,9 @@
-.streamlit/
+# Secrets & local-only working files (do NOT commit)
+.streamlit/secrets.toml
+.streamlit/master_resume.txt
+
+# OS / cache / build output
 .DS_Store
+__pycache__/
+*.pyc
 graphify-out/

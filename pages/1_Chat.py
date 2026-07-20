@@ -4,7 +4,7 @@ from datetime import datetime
 from prompts import build_system_prompt, clean_response
 from ui import apply_style
 
-st.set_page_config(page_title="JisangFolio · 대화하기", page_icon="💬")
+st.set_page_config(page_title="JisangFolio · Chat", page_icon="💬")
 apply_style()
 
 try:
@@ -56,7 +56,7 @@ def format_chat_for_export(history, lang):
 
 # --- 사이드바 ---
 with st.sidebar:
-    lang = st.radio("Language / 언어", ["한국어", "English"], horizontal=True, key="chat_lang")
+    lang = st.radio("Language / 언어", ["English", "한국어"], horizontal=True, key="chat_lang")
     st.divider()
     st.markdown("""
     **박지상 (Jisang Park)**
