@@ -210,7 +210,7 @@ def ask_jisang(question: str) -> str:
 
     client = Groq(api_key=api_key)
     response = client.chat.completions.create(
-        model="qwen/qwen3.6-27b",
+        model="qwen/qwen3-32b",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question},

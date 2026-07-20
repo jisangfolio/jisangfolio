@@ -1,7 +1,7 @@
 # JisangFolio 평가 리포트
 
 - 생성: 2026-06-12 13:09
-- 챗봇 모델: `qwen/qwen3.6-27b` (temperature=0.2)
+- 챗봇 모델: `qwen/qwen3-32b` (temperature=0.2)
 - 심사(judge) 모델: `llama-3.3-70b-versatile` (temperature=0) — 자기채점 편향 회피용 별도 모델
 - 채점: 결정적 규칙(키워드·금지어·형식)이 백본, LLM judge는 보조(offtopic/injection은 judge가 게이트)
 

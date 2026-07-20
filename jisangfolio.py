@@ -56,8 +56,8 @@ T = {
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 대화하는 이력서",
-        "how_head": "## 어떻게 돌아가나",
-        "how_intro": "챗봇·데이터분석·MCP 서버, 세 파이프라인이 각각 따로 돕니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
+        "how_head": "## 파이프라인",
+        "how_intro": "챗봇·데이터분석·MCP 서버가 각각 별도의 파이프라인으로 돌아갑니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
         "graph_head": "## 코드베이스 구조 그래프",
         "graph_bullets": (
             "- **단일 소스(SSOT):** 프롬프트·후처리(`prompts.py`)를 앱 페이지와 평가 하니스가 공유합니다 — 그래프에서 `build_system_prompt`이 여러 파이프라인을 잇는 허브로 나타납니다.  \n"
@@ -65,23 +65,23 @@ T = {
         ),
         "graph_caption": "노드를 클릭하면 이웃 관계를 탐색할 수 있습니다. (vis-network 인터랙티브 · 이 사이트 코드의 실제 콜그래프)",
         "graph_missing": "(codegraph.html을 프로젝트 루트에 넣으면 코드 지식그래프가 표시됩니다)",
-        "arch_tab1": "💬 채팅 파이프라인",
-        "arch_tab2": "📂 데이터 분석 파이프라인",
-        "arch_tab3": "🔌 MCP 서버 파이프라인",
+        "arch_tab1": "채팅 파이프라인",
+        "arch_tab2": "데이터 분석 파이프라인",
+        "arch_tab3": "MCP 서버 파이프라인",
         "arch": [
-            "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 이력서 전문\n_(~3K 토큰 · RAG 불필요)_",
+            "**마스터 이력서 + 프로필 그래프**\n\n이력서 전문과 아래 프로필 관계도를 시스템 프롬프트에 함께 주입\n_(약 3K 토큰)_",
             "**Groq · Qwen3 32B**\n\n시스템 프롬프트 전문 주입\n`/no_think` · `<think>` 스트리밍 필터",
-            "💬 **1인칭 스트리밍**\n\n멀티턴 대화 이력 유지\n박지상 본인처럼 실시간 답변",
+            "**1인칭 스트리밍**\n\n멀티턴 대화 이력 유지\n박지상 본인처럼 실시간 답변",
         ],
         "arch_data": [
-            "📤 **파일 업로드**\n\nCSV/Excel → DataFrame\nchunk_size=1000 분할 + FAISS 임베딩",
-            "🔀 **LLM 라우터**\n\n질문 유형 자동 판별\n`PANDAS` or `RAG` 2분기",
-            "⚙️ **PANDAS 경로**\n\n코드 생성 → 샌드박스 exec\n실패 시 RAG 자동 폴백",
-            "🔍 **RAG 경로**\n\nFAISS + HuggingFace 임베딩\n멀티턴 컨텍스트 포함 답변",
+            "**파일 업로드**\n\nCSV/Excel → DataFrame\nchunk_size=1000 분할 + FAISS 임베딩",
+            "**LLM 라우터**\n\n질문 유형 자동 판별\n`PANDAS` or `RAG` 2분기",
+            "**PANDAS 경로**\n\n코드 생성 → 샌드박스 exec\n실패 시 RAG 자동 폴백",
+            "**RAG 경로**\n\nFAISS + HuggingFace 임베딩\n멀티턴 컨텍스트 포함 답변",
         ],
         "arch_mcp": [
-            "🤖 **MCP 클라이언트**\n\nClaude Desktop · Cursor · Cline\nstdio로 서버 연결",
-            "🔌 **fastmcp 서버**\n\n프로필·경력·프로젝트·기술·논문\n6개 툴 노출",
+            "**MCP 클라이언트**\n\nClaude Desktop · Cursor · Cline\nstdio로 서버 연결",
+            "**fastmcp 서버**\n\n프로필·경력·프로젝트·기술·논문\n6개 툴 노출",
             "**동적 Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\n1인칭 실시간 답변",
         ],
         "rag_note": "",
@@ -143,7 +143,7 @@ T = {
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX Research Division &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## A Resume You Talk To",
-        "how_head": "## How it works",
+        "how_head": "## Pipelines",
         "how_intro": "Three separate pipelines — chat, data analysis, and an MCP server — each doing its own thing. The tabs show why I split them up.",
         "graph_head": "## Codebase structure graph",
         "graph_bullets": (
@@ -152,23 +152,23 @@ T = {
         ),
         "graph_caption": "Click any node to explore its neighbors. (Interactive vis-network · the real call graph of this site's code)",
         "graph_missing": "(place codegraph.html in the project root to display the code knowledge graph)",
-        "arch_tab1": "💬 Chat Pipeline",
-        "arch_tab2": "📂 Data Analysis Pipeline",
-        "arch_tab3": "🔌 MCP Server Pipeline",
+        "arch_tab1": "Chat Pipeline",
+        "arch_tab2": "Data Analysis Pipeline",
+        "arch_tab3": "MCP Server Pipeline",
         "arch": [
-            "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets\n_(~3K tokens · RAG not needed)_",
+            "**Master Resume + Profile Graph**\n\nThe resume text and the profile graph below are injected into the system prompt\n_(~3K tokens)_",
             "**Groq · Qwen3 32B**\n\nFull resume in system prompt\n`/no_think` · `<think>` streaming filter",
-            "💬 **1st-person Streaming**\n\nMulti-turn conversation history\nAnswers as Jisang in real-time",
+            "**1st-person Streaming**\n\nMulti-turn conversation history\nAnswers as Jisang in real-time",
         ],
         "arch_data": [
-            "📤 **File Upload**\n\nCSV/Excel → DataFrame\nchunk_size=1000 split + FAISS embedding",
-            "🔀 **LLM Router**\n\nAuto-classifies question type\n`PANDAS` or `RAG`",
-            "⚙️ **PANDAS Path**\n\nCode gen → sandboxed exec\nAuto-fallback to RAG on error",
-            "🔍 **RAG Path**\n\nFAISS + HuggingFace embeddings\nMulti-turn context in answer",
+            "**File Upload**\n\nCSV/Excel → DataFrame\nchunk_size=1000 split + FAISS embedding",
+            "**LLM Router**\n\nAuto-classifies question type\n`PANDAS` or `RAG`",
+            "**PANDAS Path**\n\nCode gen → sandboxed exec\nAuto-fallback to RAG on error",
+            "**RAG Path**\n\nFAISS + HuggingFace embeddings\nMulti-turn context in answer",
         ],
         "arch_mcp": [
-            "🤖 **MCP Client**\n\nClaude Desktop · Cursor · Cline\nConnects via stdio",
-            "🔌 **fastmcp Server**\n\nProfile·Experience·Projects·Skills·Publications\n6 tools exposed",
+            "**MCP Client**\n\nClaude Desktop · Cursor · Cline\nConnects via stdio",
+            "**fastmcp Server**\n\nProfile·Experience·Projects·Skills·Publications\n6 tools exposed",
             "**Dynamic Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\nFirst-person real-time answers",
         ],
         "rag_note": "",
@@ -349,10 +349,6 @@ for col, (header, body) in zip(cols, t["stacks"]):
         st.markdown(header)
         st.markdown(body)
 
-# ── 프로필 구조 그래프 (프로필 SSOT — 챗봇과 데이터 공유) ──────────
-st.markdown(t["profilegraph_head"])
-components.html(profile_graph.to_vis_html(lang), height=580, scrolling=False)
-
 st.divider()
 
 # ── 작동 원리 ─────────────────────────────────────────────────────
@@ -383,6 +379,10 @@ with tab3:
         box.info(content)
     for arrow in [m2, m4]:
         arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+
+# ── 프로필 구조 그래프 (프로필 SSOT — 챗봇과 데이터 공유) ──────────
+st.markdown(t["profilegraph_head"])
+components.html(profile_graph.to_vis_html(lang), height=580, scrolling=False)
 
 # ── 코드 지식그래프 (Graphify) ────────────────────────────────────
 st.markdown(t["graph_head"])

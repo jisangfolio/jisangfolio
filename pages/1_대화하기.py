@@ -103,9 +103,7 @@ with st.sidebar:
 
 # --- 메인 ---
 title = "💬 박지상과 대화하기" if lang == "한국어" else "💬 Chat with Jisang"
-page_caption = "이력서를 통째로 물고 있는 챗봇입니다. 면접에서 물어볼 법한 걸 편하게 물어보시면 됩니다." if lang == "한국어" else "This chatbot has my whole resume loaded. Ask it the kind of thing you'd ask in an interview."
 st.title(title)
-st.caption(page_caption)
 
 for role, message in st.session_state.chat_history:
     avatar = "🧐" if role == "user" else "🧑‍💻"
@@ -138,7 +136,7 @@ if user_input:
 
         try:
             stream = client.chat.completions.create(
-                model="qwen/qwen3.6-27b",
+                model="qwen/qwen3-32b",
                 messages=messages,
                 stream=True,
             )
@@ -165,7 +163,15 @@ if user_input:
                 else:
                     full_response += delta
                     message_placeholder.markdown(full_response + "▌")
+            # 스트림 종료 후 확정: 50자 미만 짧은 응답이 in_think=None 상태로 버퍼에만
+            # 남아 빈 화면이 되던 버그 수정. 미결정 버퍼를 본문으로 확정한다.
+            if in_think is None:
+                full_response = buffer
             full_response = clean_response(full_response)
+            if not full_response.strip():          # 그래도 비면 원본 버퍼에서 재추출
+                full_response = clean_response(buffer)
+            if not full_response.strip():          # 진짜로 빈 응답이면 안내 문구
+                full_response = "(응답이 비어 있어요. 다시 한 번 물어봐 주세요.)" if lang == "한국어" else "(Empty response — please try again.)"
             message_placeholder.markdown(full_response)
             st.session_state.chat_history.append(("assistant", full_response))
         except Exception as e:
