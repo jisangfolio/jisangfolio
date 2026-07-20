@@ -44,7 +44,7 @@ with st.sidebar:
     else:
         st.caption("(resume.pdf를 프로젝트 루트에 넣으면 다운로드 버튼이 활성화됩니다)")
     st.divider()
-    st.caption("AI는 실수를 할 수 있습니다. 중요한 정보는 직접 확인해 주세요.")
+    st.caption("이 챗봇은 제(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있어요. 정확한 건 이력서 PDF나 메일로 직접 물어봐 주세요 :)")
 
 # ── 언어별 텍스트 ────────────────────────────────────────────────
 T = {
@@ -54,8 +54,8 @@ T = {
         "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 📖 읽지 말고 대화하는 이력서",
         "tagline_body": (
-            "정적인 PDF 이력서의 한계를 넘어, 저의 모든 경험과 역량을 AI가 직접 전달합니다.  \n"
-            "채용 담당자가 궁금한 것을 바로 물어볼 수 있는 인터랙티브 포트폴리오입니다."
+            "이력서를 PDF로 또 보내는 게 싫어서, 아예 물어보실 수 있게 만들었습니다.  \n"
+            "아래 챗봇은 제 이력서를 통째로 물고 있어요. 궁금한 건 바로 던져보세요."
         ),
         "hero_q_hint": "💡 아래를 클릭하면 AI가 바로 답해드립니다",
         "hero_questions": [
@@ -63,13 +63,13 @@ T = {
             "삼성SDI에서 어떤 일을 했나요?",
             "가장 큰 기술적 도전은?",
         ],
-        "how_head": "## ⚙️ 이 포트폴리오, 직접 만들었습니다",
-        "how_intro": "단순 소개 페이지가 아닙니다. 세 개의 독립적인 AI 파이프라인이 실시간으로 작동하고 있습니다.",
-        "graph_head": "## 🕸️ 이 포트폴리오, 지식그래프로는 어떨까?",
+        "how_head": "## 어떻게 돌아가나",
+        "how_intro": "챗봇·데이터분석·MCP 서버, 세 파이프라인이 각각 따로 돕니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있어요.",
+        "graph_head": "## 코드로 그린 지식그래프",
         "graph_bullets": (
             "- **단일 소스(SSOT):** 프롬프트·후처리(`prompts.py`)를 앱 페이지와 평가 하니스가 공유 — 그래프에서 `build_system_prompt`이 여러 파이프라인을 잇는 허브로 나타납니다.  \n"
             "- **회귀 평가 하니스:** 결정적 채점(사실 키워드·금지어) + LLM-judge로 챗봇 답변의 사실성을 릴리스마다 검증합니다.  \n"
-            "- 52개 노드 · 8개 커뮤니티 · 100% 코드 근거 (로컬 AST 추출, Graphify)."
+            "- 이 그래프는 손으로 그린 게 아니라 코드를 AST로 파싱해서 뽑았어요. 노드 52개가 다 실제 함수·모듈입니다 (Graphify)."
         ),
         "graph_caption": "노드를 클릭하면 이웃 관계를 탐색할 수 있습니다. (vis-network 인터랙티브 · 이 사이트 코드의 실제 콜그래프)",
         "graph_missing": "(codegraph.html을 프로젝트 루트에 넣으면 코드 지식그래프가 표시됩니다)",
@@ -78,7 +78,7 @@ T = {
         "arch_tab3": "🔌 MCP 서버 파이프라인",
         "arch": [
             "📄 **마스터 이력서**\n\nStreamlit Secrets에 주입된 이력서 전문\n_(~3K 토큰 · RAG 불필요)_",
-            "✨ **Groq · Qwen3 32B**\n\n시스템 프롬프트 전문 주입\n`/no_think` · `<think>` 스트리밍 필터",
+            "**Groq · Qwen3 32B**\n\n시스템 프롬프트 전문 주입\n`/no_think` · `<think>` 스트리밍 필터",
             "💬 **1인칭 스트리밍**\n\n멀티턴 대화 이력 유지\n박지상 본인처럼 실시간 답변",
         ],
         "arch_data": [
@@ -90,53 +90,53 @@ T = {
         "arch_mcp": [
             "🤖 **MCP 클라이언트**\n\nClaude Desktop · Cursor · Cline\nstdio로 서버 연결",
             "🔌 **fastmcp 서버**\n\n프로필·경력·프로젝트·기술·논문\n6개 툴 노출",
-            "✨ **동적 Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\n1인칭 실시간 답변",
+            "**동적 Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\n1인칭 실시간 답변",
         ],
         "rag_note": "",
-        "timeline_head": "## 📅 경력 타임라인",
-        "proj_head": "## 🛠️ 주요 프로젝트",
+        "timeline_head": "## 경력 타임라인",
+        "proj_head": "## 주요 프로젝트",
         "projects": [
             {
-                "title": "🔬 KETI AX연구본부 AI 에이전트 연구",
+                "title": "KETI AX연구본부 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
                 "desc": "MLOps 도시냉각 AI 서빙 인프라 구축(주력): 부경대 제공 PyTorch 3D U-Net을 ONNX 변환 → Triton GPU 서빙으로 운영 배포(CFD 수십 분 대비 추론 ~200ms). MLflow Tracking·Registry 도입으로 v1↔v2 비교 검증 — MAE 0.53→0.26°C, R² 0.82→0.95(MAE 51%↓). 자체호스팅 스택(MLflow·MinIO·Gitea·Triton) 아키텍처 설계·기술 선정. (별도) 송산그린시티 디지털 트윈 3파트 운영 환경 연동·검증.",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
-                "title": "🏭 삼성SDI 폐쇄망 RAG",
+                "title": "삼성SDI 폐쇄망 RAG",
                 "period": "2025.06 ~ 08 · 인턴",
                 "desc": "완전 인터넷 차단 환경에서 특허 검색 RAG 챗봇 **1인 단독 개발**. 대화 이력 기반 재검색 로직 설계, 핵심 지표 집계·시각화 기능 포함 → 임원 PoC 호평",
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
-                "title": "📊 TEBO 균형 분석 · SCIE 논문",
+                "title": "TEBO 균형 분석 · SCIE 논문",
                 "period": "Applied Sciences, 2025.07 게재",
                 "desc": "CoP 시계열에 Butterworth Filter(4차) + FFT 적용, Rambling/Trembling 분해로 데이터 설명력 **85%+ 달성**",
                 "tags": "`Python` `SciPy` `FFT` `시계열 분석`",
             },
         ],
-        "stack_head": "## 🧰 기술 스택",
+        "stack_head": "## 기술 스택",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · MinIO · Docker  \nNGSI-LD · MQTT · HTTP"),
         ],
-        "personal_head": "## 💡 개인 프로젝트",
+        "personal_head": "## 개인 프로젝트",
         "personal_projects": [
             {
-                "title": "🧑‍💻 JisangFolio",
+                "title": "JisangFolio",
                 "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(~3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 AI 챗봇을 구현했습니다. Qwen3 thinking 모드를 `/no_think` + 스트리밍 필터로 제어합니다.",
                 "tags": "`Groq · Qwen3 32B` `Streamlit` `Python` `스트리밍 필터`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
-                "title": "📂 JisangData",
+                "title": "JisangData",
                 "desc": "LLM 라우터가 질문 유형을 판별해 집계·통계 질문은 pandas 코드를 생성·샌드박스 실행하고, 검색·요약 질문은 FAISS RAG로 처리합니다. 코드 실행 실패 시 RAG 자동 폴백.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas 코드 생성` `Streamlit`",
                 "link": "page:데이터분석",
             },
             {
-                "title": "🔌 JisangFolio MCP Server",
+                "title": "JisangFolio MCP Server",
                 "desc": "Claude Desktop에서 제 포트폴리오를 직접 조회하는 MCP 서버입니다. FastMCP로 프로필·경력·프로젝트·기술·논문 조회 툴과 1인칭 Q&A(`ask_jisang`) 툴을 구현했습니다.",
                 "tags": "`fastmcp` `MCP` `Claude Desktop` `Groq`",
                 "link": "",
@@ -153,8 +153,8 @@ T = {
         "location": "📍 KETI AX Research Division &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 📖 A Resume You Talk To",
         "tagline_body": (
-            "Going beyond static PDF resumes — my AI delivers my experience and skills in real conversation.  \n"
-            "Ask anything you'd want to know in an interview, and get an answer instantly."
+            "I got tired of emailing yet another PDF, so I made one you can just ask.  \n"
+            "The chatbot below has my whole resume loaded — ask it anything."
         ),
         "hero_q_hint": "💡 Click below and my AI answers instantly",
         "hero_questions": [
@@ -162,13 +162,13 @@ T = {
             "What did you do at Samsung SDI?",
             "Your toughest technical challenge?",
         ],
-        "how_head": "## ⚙️ This Portfolio Is a Project",
-        "how_intro": "Not just an introduction page — three independent AI pipelines running live.",
-        "graph_head": "## 🕸️ This Portfolio, as a Knowledge Graph?",
+        "how_head": "## How it works",
+        "how_intro": "Three separate pipelines — chat, data analysis, and an MCP server — each doing its own thing. The tabs show why I split them up.",
+        "graph_head": "## The codebase as a knowledge graph",
         "graph_bullets": (
             "- **Single Source of Truth:** prompts & post-processing (`prompts.py`) are shared by the app pages and the eval harness — in the graph, `build_system_prompt` appears as the hub linking multiple pipelines.  \n"
             "- **Regression eval harness:** deterministic checks (fact keywords · banned terms) + an LLM judge verify the chatbot's factual accuracy on every release.  \n"
-            "- 52 nodes · 8 communities · 100% code-grounded (local AST extraction, Graphify)."
+            "- Not hand-drawn — parsed straight from the code via AST. All 52 nodes are real functions and modules (Graphify)."
         ),
         "graph_caption": "Click any node to explore its neighbors. (Interactive vis-network · the real call graph of this site's code)",
         "graph_missing": "(place codegraph.html in the project root to display the code knowledge graph)",
@@ -177,7 +177,7 @@ T = {
         "arch_tab3": "🔌 MCP Server Pipeline",
         "arch": [
             "📄 **Master Resume**\n\nFull resume text injected via Streamlit Secrets\n_(~3K tokens · RAG not needed)_",
-            "✨ **Groq · Qwen3 32B**\n\nFull resume in system prompt\n`/no_think` · `<think>` streaming filter",
+            "**Groq · Qwen3 32B**\n\nFull resume in system prompt\n`/no_think` · `<think>` streaming filter",
             "💬 **1st-person Streaming**\n\nMulti-turn conversation history\nAnswers as Jisang in real-time",
         ],
         "arch_data": [
@@ -189,53 +189,53 @@ T = {
         "arch_mcp": [
             "🤖 **MCP Client**\n\nClaude Desktop · Cursor · Cline\nConnects via stdio",
             "🔌 **fastmcp Server**\n\nProfile·Experience·Projects·Skills·Publications\n6 tools exposed",
-            "✨ **Dynamic Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\nFirst-person real-time answers",
+            "**Dynamic Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\nFirst-person real-time answers",
         ],
         "rag_note": "",
-        "timeline_head": "## 📅 Career Timeline",
-        "proj_head": "## 🛠️ Key Projects",
+        "timeline_head": "## Career Timeline",
+        "proj_head": "## Key Projects",
         "projects": [
             {
-                "title": "🔬 KETI AX Research Division · AI Agent Research",
+                "title": "KETI AX Research Division · AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
                 "desc": "MLOps serving infrastructure for urban cooling AI (primary): PKNU-provided PyTorch 3D U-Net → ONNX → Triton GPU serving in production (~200ms inference vs. tens of minutes for CFD). MLflow Tracking·Registry for v1↔v2 comparison — MAE 0.53→0.26°C, R² 0.82→0.95 (MAE 51%↓). Architecture design & tooling selection for a self-hosted stack (MLflow·MinIO·Gitea·Triton). (Separately) Songsan Green City digital twin — production integration & validation of 3 parts.",
                 "tags": "`PyTorch` `Triton` `ONNX` `MLflow` `MinIO` `NGSI-LD` `Docker`",
             },
             {
-                "title": "🏭 Samsung SDI Air-Gapped RAG",
+                "title": "Samsung SDI Air-Gapped RAG",
                 "period": "Jun ~ Aug 2025 · Intern",
                 "desc": "**Solo-built** patent search RAG chatbot in a fully internet-blocked environment. Designed re-search logic using conversation history and provided key metric aggregation & visualization → executive PoC praised",
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
-                "title": "📊 TEBO Balance Analysis · SCIE Paper",
+                "title": "TEBO Balance Analysis · SCIE Paper",
                 "period": "Applied Sciences, Jul 2025",
                 "desc": "Applied Butterworth Filter(4th order) + FFT on CoP time-series, decomposed Rambling/Trembling achieving **85%+ explanatory power**",
                 "tags": "`Python` `SciPy` `FFT` `Time-series Analysis`",
             },
         ],
-        "stack_head": "## 🧰 Tech Stack",
+        "stack_head": "## Tech Stack",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nRule-based Agent · Prompt Engineering"),
             ("**Data Engineering**", "Pandas · NumPy · spaCy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "MLflow · NVIDIA Triton  \nONNX · MinIO · Docker  \nNGSI-LD · MQTT · HTTP"),
         ],
-        "personal_head": "## 💡 Personal Projects",
+        "personal_head": "## Personal Projects",
         "personal_projects": [
             {
-                "title": "🧑‍💻 JisangFolio",
+                "title": "JisangFolio",
                 "desc": "This portfolio itself. Full resume (~3K tokens) injected into the system prompt — no RAG needed. Qwen3 thinking mode controlled via `/no_think` + streaming filter.",
                 "tags": "`Groq · Qwen3 32B` `Streamlit` `Python` `Streaming Filter`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
-                "title": "📂 JisangData",
+                "title": "JisangData",
                 "desc": "An LLM router classifies each question: aggregation/stats queries generate and sandbox-execute pandas code; search/summary queries use FAISS RAG. Auto-fallback to RAG on code error.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas Code Gen` `Streamlit`",
                 "link": "page:데이터분석",
             },
             {
-                "title": "🔌 JisangFolio MCP Server",
+                "title": "JisangFolio MCP Server",
                 "desc": "An MCP server that lets Claude Desktop query my portfolio directly. Built with FastMCP — tools for profile/experience/projects/skills/publications plus a first-person Q&A tool (`ask_jisang`).",
                 "tags": "`fastmcp` `MCP` `Claude Desktop` `Groq`",
                 "link": "",

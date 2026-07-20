@@ -85,7 +85,7 @@ with st.sidebar:
             st.rerun()
 
     st.divider()
-    caption_text = "AI는 실수를 할 수 있습니다. 중요한 정보는 직접 확인해 주세요." if lang == "한국어" else "AI can make mistakes. Verify important information directly."
+    caption_text = "이 챗봇은 제(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있어요. 정확한 건 이력서 PDF나 메일로 물어봐 주세요 :)" if lang == "한국어" else "This chatbot answers from my (Jisang's) resume, so it can occasionally get things wrong. For anything important, check the resume PDF or just email me :)"
     st.caption(caption_text)
 
     if st.session_state.chat_history:
@@ -101,7 +101,7 @@ with st.sidebar:
 
 # --- 메인 ---
 title = "💬 박지상과 대화하기" if lang == "한국어" else "💬 Chat with Jisang"
-page_caption = "저의 AI가 박지상 본인처럼 경험과 역량을 답변해 드립니다." if lang == "한국어" else "My AI answers as Jisang himself — experience, skills, and projects."
+page_caption = "이력서를 통째로 물고 있는 챗봇이에요. 면접에서 물어볼 법한 걸 편하게 던져보세요." if lang == "한국어" else "This chatbot has my whole resume loaded. Ask it the kind of thing you'd ask in an interview."
 st.title(title)
 st.caption(page_caption)
 

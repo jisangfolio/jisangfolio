@@ -1,7 +1,7 @@
 # 👨‍💻 JisangFolio
 
 > **"읽지 말고 대화하는 이력서."**
-> 정적인 PDF 문서의 한계를 넘어, 채용 담당자와 실시간으로 소통하며 제 경험과 역량을 증명하는 **AI 인터랙티브 포트폴리오**입니다.
+> 이력서를 PDF로 또 보내는 게 싫어서, 아예 물어볼 수 있게 만든 포트폴리오입니다. 이력서 전문을 물고 있는 챗봇 + 데이터분석 데모 + MCP 서버로 구성돼 있어요.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
@@ -12,7 +12,7 @@
 
 ## 🚀 Project Overview
 
-**JisangFolio**는 이력서를 기반으로 면접관의 질문에 답변하는 AI 인터랙티브 포트폴리오입니다. 세 개의 독립적인 AI 파이프라인이 실시간으로 작동합니다.
+**JisangFolio**는 이력서를 기반으로 면접관의 질문에 답변하는 AI 인터랙티브 포트폴리오입니다. 챗봇·데이터분석·MCP 서버 세 파이프라인이 각각 따로 돕니다.
 
 - **채팅 파이프라인**: 이력서 전문(~3K 토큰)을 시스템 프롬프트에 직접 주입 — RAG 없이도 모든 경험을 정확하게 답변. Qwen3 thinking 모드를 `/no_think` + 스트리밍 필터로 제어.
 - **데이터 분석 파이프라인**: LLM 라우터가 질문 유형을 자동 판별해 집계·통계는 pandas 코드를 생성·샌드박스 실행, 검색·요약은 FAISS RAG로 처리.
@@ -20,7 +20,7 @@
 
 ## 🌟 Highlights
 
-- **포트폴리오 자체가 프로젝트** — Streamlit 페이지가 아니라, 살아 움직이는 멀티 파이프라인 데모
+- **포트폴리오 자체가 프로젝트** — 소개 페이지가 아니라, 버튼 누르면 실제로 도는 데모 3개 (목업 아님)
 - **회귀 평가 하니스 내장** — 결정적 채점 + LLM-as-judge로 챗봇 답변의 사실성을 오프라인 검증 (`evals/`)
 - **코드 지식그래프 임베드** — 코드베이스를 인터랙티브 그래프로 시각화(Graphify · 로컬 AST). `prompts.py`가 앱·평가를 잇는 단일 소스(SSOT) 허브임을 홈에서 바로 확인
 - **실제 운영 화면 포함** — KETI 연구의 Prometheus + Grafana 대시보드 스크린샷 임베드
@@ -72,7 +72,7 @@ jisangfolio/
 - **경력 타임라인**: Plotly Gantt 차트로 학력·경력·군복무·논문 시각화
 - **MLOps 대시보드 스크린샷**: KETI 연구 Prometheus+Grafana 실제 운영 화면 포함
 - **회귀 평가 하니스**: `evals/`에서 챗봇·라우터 출력을 결정적 채점(사실 키워드·금지어·형식) + LLM-as-judge로 정량 검증 — 프롬프트/모델 변경 시 품질 회귀 방지
-- **코드 지식그래프**: 코드베이스를 인터랙티브 force-directed 그래프로 시각화(Graphify, 로컬 AST 추출 · 100% 코드 근거). `prompts.py`가 앱·평가를 잇는 단일 소스 허브임을 시각적으로 확인 — 노드 클릭으로 콜그래프 탐색
+- **코드 지식그래프**: 코드베이스를 인터랙티브 force-directed 그래프로 시각화(Graphify, 로컬 AST 추출). 손으로 그린 게 아니라 코드에서 파싱한 실제 콜그래프라, `prompts.py`가 앱·평가를 잇는 단일 소스 허브임이 눈으로 보임 — 노드 클릭으로 탐색
 - **이력서 PDF 다운로드**
 
 ## 🛠 Tech Stack
