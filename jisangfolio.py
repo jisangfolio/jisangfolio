@@ -56,13 +56,11 @@ T = {
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 대화하는 이력서",
-        "hero_tagline": "온프레미스·폐쇄망 환경에서 MLOps 파이프라인과 RAG·LLM 서빙을 처음부터 끝까지 소유하는 엔지니어입니다.",
+        "hero_tagline": "읽지 말고, 물어보세요. 이력서에 대해 무엇이든 제 AI에게 직접 질문할 수 있습니다.",
         "about_head": "## 소개",
         "about_body": "미국에서 정보과학과 데이터를 공부하다, 군대에서 통역병으로 2년을 보내고 돌아왔습니다. 지금은 KETI에서 도시가 얼마나 뜨거워질지 예측하는 AI를 GPU 위에 올려, 원래 수십 분 걸리던 계산을 약 200밀리초 안에 답하게 만들고 있습니다.\n\n화려한 모델보다 \"새벽 3시에 이 서버가 죽어도 누가 고칠 수 있는가\"를 더 오래 고민하는 쪽입니다. 배포·서빙·모니터링처럼 지루하지만 안 죽는 걸 만드는 일을 좋아합니다.",
         "edu_head": "## 학력",
         "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — Information Science + Data Science 학사 · GPA 3.89/4.0 · 2025.12  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**주요 이수 과목** (강의 프로젝트 수준): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means 직접구현) · INFO330 Database (T-SQL) · STAT207 · MATH227",
-        "contact_head": "## 연락처",
-        "contact_body": "읽지 말고, 물어보세요. 이력서에 대해 무엇이든 제 AI에게 직접 질문할 수 있습니다.",
         "how_head": "## 파이프라인",
         "how_intro": "챗봇·데이터분석·MCP 서버가 각각 별도의 파이프라인으로 돌아갑니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
         "graph_head": "## 코드베이스 구조 그래프",
@@ -117,9 +115,9 @@ T = {
         "stack_head": "## 기술 스택",
         "profilegraph_head": "## 프로필 구조 그래프",
         "stacks": [
-            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nLLM eval · Rule-based Agent"),
+            ("**AI / LLM**", "LangChain · RAG · GraphRAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
             ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
-            ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
+            ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · GitHub Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
         ],
         "personal_head": "## 개인 프로젝트",
         "personal_projects": [
@@ -150,13 +148,11 @@ T = {
         "subtitle": "Data Engineer · AI Researcher",
         "location": "📍 KETI AX Research Division &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
         "tagline_head": "## A Resume You Talk To",
-        "hero_tagline": "I own MLOps pipelines and RAG · LLM serving end to end — in on-prem, air-gapped environments where you can't lean on the cloud.",
+        "hero_tagline": "Don't read it — ask it. You can ask my AI anything about my resume, live.",
         "about_head": "## About",
         "about_body": "I studied information science and data in the U.S., spent two years as a military interpreter, and came back to build things that don't fall over. At KETI I put an urban-cooling AI on a GPU so that a computation that used to take tens of minutes now answers in about 200 milliseconds.\n\nI care less about flashy models and more about \"who fixes this server when it dies at 3 a.m.\" I like the unglamorous work — deployment, serving, monitoring — that keeps things alive.",
         "edu_head": "## Education",
         "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — B.S., Information Science + Data Science · GPA 3.89/4.0 · Dec 2025  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**Selected coursework** (course projects): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means from scratch) · INFO330 Database (T-SQL) · STAT207 · MATH227",
-        "contact_head": "## Contact",
-        "contact_body": "Don't read it — ask it. You can ask my AI anything about my resume, live.",
         "how_head": "## Pipelines",
         "how_intro": "Three separate pipelines — chat, data analysis, and an MCP server — each doing its own thing. The tabs show why I split them up.",
         "graph_head": "## Codebase structure graph",
@@ -211,9 +207,9 @@ T = {
         "stack_head": "## Tech Stack",
         "profilegraph_head": "## Profile graph",
         "stacks": [
-            ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nLLM eval · Rule-based Agent"),
+            ("**AI / LLM**", "LangChain · RAG · GraphRAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
             ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
-            ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
+            ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · GitHub Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
         ],
         "personal_head": "## Personal Projects",
         "personal_projects": [
@@ -450,14 +446,3 @@ for col, proj in zip(cols, t["personal_projects"]):
             if proj["link"] and proj["link"].startswith("page:"):
                 if st.button("사용해 보기 →" if lang == "한국어" else "Try it →", key=proj["title"], use_container_width=True):
                     st.switch_page("pages/2_Data_Analysis.py")
-
-st.divider()
-
-# ── 연락처 ────────────────────────────────────────────────────────
-st.markdown(t["contact_head"])
-st.markdown(t["contact_body"])
-_cc1, _cc2 = st.columns([1, 1])
-with _cc1:
-    if st.button(t["cta_btn"], type="primary", use_container_width=True, key="contact_chat"):
-        st.switch_page("pages/1_Chat.py")
-st.markdown("✉️ jjpark324434@gmail.com &nbsp;·&nbsp; [GitHub](https://github.com/jisangfolio) &nbsp;·&nbsp; [LinkedIn](https://linkedin.com/in/jisangpark)")

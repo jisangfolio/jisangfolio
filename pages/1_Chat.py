@@ -3,6 +3,10 @@ from groq import Groq
 from datetime import datetime
 from prompts import build_system_prompt, clean_response
 from ui import apply_style
+import time
+from guardrails import check_input, blocked_message
+from observability import log_trace
+from profile_graph import graph_retrieve
 
 st.set_page_config(page_title="JisangFolio · Chat", page_icon="💬")
 apply_style()
@@ -119,62 +123,86 @@ if not user_input and st.session_state.pending_question:
 SYSTEM_INSTRUCTION = SYSTEM_KO if lang == "한국어" else SYSTEM_EN
 
 if user_input:
+    # 🛡 Guardrail — 인젝션/과길이/빈입력을 모델 도달 전에 차단
+    verdict = check_input(user_input)
+
     st.session_state.chat_history.append(("user", user_input))
     with st.chat_message("user", avatar="🧐"):
         st.markdown(user_input)
 
     with st.chat_message("assistant", avatar="🧑‍💻"):
-        message_placeholder = st.empty()
-        message_placeholder.markdown("💭")
-        full_response = ""
+        if not verdict["allowed"]:
+            guard_msg = blocked_message(verdict, lang)
+            st.markdown(guard_msg)
+            st.caption(f"🛡 Guardrail blocked · {verdict['category']}")
+            st.session_state.chat_history.append(("assistant", guard_msg))
+            log_trace(page="chat", model="qwen/qwen3.6-27b", route="blocked",
+                      latency_ms=0, guard=verdict["category"], ok=False)
+        else:
+            # 🕸 GraphRAG — 질문 관련 서브그래프를 탐색해 '집중 근거'로 주입
+            gr = graph_retrieve(user_input, lang=lang)
+            system_content = SYSTEM_INSTRUCTION
+            if gr["context"]:
+                _lab = "이 질문에 관련된 프로필 서브그래프" if lang == "한국어" else "Profile subgraph relevant to this question"
+                system_content = system_content + f"\n\n[GraphRAG — {_lab}]\n" + gr["context"] + "\n"
 
-        messages = [{"role": "system", "content": SYSTEM_INSTRUCTION}]
-        for role, msg in st.session_state.chat_history[:-1]:
-            groq_role = "user" if role == "user" else "assistant"
-            messages.append({"role": groq_role, "content": msg})
-        messages.append({"role": "user", "content": user_input})
-
-        try:
-            stream = client.chat.completions.create(
-                model="qwen/qwen3.6-27b",
-                messages=messages,
-                stream=True,
-                reasoning_effort="none",  # thinking 끔 → 응답 속도 대폭 개선(빈 추론 토큰 생성 방지)
-            )
+            message_placeholder = st.empty()
+            message_placeholder.markdown("💭")
             full_response = ""
-            buffer = ""
-            in_think = None  # None=미결정, True=thinking 블록 내, False=일반 응답
-            for chunk in stream:
-                delta = chunk.choices[0].delta.content or ""
+
+            messages = [{"role": "system", "content": system_content}]
+            for role, msg in st.session_state.chat_history[:-1]:
+                groq_role = "user" if role == "user" else "assistant"
+                messages.append({"role": groq_role, "content": msg})
+            messages.append({"role": "user", "content": user_input})
+
+            try:
+                t0 = time.time()
+                stream = client.chat.completions.create(
+                    model="qwen/qwen3.6-27b",
+                    messages=messages,
+                    stream=True,
+                    reasoning_effort="none",  # thinking 끔 → 응답 속도 개선
+                )
+                full_response = ""
+                buffer = ""
+                in_think = None  # None=미결정, True=thinking 블록 내, False=일반 응답
+                for chunk in stream:
+                    delta = chunk.choices[0].delta.content or ""
+                    if in_think is None:
+                        buffer += delta
+                        if "<think>" in buffer:
+                            in_think = True
+                        elif len(buffer) >= 50:
+                            in_think = False
+                            full_response = buffer
+                            message_placeholder.markdown(full_response + "▌")
+                    elif in_think:
+                        buffer += delta
+                        if "</think>" in buffer:
+                            after = buffer.split("</think>", 1)[1].lstrip("\n")
+                            full_response = after
+                            in_think = False
+                            message_placeholder.markdown(full_response + "▌")
+                    else:
+                        full_response += delta
+                        message_placeholder.markdown(full_response + "▌")
+                # 스트림 종료 후 확정: 50자 미만 짧은 응답이 버퍼에만 남아 빈 화면이 되던 버그 수정
                 if in_think is None:
-                    buffer += delta
-                    if "<think>" in buffer:
-                        in_think = True
-                    elif len(buffer) >= 50:
-                        in_think = False
-                        full_response = buffer
-                        message_placeholder.markdown(full_response + "▌")
-                elif in_think:
-                    buffer += delta
-                    if "</think>" in buffer:
-                        after = buffer.split("</think>", 1)[1].lstrip("\n")
-                        full_response = after
-                        in_think = False
-                        message_placeholder.markdown(full_response + "▌")
-                else:
-                    full_response += delta
-                    message_placeholder.markdown(full_response + "▌")
-            # 스트림 종료 후 확정: 50자 미만 짧은 응답이 in_think=None 상태로 버퍼에만
-            # 남아 빈 화면이 되던 버그 수정. 미결정 버퍼를 본문으로 확정한다.
-            if in_think is None:
-                full_response = buffer
-            full_response = clean_response(full_response)
-            if not full_response.strip():          # 그래도 비면 원본 버퍼에서 재추출
-                full_response = clean_response(buffer)
-            if not full_response.strip():          # 진짜로 빈 응답이면 안내 문구
-                full_response = "(응답이 비어 있어요. 다시 한 번 물어봐 주세요.)" if lang == "한국어" else "(Empty response — please try again.)"
-            message_placeholder.markdown(full_response)
-            st.session_state.chat_history.append(("assistant", full_response))
-        except Exception as e:
-            err = "답변 생성 중 오류가 발생했습니다" if lang == "한국어" else "Error generating response"
-            st.error(f"{err}: {e}")
+                    full_response = buffer
+                full_response = clean_response(full_response)
+                if not full_response.strip():
+                    full_response = clean_response(buffer)
+                if not full_response.strip():
+                    full_response = "(응답이 비어 있어요. 다시 한 번 물어봐 주세요.)" if lang == "한국어" else "(Empty response — please try again.)"
+                message_placeholder.markdown(full_response)
+                st.session_state.chat_history.append(("assistant", full_response))
+                # 📈 Observability — 이 턴을 트레이스로 기록
+                log_trace(page="chat", model="qwen/qwen3.6-27b", route="chat",
+                          latency_ms=int((time.time() - t0) * 1000),
+                          guard="ok", nodes=gr["seeds"], ok=True)
+                if gr["seeds"]:
+                    st.caption(f"🕸 GraphRAG · traversed {len(gr['nodes'])} nodes: " + " · ".join(gr["nodes"][:8]))
+            except Exception as e:
+                err = "답변 생성 중 오류가 발생했습니다" if lang == "한국어" else "Error generating response"
+                st.error(f"{err}: {e}")

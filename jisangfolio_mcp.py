@@ -1,13 +1,17 @@
 """
 JisangFolio MCP Server
-Claude Desktop에서 박지상의 포트폴리오 데이터를 직접 조회할 수 있는 MCP 서버입니다.
+An MCP server that lets Claude Desktop / Cursor / Cline query Jisang Park's portfolio directly.
 
-연결 방법 (claude_desktop_config.json):
+All portfolio data lives in the module-level constants below (single place to edit — no
+copies scattered across the tool functions), keeping the MCP tools drift-free and in English.
+
+Connect (claude_desktop_config.json):
 {
   "mcpServers": {
     "jisangfolio": {
       "command": "python",
-      "args": ["/Users/jjpark/Desktop/info/jisangfolio/jisangfolio_mcp.py"]
+      "args": ["/Users/jjpark/Desktop/info/jisangfolio/jisangfolio_mcp.py"],
+      "env": { "GROQ_API_KEY": "your_groq_api_key" }
     }
   }
 }
@@ -16,127 +20,102 @@ Claude Desktop에서 박지상의 포트폴리오 데이터를 직접 조회할 
 from fastmcp import FastMCP
 from prompts import strip_foreign_cjk
 
-mcp = FastMCP("JisangFolio — 박지상 포트폴리오")
+mcp = FastMCP("JisangFolio — Jisang Park portfolio")
 
-
-@mcp.tool()
-def get_profile() -> str:
-    """박지상(Jisang Park)의 기본 프로필, 학력, 연락처를 반환합니다."""
-    return """
-이름: 박지상 (Jisang Park)
-현직: 한국전자기술연구원(KETI) AX연구본부 AI 에이전트 개발 연구원 (계약직, 2026.02~)
-학력: UIUC Information Science + Data Science (BSIS+DS), GPA 3.89/4.0, 2025.12 졸업
-이전: University of Washington, Seattle (Pre-Science, 2019~2024)
-군복무: 대한민국 해군 어학병 병장 만기제대 (2021.02~2022.10) — 광주함 함상근무 10개월, 한미연합사 영어 통역
-어학: 한국어(상), 영어(상, TOEIC 970 · OPIc IH), 미국 거주 10년 (고교+대학 전과정)
-연락처: jjpark324434@gmail.com | linkedin.com/in/jisangpark | github.com/jisangfolio
-포트폴리오: jisangfolio.streamlit.app
+# ── Portfolio data (single source for the MCP tools) ─────────────────
+_PROFILE = """
+Name: Jisang Park (박지상)
+Current: Researcher, AX Research Division, Korea Electronics Technology Institute (KETI) — AI agent development (contract, since Feb 2026)
+Education: B.S. Information Science + Data Science (iSchool), UIUC · GPA 3.89/4.0 · Dec 2025
+Prior: University of Washington, Seattle (Pre-Science, 2019–2024)
+Military: ROK Navy, honorable discharge as Sergeant — English interpreter (Feb 2021–Oct 2022), incl. ~10 months aboard ROKS Gwangju and interpretation for ROK–US Combined Forces
+Languages: Korean (native), English (near-native — TOEIC 970 · OPIc IH; ~10 years in the U.S.)
+Contact: jjpark324434@gmail.com | linkedin.com/in/jisangpark | github.com/jisangfolio
+Portfolio: jisangfolio.streamlit.app
 """
 
+_KETI = """
+[KETI — Researcher, AX Research Division (AI agent development)]
+Period: Feb 2026 – present / contract
 
-@mcp.tool()
-def get_experience(company: str = "") -> str:
-    """
-    경력 정보를 반환합니다.
-    company 파라미터로 'KETI' 또는 'Samsung'(삼성SDI)을 지정하면 해당 경력만 반환합니다.
-    """
-    keti = """
-[한국전자기술연구원 (KETI) — AX연구본부 AI 에이전트 개발 연구원]
-기간: 2026.02 ~ 현재 / 계약직
-연봉: 3,300만원
+▸ Project 1: Songsan Green City digital-twin integration (Feb–Apr 2026, done)
+  - Integrated 3 parts (data platform / SWMM simulator / Unity viz) and registered NGSI-LD data models
+  - Analyzed the MQTT + HTTP hybrid comms structure; applied a Ports-and-Adapters pattern
+  - Documented the integration & sequence diagrams and presented internally
 
-▸ 연구1: 송산그린시티 디지털 트윈 시스템 연동 (2026.02~04, 완료)
-  - 3파트(데이터플랫폼/SWMM/Unity) 통합 연동 및 NGSI-LD 데이터 모델 등록
-  - MQTT + HTTP 하이브리드 통신 구조 분석, Ports and Adapters 패턴 적용
-  - 연동 구조도·시퀀스 다이어그램 정리 후 내부 발표
-
-▸ 연구2: 폐쇄망 자체호스팅 MLOps 플랫폼 구축 (2026.03~ 진행중)
-  - 여러 모델을 폐쇄망에서 서빙·관리하는 범용(모델-agnostic) MLOps 플랫폼을 오픈소스로 주도 설계·구축
-    (도시냉각 AI 연구 환경이 배경 — 부경대 3D U-Net·외부팀 PINN이 플랫폼 위에서 도는 활용 사례)
-  - 부경대 제공 PyTorch 3D U-Net(+CBAM+Attention Gate) → ONNX 변환 → Triton GPU 서빙
-  - 외부팀(U-Ecotron) PINN 3종을 같은 Triton에 배포 — voxel/point I/O 이종 모델 통합, 플랫폼 첫 외부 활용 사례
-  - 1차 학습(45건): MAE 0.53°C, R² 0.82 → 2차(291건 통합): MAE 0.26°C, R² 0.95 (MAE 51%↓)
-  - CFD 시뮬레이션 수십 분(부경대 제공) → Triton 추론 ~200ms
-  - MLOps 스택: MLflow(Tracking·Registry·아티팩트 서빙) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
-  - 신규(2026-06): Streamlit 운영 포털(6페이지)·Evidently 드리프트 대시보드(PoC)·ONNX 검증→배포 CI(수동 트리거)
-  - 아티팩트 저장은 MinIO 도입 후 AGPL 이슈로 제거 → MLflow 로컬 저장(--serve-artifacts)으로 대체
-  - 자체호스팅 원칙(상부 방침): 외부 SaaS/클라우드 회피 → GitHub→Gitea, 클라우드 모니터링→Prometheus+Grafana
-  - 역할: 아키텍처 설계, 기술 선정, 환경 구축/운영, 실험 수행, 결과 분석, 발표자료 작성
+▸ Project 2: Air-gapped, self-hosted MLOps platform (since Mar 2026, ongoing)
+  - Led the design & build of a model-agnostic, open-source MLOps platform that serves/manages multiple models in an air-gapped network
+    (the urban-cooling AI research is the backdrop — a PKNU 3D U-Net and an external team's PINNs run on top of it as use cases)
+  - PKNU-provided PyTorch 3D U-Net (+CBAM +Attention Gate) → ONNX → Triton GPU serving
+  - Unified 3 external (U-Ecotron) PINN models on the same Triton — voxel/point I/O heterogeneous models, the platform's first external use case
+  - Round 1 (45 samples): MAE 0.53°C, R² 0.82 → Round 2 (291 samples integrated): MAE 0.26°C, R² 0.95 (MAE ↓51%)
+  - CFD simulation (tens of minutes, PKNU-provided) → Triton inference ~200ms
+  - Stack: MLflow (tracking·registry·artifact serving) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
+  - New (Jun 2026): Streamlit ops portal (6 pages) · Evidently drift dashboard (PoC) · ONNX validate→deploy CI (manual trigger)
+  - Artifact store: MinIO was dropped over an AGPL license concern → MLflow local store (--serve-artifacts)
+  - Self-hosting principle (org policy): avoid external SaaS/cloud → GitHub→Gitea, cloud monitoring→Prometheus+Grafana
+  - Role: architecture design, tooling selection, environment build/ops, experiments, analysis, presentations
 """
 
-    sdi = """
-[삼성SDI — DI(Data Intelligence) 그룹 데이터 엔지니어 인턴]
-기간: 2025.06 ~ 2025.08
+_SDI = """
+[Samsung SDI — Data Engineer Intern, DI (Data Intelligence) Group]
+Period: Jun 2025 – Aug 2025
 
-▸ 폐쇄망 특허 검색 RAG 챗봇 "SPA(SDI Patent Assistant)" 1인 단독 개발
-  - 완전 인터넷 차단 환경에서 Ollama + Qwen2.5-72B 로컬 서빙
-  - LangChain + FAISS 벡터 DB, MinIO에서 patent.csv 로드
-  - 대화 이력(최근 5턴) 기반 맥락 유지 + 이전 RAG 선택지 저장 → 후속 질의 자동 재검색
-  - Rule-based Agent: "그래프/통계/출원" 키워드 → LLM 우회 → pandas 집계 + st.bar_chart 시각화
-  - Streamlit UI + Docker 배포, 임원 대상 PoC 발표에서 호평 획득
+▸ Solo-built "SPA (SDI Patent Assistant)", an air-gapped patent-search RAG chatbot
+  - Fully internet-blocked environment; self-hosted Ollama + Qwen2.5-72B
+  - LangChain + FAISS vector DB; loaded patent.csv from MinIO
+  - Kept context over the last 5 turns + stored prior RAG choices → auto re-retrieval on follow-ups
+  - Rule-based agent: "chart/stats/filing" keywords → bypass the LLM → pandas aggregation + st.bar_chart
+  - Streamlit UI + Docker; praised in an executive PoC
 """
 
-    company_upper = company.upper()
-    if "KETI" in company_upper:
-        return keti
-    if "SAMSUNG" in company_upper or "SDI" in company_upper or "삼성" in company:
-        return sdi
-    return keti + "\n" + sdi
+_PROJECTS = """
+[Key projects]
 
+1. KETI air-gapped, self-hosted MLOps platform
+   - PyTorch 3D U-Net + 3 external PINNs → ONNX → NVIDIA Triton heterogeneous serving
+   - MLflow · Gitea · Gitea Actions · Prometheus · Grafana + Streamlit ops portal · Evidently drift (PoC)
+   - Round 2 (291 samples) improved MAE by 51%, R² 0.95
+   - Stack: PyTorch, ONNX, Triton, MLflow, Gitea, Docker Compose, Prometheus, Grafana, Evidently, Streamlit
 
-@mcp.tool()
-def get_projects() -> str:
-    """주요 프로젝트 및 개인 프로젝트 목록을 반환합니다."""
-    return """
-[주요 프로젝트]
+2. Samsung SDI SPA — air-gapped patent RAG chatbot
+   - Fully internet-blocked, solo-built
+   - Rule-based agent + RAG hybrid; praised in an executive PoC
+   - Stack: Ollama, Qwen2.5-72B, LangChain, FAISS, Streamlit, Docker
 
-1. KETI 폐쇄망 자체호스팅 MLOps 플랫폼
-   - PyTorch 3D U-Net + 외부 PINN 3종 → ONNX → NVIDIA Triton 이종 모델 통합 서빙
-   - MLflow·Gitea·Gitea Actions·Prometheus·Grafana + Streamlit 운영 포털·Evidently 드리프트(PoC)
-   - 2차 학습(291건 통합)으로 MAE 51% 개선, R² 0.95 달성
-   - 스택: PyTorch, ONNX, Triton, MLflow, Gitea, Docker Compose, Prometheus, Grafana, Evidently, Streamlit
+3. TEBO balance analysis · SCIE paper (co-author)
+   - Applied Sciences (SCIE), Jul 2025
+   - CoP time-series → 4th-order Butterworth (6Hz) + FFT → Rambling/Trembling decomposition
+   - Individual abstract simulation: R² ≈ 0.85, Pearson r = 0.92 (p<0.001)
+   - Stack: Python, NumPy, SciPy, Matplotlib
 
-2. 삼성SDI SPA — 폐쇄망 특허 RAG 챗봇
-   - 완전 인터넷 차단 환경, 1인 단독 개발
-   - Rule-based Agent + RAG 하이브리드, 임원 PoC 호평
-   - 스택: Ollama, Qwen2.5-72B, LangChain, FAISS, Streamlit, Docker
-
-3. TEBO 균형 분석 · SCIE 논문 (공동 저자)
-   - Applied Sciences (SCIE) 2025.07 게재
-   - CoP 시계열 → 4차 Butterworth(6Hz) + FFT → Rambling/Trembling 분해
-   - 개인 abstract 시뮬레이션: R² ≈ 0.85, Pearson r = 0.92 (p<0.001)
-   - 스택: Python, NumPy, SciPy, Matplotlib
-
-[개인 프로젝트]
+[Personal projects]
 
 4. JisangFolio (jisangfolio.streamlit.app)
-   - 이력서 기반 AI 면접 챗봇 + 데이터 분석 도구
-   - Groq + Qwen3 27B, 시스템 프롬프트 전문 주입(RAG 불필요)
-   - LLM 라우터 → pandas 코드 생성·샌드박스 실행 or FAISS RAG
-   - 현재 보고 계신 이 MCP 서버도 JisangFolio의 일부입니다
-   - 스택: Streamlit, Groq, LangChain, FAISS, Plotly, fastmcp
+   - An AI interview chatbot built from my résumé + a data-analysis tool
+   - Groq + Qwen3 27B, full résumé injected into the system prompt (no RAG needed)
+   - LLM router → pandas codegen & sandbox exec, or FAISS RAG (with hybrid retrieval)
+   - GraphRAG over a profile knowledge graph, a programmatic guardrails layer, and a self-hosted-style LLM observability dashboard
+   - Regression eval harness + GitHub Actions CI
+   - This MCP server is itself part of JisangFolio
+   - Stack: Streamlit, Groq, LangChain, FAISS, Plotly, fastmcp
 """
 
-
-@mcp.tool()
-def get_skills() -> str:
-    """기술 스택을 카테고리별로 반환합니다."""
-    return """
+_SKILLS = """
 [AI / LLM]
-LangChain, RAG, FAISS, Prompt Engineering, Hugging Face, PyTorch, ONNX
-Rule-based Agent, Ollama, Groq, fastmcp (MCP 서버 개발)
+LangChain, RAG, GraphRAG, FAISS, Prompt Engineering, Hugging Face, PyTorch, ONNX
+Rule-based Agent, Ollama, Groq, MCP (fastmcp), LLM eval (LLM-as-judge), Guardrails
 
-[MLOps / Infra]
-MLflow (Tracking + Model Registry + 아티팩트 서빙), NVIDIA Triton Inference Server
-Gitea (자체호스팅 Git), Gitea Actions (CI), ONNX Runtime
-Prometheus, Grafana (PromQL, 대시보드 프로비저닝)
-Evidently (데이터 드리프트, PoC), Streamlit (운영 포털)
-Docker, Docker Compose, MinIO (삼성SDI 오브젝트 스토리지)
+[MLOps / LLMOps]
+MLflow (tracking + model registry + artifact serving), NVIDIA Triton Inference Server
+Gitea (self-hosted Git), Gitea Actions & GitHub Actions (CI), ONNX Runtime
+Prometheus, Grafana (PromQL, dashboards), Evidently (data drift, PoC)
+LLM observability (tracing · latency · routing), Streamlit ops portal
+Docker, Docker Compose
 
 [Data Science]
-Pandas, NumPy, Matplotlib, SciPy, spaCy, Gensim
-Butterworth Filter, FFT, 시계열 분석
-BeautifulSoup (웹 스크래핑)
+Pandas, NumPy, Matplotlib, SciPy, spaCy
+Butterworth filter, FFT, time-series analysis, hybrid retrieval (BM25 + dense)
 
 [Visualization]
 Streamlit, Plotly, Tableau, Power BI
@@ -145,68 +124,93 @@ Streamlit, Plotly, Tableau, Power BI
 NGSI-LD, MQTT, REST API, Postman, SWMM
 
 [Languages]
-Python (고급), R, SQL
+Python (advanced), R, SQL
 
 [Tools]
 Git, GitHub, Gitea, Docker, VSCode, Claude Code
 """
 
+_PUBLICATIONS = """
+[Published paper]
+Title: "Effect of Tai Chi Practice on the Adaptation to Sensory and Motor Perturbations While Standing in Older Adults"
+Journal: Applied Sciences (SCIE)
+Date: Jul 2025
+Advisor: Dr. Manuel E. Hernandez (UIUC)
 
-@mcp.tool()
-def get_publications() -> str:
-    """논문 및 학술 성과를 반환합니다."""
-    return """
-[게재 논문]
-제목: "Effect of Tai Chi Practice on the Adaptation to Sensory and Motor Perturbations While Standing in Older Adults"
-저널: Applied Sciences (SCIE, 국외)
-게재일: 2025.07
-지도교수: Dr. Manuel E. Hernandez (UIUC)
+[My contribution]
+- Solo-designed & implemented the full CoP (center-of-pressure) time-series analysis pipeline
+- 4th-order Butterworth low-pass filter (6Hz cutoff) → sensor-noise filtering
+- Zero-crossing equilibrium detection → cubic-spline interpolation to reconstruct Rambling
+- FFT → integrated 0–0.3Hz → low-frequency Rambling power
+- Compared Young (n=1) / Healthy Older (n=37) / TCOA clinical (n=22) groups
+- Note: on the published paper I am a co-author (not first/corresponding author)
 
-[개인 기여 요약]
-- CoP(압력중심) 시계열 데이터 분석 파이프라인 전체 단독 설계·구현
-- 4차 Butterworth 저역통과 필터(6Hz cutoff) → 센서 노이즈 필터링
-- Zero-crossing 기반 평형점 탐지 → Cubic spline 보간으로 Rambling 재구성
-- FFT → 0~0.3Hz 적분 → Low-frequency rambling power 산출
-- Young(n=1) / Healthy Older(n=37) / TCOA 임상군(n=22) 비교 분석
-- ※게재 논문은 공동 저자 (주저자·교신저자 아님)
-
-[개인 초록 — 단독 저자, 아래 시뮬레이션 수치의 출처]
-제목: "Postural Control in Healthy and TCOA Adults: Rambling-Component Analysis and Simulated CoP Trajectories"
-저자: JJ Park (단독)
-- 단일 Rambling 파워로 자세 동요 분산 85%+ 설명 (R² ≈ 0.85)
-- 시뮬레이션 면적 vs 실제 stabilogram: Pearson r = 0.92 (p<0.001)
+[Individual abstract — sole author; source of the simulation numbers below]
+Title: "Postural Control in Healthy and TCOA Adults: Rambling-Component Analysis and Simulated CoP Trajectories"
+Author: JJ Park (sole)
+- A single Rambling-power metric explained 85%+ of sway variance (R² ≈ 0.85)
+- Simulated area vs. actual stabilogram: Pearson r = 0.92 (p<0.001)
 """
 
 
 @mcp.tool()
+def get_profile() -> str:
+    """Return Jisang Park's basic profile, education, and contact info."""
+    return _PROFILE
+
+
+@mcp.tool()
+def get_experience(company: str = "") -> str:
+    """Return work experience. Pass 'KETI' or 'Samsung' (Samsung SDI) to get only that role."""
+    c = company.upper()
+    if "KETI" in c:
+        return _KETI
+    if "SAMSUNG" in c or "SDI" in c or "삼성" in company:
+        return _SDI
+    return _KETI + "\n" + _SDI
+
+
+@mcp.tool()
+def get_projects() -> str:
+    """Return key projects and personal projects."""
+    return _PROJECTS
+
+
+@mcp.tool()
+def get_skills() -> str:
+    """Return the tech stack by category."""
+    return _SKILLS
+
+
+@mcp.tool()
+def get_publications() -> str:
+    """Return publications and academic work."""
+    return _PUBLICATIONS
+
+
+@mcp.tool()
 def ask_jisang(question: str) -> str:
-    """
-    박지상에게 자유롭게 질문하세요. Groq + Qwen3 27B가 1인칭으로 답변합니다.
-    사용하려면 GROQ_API_KEY 환경변수가 필요합니다.
-    """
+    """Ask Jisang anything — Groq + Qwen3 27B answers in the first person.
+    Requires the GROQ_API_KEY environment variable."""
     import os
     from groq import Groq
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        return "GROQ_API_KEY 환경변수가 설정되지 않았습니다. claude_desktop_config.json의 env 항목을 확인해 주세요."
+        return "GROQ_API_KEY is not set. Please check the 'env' section of claude_desktop_config.json."
 
     resume_context = "\n\n".join([
-        get_profile(),
-        get_experience(),
-        get_projects(),
-        get_skills(),
-        get_publications(),
+        _PROFILE, _KETI, _SDI, _PROJECTS, _SKILLS, _PUBLICATIONS,
     ])
 
     system_prompt = f"""/no_think
-당신은 데이터 엔지니어이자 AI 개발자인 '박지상(JJ Park)' 본인입니다.
-아래 [이력서] 내용을 바탕으로 질문에 1인칭 시점으로 답변하세요.
-- 한국어로 답변하세요.
-- 볼드체(**)를 사용하지 마세요.
-- 이력서에 없는 내용은 지어내지 마세요.
+You are 'Jisang Park (JJ Park)', a data engineer and AI developer.
+Answer the question in the first person, based on the [Résumé] below.
+- Answer in English.
+- Do not use bold text (**).
+- Don't make up anything not in the résumé.
 
-[이력서]
+[Résumé]
 {resume_context}"""
 
     client = Groq(api_key=api_key)
@@ -217,7 +221,7 @@ def ask_jisang(question: str) -> str:
             {"role": "user", "content": question},
         ],
         max_tokens=800,
-        reasoning_effort="none",  # thinking 끔 → 응답 속도 개선
+        reasoning_effort="none",  # thinking off → faster
     )
     content = response.choices[0].message.content or ""
     if "</think>" in content:

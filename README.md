@@ -8,6 +8,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Groq](https://img.shields.io/badge/LLM-Groq_Qwen3-F55036?logo=groq&logoColor=white)](https://groq.com/)
 [![MCP](https://img.shields.io/badge/MCP-Server-blueviolet?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
+[![CI](https://github.com/jisangfolio/jisangfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/jisangfolio/jisangfolio/actions/workflows/ci.yml)
 
 ## Overview
 
@@ -23,6 +24,11 @@ JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOp
 - **Profile knowledge graph (SSOT)** — education, work, projects, skills, and coursework defined as nodes/edges in `profile_graph.py`, embedded as an interactive graph *and* injected into the chatbot's system prompt — so the graph and the bot share one source of truth.
 - **Code knowledge graph** — the codebase visualized as an interactive call graph (Graphify, local AST), showing `prompts.py` as the hub that links the app pages and the eval harness.
 - **Regression eval harness** — `evals/` scores the chatbot and router with deterministic checks (fact keywords · banned terms) + an LLM-as-judge (a *different* model, to avoid self-scoring bias). It once caught a stale résumé copy leaking into the bot and lifted factual accuracy from 62% to 94%.
+- **GraphRAG over the profile graph** — each chat question retrieves a focused subgraph (seed nodes + neighbor traversal) that's injected as extra grounding; the traversed nodes are shown live under every answer.
+- **Guardrails layer** — a programmatic input guard (prompt-injection · scope · length) runs *before* anything reaches the model, on top of the persona's scope rule.
+- **LLM observability** — every chat / data turn is traced (latency · model · routing · guardrail verdict) on a self-hosted-style dashboard page — same idea as Langfuse / Arize Phoenix, built in-house to match the on-prem, no-external-SaaS approach.
+- **Hybrid retrieval** — the data page fuses dense (FAISS) and sparse (BM25) search with Reciprocal Rank Fusion, on top of the LLM router.
+- **Tested & CI'd** — a `pytest` suite (guardrails · GraphRAG · post-processing · graph integrity) runs on every push via GitHub Actions. The quality bar is enforced, not assumed.
 - **Real artifacts** — a Prometheus + Grafana screenshot from my KETI work, and 745 records from my published SCIE paper loaded into the data page.
 
 ## Project structure
@@ -31,13 +37,18 @@ JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOp
 jisangfolio/
 ├── jisangfolio.py              # Home (hero · about · experience · projects · skills · education · contact · graphs)
 ├── pages/
-│   ├── 1_Chat.py               # AI chatbot (EN/KO)
-│   └── 2_Data_Analysis.py      # JisangData (LLM router + pandas codegen + RAG)
+│   ├── 1_Chat.py               # AI chatbot (guardrails → GraphRAG → LLM → tracing; EN/KO)
+│   ├── 2_Data_Analysis.py      # JisangData (LLM router + pandas codegen + RAG)
+│   └── 3_Observability.py      # LLM observability dashboard (traces · latency · routing)
 ├── jisangfolio_mcp.py          # MCP server (6 tools)
 ├── prompts.py                  # Prompt/post-processing SSOT (shared by app + evals)
-├── profile_graph.py            # Profile knowledge graph SSOT (home graph + chatbot injection)
+├── profile_graph.py            # Profile knowledge graph SSOT (home graph · chatbot · GraphRAG)
+├── guardrails.py               # Input guardrails layer (injection · scope · length)
+├── observability.py            # Trace store + metrics (self-hosted-style LLM observability)
 ├── ui.py                       # Shared styling (Pretendard font · rounding)
 ├── evals/                      # Regression eval harness (deterministic + LLM judge)
+├── tests/                      # pytest unit tests (guardrails · GraphRAG · post-processing · graph)
+├── .github/workflows/ci.yml    # CI — runs the test suite on every push
 ├── tebo_sample.xlsx            # TEBO paper sample data (745 records)
 ├── mlops_grafana.png           # KETI MLOps dashboard screenshot
 ├── codegraph.html              # Code knowledge graph (Graphify)
@@ -53,7 +64,8 @@ jisangfolio/
 |------|-------|
 | UI | Streamlit · custom CSS (Pretendard) |
 | LLM | Groq (Qwen3) · reasoning disabled for latency |
-| RAG / Vector DB | LangChain · FAISS · HuggingFace Embeddings (all-MiniLM-L6-v2) |
+| RAG / retrieval | LangChain · FAISS · BM25 (hybrid, RRF) · GraphRAG · HuggingFace Embeddings (all-MiniLM-L6-v2) |
+| Testing / CI | pytest · GitHub Actions |
 | Eval judge | Llama-3.3-70B (separate model) |
 | MCP | fastmcp |
 | Data | Pandas · Plotly · vis-network |

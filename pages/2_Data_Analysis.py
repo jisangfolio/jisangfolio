@@ -9,6 +9,7 @@ from langchain_core.documents import Document
 from langchain_groq import ChatGroq
 from prompts import ROUTER_PROMPT_TEMPLATE
 from ui import apply_style
+from observability import log_trace
 # Heavy torch/faiss deps (FAISS · HuggingFaceEmbeddings) are imported lazily,
 # only when embedding is actually needed — keeps first render light.
 
@@ -49,6 +50,41 @@ with st.sidebar:
                 st.rerun()
     st.divider()
     st.caption("This analysis runs on AI-generated code. If the numbers matter, double-check against the source data :)")
+
+import re
+
+
+def _tok(s):
+    return re.findall(r"[a-z0-9가-힣]+", (s or "").lower())
+
+
+def _rrf(ranklists, k=5, c=60):
+    """Reciprocal Rank Fusion — fuse multiple ranked doc lists into one."""
+    scores, docmap = {}, {}
+    for docs in ranklists:
+        for rank, d in enumerate(docs):
+            key = d.page_content
+            scores[key] = scores.get(key, 0.0) + 1.0 / (c + rank + 1)
+            docmap[key] = d
+    top = sorted(scores, key=scores.get, reverse=True)[:k]
+    return [docmap[key] for key in top]
+
+
+class HybridRetriever:
+    """Hybrid retrieval: dense (FAISS) + sparse (BM25), fused with RRF.
+    Same .invoke(query) interface as a LangChain retriever."""
+
+    def __init__(self, vectorstore, splits, bm25, k=5):
+        self.vs, self.splits, self.bm25, self.k = vectorstore, splits, bm25, k
+
+    def invoke(self, query, k=None):
+        k = k or self.k
+        dense = self.vs.similarity_search(query, k=k * 3)
+        scores = self.bm25.get_scores(_tok(query))
+        order = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k * 3]
+        sparse = [self.splits[i] for i in order]
+        return _rrf([dense, sparse], k=k)
+
 
 # --- File processing ---
 @st.cache_resource(show_spinner="Analyzing the uploaded file...")
@@ -115,8 +151,11 @@ def build_vectorstore(file_bytes: bytes, file_name: str):
     progress_bar.empty()
     st.sidebar.success(f"✅ Indexed records: {vectorstore.index.ntotal}")
 
+    from rank_bm25 import BM25Okapi
+    bm25 = BM25Okapi([_tok(d.page_content) for d in splits])
     k = max(1, min(10, vectorstore.index.ntotal // 5))
-    return df, vectorstore.as_retriever(search_kwargs={"k": k})
+    # Hybrid: dense (FAISS) + sparse (BM25) fused with RRF
+    return df, HybridRetriever(vectorstore, splits, bm25, k=k)
 
 
 def get_df_info(df: pd.DataFrame) -> str:
@@ -247,6 +286,7 @@ if user_input and retriever:
 
     df_info = get_df_info(df)
     route = classify_question(llm, user_input, df_info)
+    _t0 = time.time()
 
     if route == "PANDAS":
         # --- pandas codegen path ---
@@ -388,6 +428,10 @@ Answer:"""
                         full_response += delta
                         response_container.markdown(full_response)
             st.session_state["data_messages"].append(ChatMessage(role="assistant", content=full_response))
+
+    # 📈 Observability — 데이터 분석 턴도 트레이스로 기록
+    log_trace(page="data", route=route, model=GROQ_MODEL,
+              latency_ms=int((time.time() - _t0) * 1000))
 
 elif user_input and not retriever:
     st.warning("Please upload a file first.")
