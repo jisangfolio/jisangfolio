@@ -47,8 +47,8 @@ NODES = [
      "desc_ko": "완전 차단망 특허검색 RAG 챗봇 1인 단독 개발 → 임원 PoC 호평.",
      "desc_en": "Solo-built patent-search RAG chatbot in a fully air-gapped env → executive PoC praised."},
     {"id": "jf", "group": "project", "ko": "JisangFolio", "en": "JisangFolio",
-     "desc_ko": "이 포트폴리오 · 회귀 평가 하니스로 사실 정확도 통과율 62%→94%.",
-     "desc_en": "This portfolio · a regression eval harness lifted factual accuracy 62%→94%."},
+     "desc_ko": "이 포트폴리오 · GraphRAG·가드레일·LLM 옵저버빌리티·하이브리드 RAG·CI 실장, 회귀 평가 하니스로 사실 정확도 62%→94%.",
+     "desc_en": "This portfolio · GraphRAG, guardrails, LLM observability, hybrid RAG & CI, with a regression eval harness (factual accuracy 62%→94%)."},
     {"id": "jd", "group": "project", "ko": "JisangData", "en": "JisangData",
      "desc_ko": "LLM 라우터가 집계 질문은 pandas 코드 생성·실행, 검색 질문은 FAISS RAG로 처리(실패 시 RAG 폴백).",
      "desc_en": "An LLM router runs pandas codegen for aggregates and FAISS RAG for search (RAG fallback on failure)."},
@@ -130,6 +130,20 @@ NODES = [
     {"id": "sql", "group": "skill", "ko": "SQL", "en": "SQL",
      "desc_ko": "T-SQL 복합 JOIN·CTE·저장 프로시저·스키마 정규화(INFO330).",
      "desc_en": "T-SQL complex JOINs·CTEs·stored procedures·normalization (INFO330)."},
+
+    # JisangFolio LLMOps 스택 (본 사이트 실장)
+    {"id": "graphrag", "group": "skill", "ko": "GraphRAG", "en": "GraphRAG",
+     "desc_ko": "질문마다 이 프로필 그래프에서 관련 서브그래프(시드+이웃)를 탐색해 챗봇 근거로 주입.",
+     "desc_en": "Each question retrieves a relevant subgraph (seeds + neighbors) from this profile graph as chatbot grounding."},
+    {"id": "guardrails", "group": "skill", "ko": "Guardrails", "en": "Guardrails",
+     "desc_ko": "프롬프트 인젝션·스코프·길이 입력 가드가 LLM 앞단에서 프로그램적으로 차단.",
+     "desc_en": "A programmatic input guard (prompt-injection·scope·length) blocks before anything reaches the LLM."},
+    {"id": "observability", "group": "skill", "ko": "LLM Observability", "en": "LLM Observability",
+     "desc_ko": "챗·데이터 매 턴을 트레이싱(지연·모델·라우팅·가드결과) — Langfuse/Phoenix 개념 인하우스 대시보드.",
+     "desc_en": "Every chat/data turn is traced (latency·model·routing·guard verdict) — a Langfuse/Phoenix-style in-house dashboard."},
+    {"id": "hybrid", "group": "skill", "ko": "Hybrid RAG", "en": "Hybrid RAG",
+     "desc_ko": "FAISS(dense) + BM25(sparse)를 Reciprocal Rank Fusion으로 융합 — JisangData 검색 경로.",
+     "desc_en": "FAISS (dense) + BM25 (sparse) fused with Reciprocal Rank Fusion — JisangData's search path."},
 ]
 
 EDGES = [
@@ -150,8 +164,12 @@ EDGES = [
     ("rag", "docker"), ("rag", "streamlit"),
     # 개인 프로젝트 → 기술 (공유 노드로 교차연결)
     ("jf", "eval"), ("jf", "groq"), ("jf", "streamlit"),
+    ("jf", "graphrag"), ("jf", "guardrails"), ("jf", "observability"),
     ("jd", "langchain"), ("jd", "faiss"), ("jd", "groq"), ("jd", "streamlit"),
+    ("jd", "hybrid"), ("jd", "observability"),
     ("mcp", "groq"),
+    # LLMOps 스택 내부 교차연결 (망 형성)
+    ("hybrid", "faiss"), ("observability", "streamlit"),
     # 논문·코스워크 → 기술 (교차연결)
     ("tebo", "scipy"), ("cs307", "pytorch"), ("info330", "sql"),
 ]

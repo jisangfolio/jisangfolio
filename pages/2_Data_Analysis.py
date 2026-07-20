@@ -23,7 +23,7 @@ except KeyError:
     st.stop()
 
 GROQ_MODEL = "qwen/qwen3.6-27b"
-SAMPLE_PATH = os.path.join(os.path.dirname(__file__), "..", "tebo_sample.xlsx")
+SAMPLE_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "tebo_sample.xlsx")
 SAMPLE_NAME = "tebo_sample.xlsx"
 TEBO_SAMPLE_QUESTIONS = [
     "Compare the average Path_Length by Study",

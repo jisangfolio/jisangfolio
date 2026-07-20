@@ -14,15 +14,15 @@
 
 JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOps engineer. Three independent pipelines run behind one Streamlit surface:
 
-- **Chat** — the résumé is injected directly into the system prompt (no RAG needed for ~3K tokens) and the bot answers in the first person, as me. Runs on Groq (Qwen3, reasoning disabled for low latency), with a Korean/English toggle, an off-topic scope guard, and a post-processing filter that keeps Korean answers Korean.
-- **Data Analysis** — upload a CSV/Excel file and an LLM router decides between generating & sandbox-executing pandas code (for aggregates) and FAISS RAG (for search), with automatic RAG fallback on code failure.
+- **Chat** — the résumé is injected directly into the system prompt (no document RAG needed for ~3K tokens), GraphRAG retrieves a focused profile subgraph per question as extra grounding, and the bot answers in the first person, as me. Runs on Groq (Qwen3, reasoning disabled for low latency), with a Korean/English toggle, a guardrails layer + off-topic scope guard, and a post-processing filter that keeps Korean answers Korean.
+- **Data Analysis** — upload a CSV/Excel file and an LLM router decides between generating & sandbox-executing pandas code (for aggregates) and hybrid retrieval — FAISS (dense) + BM25 (sparse) fused with RRF — for search, with automatic RAG fallback on code failure.
 - **MCP Server** — the portfolio data is exposed over the Model Context Protocol, so Claude Desktop / Cursor / Cline can query it directly.
 
 ## Highlights
 
-- **The home is the portfolio** — a photo hero, About, Experience, Projects, Skills, Education, and Contact, all in one page.
+- **The home is the portfolio** — a photo hero, About, a career timeline, Projects, Skills, Education, the pipeline diagrams, and two knowledge graphs, all on one page.
 - **Profile knowledge graph (SSOT)** — education, work, projects, skills, and coursework defined as nodes/edges in `profile_graph.py`, embedded as an interactive graph *and* injected into the chatbot's system prompt — so the graph and the bot share one source of truth.
-- **Code knowledge graph** — the codebase visualized as an interactive call graph (Graphify, local AST), showing `prompts.py` as the hub that links the app pages and the eval harness.
+- **Code knowledge graph** — the codebase visualized as an interactive AST call graph (modules · imports · calls), showing `prompts.py` and `profile_graph.py` as the SSOT hubs shared by the app pages, MCP server, eval harness, and tests.
 - **Regression eval harness** — `evals/` scores the chatbot and router with deterministic checks (fact keywords · banned terms) + an LLM-as-judge (a *different* model, to avoid self-scoring bias). It once caught a stale résumé copy leaking into the bot and lifted factual accuracy from 62% to 94%.
 - **GraphRAG over the profile graph** — each chat question retrieves a focused subgraph (seed nodes + neighbor traversal) that's injected as extra grounding; the traversed nodes are shown live under every answer.
 - **Guardrails layer** — a programmatic input guard (prompt-injection · scope · length) runs *before* anything reaches the model, on top of the persona's scope rule.
@@ -35,13 +35,13 @@ JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOp
 
 ```
 jisangfolio/
-├── jisangfolio.py              # Home (hero · about · experience · projects · skills · education · contact · graphs)
+├── jisangfolio.py              # Home (hero · about · timeline · projects · skills · education · pipelines · graphs)
 ├── pages/
 │   ├── 1_Chat.py               # AI chatbot (guardrails → GraphRAG → LLM → tracing; EN/KO)
-│   ├── 2_Data_Analysis.py      # JisangData (LLM router + pandas codegen + RAG)
+│   ├── 2_Data_Analysis.py      # JisangData (LLM router + pandas codegen + hybrid RAG)
 │   └── 3_Observability.py      # LLM observability dashboard (traces · latency · routing)
 ├── jisangfolio_mcp.py          # MCP server (6 tools)
-├── prompts.py                  # Prompt/post-processing SSOT (shared by app + evals)
+├── prompts.py                  # Prompt/post-processing SSOT (shared by app + evals + tests)
 ├── profile_graph.py            # Profile knowledge graph SSOT (home graph · chatbot · GraphRAG)
 ├── guardrails.py               # Input guardrails layer (injection · scope · length)
 ├── observability.py            # Trace store + metrics (self-hosted-style LLM observability)
@@ -49,11 +49,12 @@ jisangfolio/
 ├── evals/                      # Regression eval harness (deterministic + LLM judge)
 ├── tests/                      # pytest unit tests (guardrails · GraphRAG · post-processing · graph)
 ├── .github/workflows/ci.yml    # CI — runs the test suite on every push
-├── tebo_sample.xlsx            # TEBO paper sample data (745 records)
-├── mlops_grafana.png           # KETI MLOps dashboard screenshot
-├── codegraph.html              # Code knowledge graph (Graphify)
-├── profile.jpg                 # Hero photo
-├── resume.pdf                  # Downloadable résumé
+├── assets/                     # Static assets (grouped to keep the root clean)
+│   ├── profile.jpg             #   Hero photo
+│   ├── resume.pdf              #   Downloadable résumé
+│   ├── codegraph.html          #   Code knowledge graph (interactive AST call graph)
+│   ├── mlops_grafana.png       #   KETI MLOps dashboard screenshot
+│   └── tebo_sample.xlsx        #   TEBO paper sample data (745 records)
 ├── .streamlit/config.toml      # Theme (secrets.toml is git-ignored)
 └── requirements.txt
 ```
