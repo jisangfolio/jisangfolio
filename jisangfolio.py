@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit.components.v1 as components
 import os
 from ui import apply_style
+import profile_graph
 
 st.set_page_config(
     page_title="JisangFolio",
@@ -107,6 +108,7 @@ T = {
             },
         ],
         "stack_head": "## 기술 스택",
+        "profilegraph_head": "## 프로필 구조 그래프",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nLLM eval · Rule-based Agent"),
             ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
@@ -193,6 +195,7 @@ T = {
             },
         ],
         "stack_head": "## Tech Stack",
+        "profilegraph_head": "## Profile graph",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · FAISS  \nOllama · Groq · PyTorch  \nLLM eval · Rule-based Agent"),
             ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
@@ -345,6 +348,10 @@ for col, (header, body) in zip(cols, t["stacks"]):
     with col:
         st.markdown(header)
         st.markdown(body)
+
+# ── 프로필 구조 그래프 (프로필 SSOT — 챗봇과 데이터 공유) ──────────
+st.markdown(t["profilegraph_head"])
+components.html(profile_graph.to_vis_html(lang), height=580, scrolling=False)
 
 st.divider()
 

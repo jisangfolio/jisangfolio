@@ -5,6 +5,7 @@
 프롬프트를 그대로 검증한다"를 성립시키기 위한 모듈.
 """
 import re
+from profile_graph import to_prompt_text
 
 # ── 챗봇 시스템 프롬프트 (pages/1_대화하기.py에서 추출) ────────────────
 # 헤더는 "[통합 마스터 이력서 내용]\n" / "[MASTER RESUME]\n" 직후에 이력서 전문을
@@ -57,9 +58,17 @@ Based on the [Master Resume] below, answer the interviewer's questions from a fi
 
 
 def build_system_prompt(lang: str, resume_text: str) -> str:
-    """챗봇 시스템 프롬프트를 조립한다. lang 은 '한국어' 또는 'English'."""
+    """챗봇 시스템 프롬프트를 조립한다. lang 은 '한국어' 또는 'English'.
+
+    이력서 전문 뒤에 profile_graph 의 구조 요약(관계도)을 함께 주입한다 —
+    홈에 임베드된 프로필 그래프와 동일한 단일 소스라서 그림과 챗봇이 어긋나지 않는다.
+    """
     header = _SYSTEM_KO_HEADER if lang == "한국어" else _SYSTEM_EN_HEADER
-    return header + resume_text + "\n"
+    if lang == "한국어":
+        graph = "\n\n[프로필 관계도 — 위 이력서를 구조로 요약한 지도]\n" + to_prompt_text(lang) + "\n"
+    else:
+        graph = "\n\n[PROFILE GRAPH — a structural map summarizing the resume above]\n" + to_prompt_text(lang) + "\n"
+    return header + resume_text + graph
 
 
 # ── 데이터분석 라우터 프롬프트 (pages/2_데이터분석.py classify_question에서 추출) ──
