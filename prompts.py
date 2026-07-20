@@ -118,10 +118,24 @@ def strip_think(text: str) -> str:
     return text.strip("\n")
 
 
+# 한글·라틴 외의 CJK 문자(한자·가나·전각부호). Qwen이 가끔 한글 대신 한자(等·非·現象)나
+# 전각부호(，。)를 섞는 code-switch를 후처리로 걷어내는 방어선.
+# 보존: 한글 음절(AC00-D7A3)·자모(1100-11FF, 3130-318F)·라틴·숫자·일반 문장부호.
+_FOREIGN_CJK = re.compile(
+    r"[　-〿぀-ヿ㐀-䶿一-鿿豈-﫿＀-￯]"
+)
+
+
+def strip_foreign_cjk(text: str) -> str:
+    """답변에 새어든 한자·가나·전각부호를 제거한다(한국어 전용 보장의 후처리 방어선)."""
+    return _FOREIGN_CJK.sub("", text)
+
+
 def clean_response(text: str) -> str:
     """앱이 사용자에게 출력하기 직전 적용하는 후처리.
 
-    <think> 사고 블록 제거 + 볼드(**) 제거. 평가 하니스가 '사용자가 실제로 보는
-    최종 출력'을 측정하도록 앱(pages/1)과 동일한 후처리 경로를 공유한다.
+    <think> 사고 블록 제거 + 볼드(**) 제거 + 한자/가나/전각부호 제거(한국어 전용).
+    평가 하니스가 '사용자가 실제로 보는 최종 출력'을 측정하도록 앱(pages/1)과 동일한
+    후처리 경로를 공유한다.
     """
-    return strip_think(text).replace("**", "")
+    return strip_foreign_cjk(strip_think(text).replace("**", ""))

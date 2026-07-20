@@ -14,6 +14,7 @@ Claude Desktop에서 박지상의 포트폴리오 데이터를 직접 조회할 
 """
 
 from fastmcp import FastMCP
+from prompts import strip_foreign_cjk
 
 mcp = FastMCP("JisangFolio — 박지상 포트폴리오")
 
@@ -221,7 +222,7 @@ def ask_jisang(question: str) -> str:
     content = response.choices[0].message.content or ""
     if "</think>" in content:
         content = content.split("</think>", 1)[1].lstrip("\n")
-    return content.replace("**", "")
+    return strip_foreign_cjk(content.replace("**", ""))
 
 
 if __name__ == "__main__":
