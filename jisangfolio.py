@@ -57,11 +57,10 @@ T = {
         "tagline_head": "## 대화하는 이력서",
         "how_head": "## 어떻게 돌아가나",
         "how_intro": "챗봇·데이터분석·MCP 서버, 세 파이프라인이 각각 따로 돕니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
-        "graph_head": "## 코드로 그린 지식그래프",
+        "graph_head": "## 코드베이스 구조 그래프",
         "graph_bullets": (
             "- **단일 소스(SSOT):** 프롬프트·후처리(`prompts.py`)를 앱 페이지와 평가 하니스가 공유합니다 — 그래프에서 `build_system_prompt`이 여러 파이프라인을 잇는 허브로 나타납니다.  \n"
-            "- **회귀 평가 하니스:** 결정적 채점(사실 키워드·금지어) + LLM-judge로 챗봇 답변의 사실성을 릴리스마다 검증합니다.  \n"
-            "- 이 그래프는 손으로 그린 게 아니라 코드를 AST로 파싱해서 뽑았습니다. 노드 52개가 다 실제 함수·모듈입니다 (Graphify)."
+            "- **회귀 평가 하니스:** 결정적 채점(사실 키워드·금지어) + LLM-judge로 챗봇 답변의 사실성을 릴리스마다 검증합니다."
         ),
         "graph_caption": "노드를 클릭하면 이웃 관계를 탐색할 수 있습니다. (vis-network 인터랙티브 · 이 사이트 코드의 실제 콜그래프)",
         "graph_missing": "(codegraph.html을 프로젝트 루트에 넣으면 코드 지식그래프가 표시됩니다)",
@@ -144,11 +143,10 @@ T = {
         "tagline_head": "## A Resume You Talk To",
         "how_head": "## How it works",
         "how_intro": "Three separate pipelines — chat, data analysis, and an MCP server — each doing its own thing. The tabs show why I split them up.",
-        "graph_head": "## The codebase as a knowledge graph",
+        "graph_head": "## Codebase structure graph",
         "graph_bullets": (
             "- **Single Source of Truth:** prompts & post-processing (`prompts.py`) are shared by the app pages and the eval harness — in the graph, `build_system_prompt` appears as the hub linking multiple pipelines.  \n"
-            "- **Regression eval harness:** deterministic checks (fact keywords · banned terms) + an LLM judge verify the chatbot's factual accuracy on every release.  \n"
-            "- Not hand-drawn — parsed straight from the code via AST. All 52 nodes are real functions and modules (Graphify)."
+            "- **Regression eval harness:** deterministic checks (fact keywords · banned terms) + an LLM judge verify the chatbot's factual accuracy on every release."
         ),
         "graph_caption": "Click any node to explore its neighbors. (Interactive vis-network · the real call graph of this site's code)",
         "graph_missing": "(place codegraph.html in the project root to display the code knowledge graph)",
