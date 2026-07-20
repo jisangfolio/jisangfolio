@@ -34,7 +34,7 @@ with st.sidebar:
     st.markdown("💻 [GitHub](https://github.com/jisangfolio)")
     st.divider()
 
-    resume_path = os.path.join(os.path.dirname(__file__), "resume.pdf")
+    resume_path = os.path.join(os.path.dirname(__file__), "assets", "resume.pdf")
     if os.path.exists(resume_path):
         with open(resume_path, "rb") as f:
             st.download_button(
@@ -45,7 +45,7 @@ with st.sidebar:
                 use_container_width=True,
             )
     else:
-        st.caption("(resume.pdf를 프로젝트 루트에 넣으면 다운로드 버튼이 활성화됩니다)" if lang == "한국어" else "(Add resume.pdf to the project root to enable the download button.)")
+        st.caption("(assets/resume.pdf를 넣으면 다운로드 버튼이 활성화됩니다)" if lang == "한국어" else "(Add assets/resume.pdf to enable the download button.)")
     st.divider()
     st.caption("이 챗봇은 제(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있습니다. 정확한 건 이력서 PDF나 메일로 직접 확인 바랍니다 :)" if lang == "한국어" else "This chatbot answers from my (Jisang's) resume, so it can occasionally get things wrong. For anything important, check the resume PDF or just email me :)")
 
@@ -69,7 +69,7 @@ T = {
             "- **회귀 평가 하니스:** 결정적 채점(사실 키워드·금지어) + LLM-judge로 챗봇 답변의 사실성을 릴리스마다 검증합니다."
         ),
         "graph_caption": "노드를 클릭하면 이웃 관계를 탐색할 수 있습니다. (vis-network 인터랙티브 · 이 사이트 코드의 실제 콜그래프)",
-        "graph_missing": "(codegraph.html을 프로젝트 루트에 넣으면 코드 지식그래프가 표시됩니다)",
+        "graph_missing": "(assets/codegraph.html을 넣으면 코드 지식그래프가 표시됩니다)",
         "arch_tab1": "채팅 파이프라인",
         "arch_tab2": "데이터 분석 파이프라인",
         "arch_tab3": "MCP 서버 파이프라인",
@@ -123,7 +123,7 @@ T = {
         "personal_projects": [
             {
                 "title": "JisangFolio",
-                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸습니다. 여기에 GraphRAG(그래프 탐색 검색)·가드레일·자체호스팅 LLM 옵저버빌리티·하이브리드 RAG·GitHub Actions CI까지 얹었습니다.",
+                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 무거운 문서 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸습니다. 여기에 GraphRAG(그래프 탐색 검색)·가드레일·자체호스팅 LLM 옵저버빌리티·하이브리드 RAG·GitHub Actions CI까지 얹었습니다.",
                 "tags": "`Groq · Qwen3 27B` `Streamlit` `eval 하니스` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
@@ -161,7 +161,7 @@ T = {
             "- **Regression eval harness:** deterministic checks (fact keywords · banned terms) + an LLM judge verify the chatbot's factual accuracy on every release."
         ),
         "graph_caption": "Click any node to explore its neighbors. (Interactive vis-network · the real call graph of this site's code)",
-        "graph_missing": "(place codegraph.html in the project root to display the code knowledge graph)",
+        "graph_missing": "(place assets/codegraph.html to display the code knowledge graph)",
         "arch_tab1": "Chat Pipeline",
         "arch_tab2": "Data Analysis Pipeline",
         "arch_tab3": "MCP Server Pipeline",
@@ -215,7 +215,7 @@ T = {
         "personal_projects": [
             {
                 "title": "JisangFolio",
-                "desc": "This portfolio itself. The full resume (~3K tokens) is injected into the system prompt — no RAG needed — and I built a regression eval harness (rule-based scoring + a separate LLM judge) that keeps factual accuracy stable across prompt/model changes. It caught a stale resume copy leaking into the bot and lifted the pass rate from 62% to 94%. On top of that: GraphRAG, a guardrails layer, self-hosted LLM observability, hybrid RAG, and GitHub Actions CI.",
+                "desc": "This portfolio itself. The full resume (~3K tokens) is injected into the system prompt — no document RAG needed — and I built a regression eval harness (rule-based scoring + a separate LLM judge) that keeps factual accuracy stable across prompt/model changes. It caught a stale resume copy leaking into the bot and lifted the pass rate from 62% to 94%. On top of that: GraphRAG, a guardrails layer, self-hosted LLM observability, hybrid RAG, and GitHub Actions CI.",
                 "tags": "`Groq · Qwen3 27B` `Streamlit` `eval harness` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
@@ -257,7 +257,7 @@ if lang == "한국어":
         {"구분": "경력",  "항목": "삼성SDI · 데이터 엔지니어 인턴", "시작": "2025-06-01", "종료": "2025-08-31", "상세": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
         {"구분": "논문",  "항목": "TEBO · SCIE 논문 게재",          "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP 분석 설명력 85%+"},
         {"구분": "활동",  "항목": "KSA 웹팀 (UIUC)",               "시작": "2024-08-01", "종료": "2025-06-30", "상세": "한인 학생회 웹사이트 사용성 및 성능 개선"},
-        {"구분": "경력",  "항목": "KETI · AI 에이전트 연구원",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "폐쇄망 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 디지털 트윈 연동"},
+        {"구분": "경력",  "항목": "KETI · AI 에이전트 연구원",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "폐쇄망 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 디지털 트윈 연동 · 현재 재직 중"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
 else:
@@ -269,7 +269,7 @@ else:
         {"구분": "Work",      "항목": "Samsung SDI · Data Eng. Intern",  "시작": "2025-06-01", "종료": "2025-08-31", "상세": "Solo-built air-gapped RAG chatbot → praised by executives"},
         {"구분": "Research",  "항목": "TEBO · SCIE Publication",         "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP analysis 85%+ explanatory power"},
         {"구분": "Activity",  "항목": "KSA Web Team (UIUC)",              "시작": "2024-08-01", "종료": "2025-06-30", "상세": "Improved usability and performance of Korean Student Association website"},
-        {"구분": "Work",      "항목": "KETI · AI Agent Researcher",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "Air-gapped MLOps platform · Triton model serving · digital twin integration"},
+        {"구분": "Work",      "항목": "KETI · AI Agent Researcher",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "Air-gapped MLOps platform · Triton model serving · digital twin integration · Present"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
 
@@ -293,7 +293,7 @@ with _hero_txt:
         if st.button(t["data_btn"], use_container_width=True, key="hero_data"):
             st.switch_page("pages/2_Data_Analysis.py")
 with _hero_photo:
-    _photo_path = os.path.join(os.path.dirname(__file__), "profile.jpg")
+    _photo_path = os.path.join(os.path.dirname(__file__), "assets", "profile.jpg")
     if os.path.exists(_photo_path):
         _enc = _b64m.b64encode(open(_photo_path, "rb").read()).decode()
         st.markdown(
@@ -350,7 +350,7 @@ with st.container(border=True):
     st.markdown(f"**{_keti_lead}.**")
     st.markdown(_keti_rest)
     st.caption(t["projects"][0]["tags"])
-    grafana_path = os.path.join(os.path.dirname(__file__), "mlops_grafana.png")
+    grafana_path = os.path.join(os.path.dirname(__file__), "assets", "mlops_grafana.png")
     if os.path.exists(grafana_path):
         st.image(
             grafana_path,
@@ -419,7 +419,7 @@ components.html(profile_graph.to_vis_html(lang), height=580, scrolling=False)
 # ── 코드 지식그래프 (Graphify) ────────────────────────────────────
 st.markdown(t["graph_head"])
 st.markdown(t["graph_bullets"])
-graph_path = os.path.join(os.path.dirname(__file__), "codegraph.html")
+graph_path = os.path.join(os.path.dirname(__file__), "assets", "codegraph.html")
 if os.path.exists(graph_path):
     with open(graph_path, "r", encoding="utf-8") as gf:
         components.html(gf.read(), height=600, scrolling=False)

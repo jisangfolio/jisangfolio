@@ -218,7 +218,7 @@ def classify(client, df_info, question):
 
 def run_router_evals(client, cases):
     import pandas as pd
-    sample = ROOT / "tebo_sample.xlsx"
+    sample = ROOT / "assets" / "tebo_sample.xlsx"
     df = pd.read_excel(sample)
     df_info = get_df_info(df)
 
