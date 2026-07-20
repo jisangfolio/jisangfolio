@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT))
 from prompts import build_system_prompt, ROUTER_PROMPT_TEMPLATE, strip_think, clean_response  # noqa: E402
 from groq import Groq  # noqa: E402
 
-CHAT_MODEL = "qwen/qwen3-32b"          # 앱 챗봇과 동일
+CHAT_MODEL = "qwen/qwen3.6-27b"          # 앱 챗봇과 동일
 JUDGE_MODEL = "llama-3.3-70b-versatile"  # 자기채점 편향 회피 위해 다른 계열
 SLEEP = 1.0                            # 무료 티어 레이트리밋 완화용 호출 간 간격
 

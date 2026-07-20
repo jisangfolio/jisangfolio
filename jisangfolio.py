@@ -70,7 +70,7 @@ T = {
         "arch_tab3": "MCP 서버 파이프라인",
         "arch": [
             "**마스터 이력서 + 프로필 그래프**\n\n이력서 전문과 아래 프로필 관계도를 시스템 프롬프트에 함께 주입\n_(약 3K 토큰)_",
-            "**Groq · Qwen3 32B**\n\n시스템 프롬프트 전문 주입\n`/no_think` · `<think>` 스트리밍 필터",
+            "**Groq · Qwen3 27B**\n\n시스템 프롬프트 전문 주입\n`/no_think` · `<think>` 스트리밍 필터",
             "**1인칭 스트리밍**\n\n멀티턴 대화 이력 유지\n박지상 본인처럼 실시간 답변",
         ],
         "arch_data": [
@@ -82,7 +82,7 @@ T = {
         "arch_mcp": [
             "**MCP 클라이언트**\n\nClaude Desktop · Cursor · Cline\nstdio로 서버 연결",
             "**fastmcp 서버**\n\n프로필·경력·프로젝트·기술·논문\n6개 툴 노출",
-            "**동적 Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\n1인칭 실시간 답변",
+            "**동적 Q&A**\n\n`ask_jisang` → Groq · Qwen3 27B\n1인칭 실시간 답변",
         ],
         "rag_note": "",
         "timeline_head": "## 경력 타임라인",
@@ -119,7 +119,7 @@ T = {
             {
                 "title": "JisangFolio",
                 "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸습니다. Qwen3 thinking은 `/no_think` + 스트리밍 필터로 제어합니다.",
-                "tags": "`Groq · Qwen3 32B` `Streamlit` `eval 하니스` `Python`",
+                "tags": "`Groq · Qwen3 27B` `Streamlit` `eval 하니스` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
@@ -157,7 +157,7 @@ T = {
         "arch_tab3": "MCP Server Pipeline",
         "arch": [
             "**Master Resume + Profile Graph**\n\nThe resume text and the profile graph below are injected into the system prompt\n_(~3K tokens)_",
-            "**Groq · Qwen3 32B**\n\nFull resume in system prompt\n`/no_think` · `<think>` streaming filter",
+            "**Groq · Qwen3 27B**\n\nFull resume in system prompt\n`/no_think` · `<think>` streaming filter",
             "**1st-person Streaming**\n\nMulti-turn conversation history\nAnswers as Jisang in real-time",
         ],
         "arch_data": [
@@ -169,7 +169,7 @@ T = {
         "arch_mcp": [
             "**MCP Client**\n\nClaude Desktop · Cursor · Cline\nConnects via stdio",
             "**fastmcp Server**\n\nProfile·Experience·Projects·Skills·Publications\n6 tools exposed",
-            "**Dynamic Q&A**\n\n`ask_jisang` → Groq · Qwen3 32B\nFirst-person real-time answers",
+            "**Dynamic Q&A**\n\n`ask_jisang` → Groq · Qwen3 27B\nFirst-person real-time answers",
         ],
         "rag_note": "",
         "timeline_head": "## Career Timeline",
@@ -206,7 +206,7 @@ T = {
             {
                 "title": "JisangFolio",
                 "desc": "This portfolio itself. The full resume (~3K tokens) is injected into the system prompt — no RAG needed — and I built a regression eval harness (rule-based scoring + a separate LLM judge) that keeps factual accuracy stable across prompt/model changes. It caught a stale resume copy leaking into the bot and lifted the pass rate from 62% to 94%. Qwen3 thinking is controlled via `/no_think` + a streaming filter.",
-                "tags": "`Groq · Qwen3 32B` `Streamlit` `eval harness` `Python`",
+                "tags": "`Groq · Qwen3 27B` `Streamlit` `eval harness` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
             {

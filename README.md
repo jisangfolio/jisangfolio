@@ -5,7 +5,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Groq](https://img.shields.io/badge/LLM-Groq_Qwen3_32B-F55036?logo=groq&logoColor=white)](https://groq.com/)
+[![Groq](https://img.shields.io/badge/LLM-Groq_Qwen3_27B-F55036?logo=groq&logoColor=white)](https://groq.com/)
 [![Plotly](https://img.shields.io/badge/Chart-Plotly-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
 [![FAISS](https://img.shields.io/badge/VectorDB-FAISS-009688?logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
 [![MCP](https://img.shields.io/badge/MCP-Server-blueviolet?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
@@ -71,7 +71,7 @@ jisangfolio/
 - **대화 내보내기**: 대화 기록을 텍스트 파일로 다운로드
 - **TEBO 샘플 데이터 내장**: 업로드 없이 SCIE 논문 실제 데이터(745건)로 즉시 체험
 - **LLM 라우터**: 집계·통계 질문 → pandas 코드 생성·샌드박스 실행 (코드 UI 표시), 검색·요약 → RAG, 실패 시 자동 폴백
-- **MCP 서버**: `fastmcp` 기반 6개 툴 노출, 동적 질문은 Groq + Qwen3 32B로 처리
+- **MCP 서버**: `fastmcp` 기반 6개 툴 노출, 동적 질문은 Groq + Qwen3 27B로 처리
 - **경력 타임라인**: Plotly Gantt 차트로 학력·경력·군복무·논문 시각화
 - **MLOps 대시보드 스크린샷**: KETI 연구 Prometheus+Grafana 실제 운영 화면 포함
 - **회귀 평가 하니스**: `evals/`에서 챗봇·라우터 출력을 결정적 채점(사실 키워드·금지어·형식) + LLM-as-judge로 정량 검증 — 프롬프트/모델 변경 시 품질 회귀 방지
@@ -84,7 +84,7 @@ jisangfolio/
 | 구분 | 기술 |
 |------|------|
 | UI/UX | Streamlit |
-| LLM | Groq · Qwen3 32B |
+| LLM | Groq · Qwen3 27B |
 | RAG & Vector DB | LangChain · FAISS · HuggingFace Embeddings (all-MiniLM-L6-v2) |
 | MCP Server | fastmcp |
 | Data Processing | Pandas |
@@ -97,7 +97,7 @@ graph LR
     subgraph 대화하기
         A[📄 Resume Text\nStreamlit Secrets] --> B[System Prompt\nContext Injection]
         C[🙋 User Question] --> B
-        B --> D[✨ Groq · Qwen3 32B]
+        B --> D[✨ Groq · Qwen3 27B]
         D -->|think 필터 + 스트리밍| E[💬 1인칭 답변]
     end
 
@@ -108,7 +108,7 @@ graph LR
         M --> N[샌드박스 실행 + 결과]
         L -->|검색/요약| I[RAG Retrieval\n+ LangChain]
         G --> I
-        I --> J[✨ Groq · Qwen3 32B]
+        I --> J[✨ Groq · Qwen3 27B]
         J -->|Streaming| K[📊 분석 답변]
         N -->|실패 시 폴백| I
     end
@@ -121,7 +121,7 @@ graph LR
         Q --> R4[get_skills]
         Q --> R5[get_publications]
         Q --> R6[ask_jisang]
-        R6 -->|동적 질문| D2[✨ Groq · Qwen3 32B]
+        R6 -->|동적 질문| D2[✨ Groq · Qwen3 27B]
     end
 ```
 
@@ -174,7 +174,7 @@ MCP는 오픈 프로토콜이라 Claude Desktop뿐 아니라 다양한 클라이
 | `get_projects` | 주요 프로젝트 · 개인 프로젝트 |
 | `get_skills` | 카테고리별 기술 스택 |
 | `get_publications` | SCIE 논문 및 기여 내용 |
-| `ask_jisang` | 자유 질문 → Groq + Qwen3 32B 1인칭 동적 답변 |
+| `ask_jisang` | 자유 질문 → Groq + Qwen3 27B 1인칭 동적 답변 |
 
 **연결 방법** — Claude Desktop 예시 (`~/Library/Application Support/Claude/claude_desktop_config.json`)
 

@@ -110,7 +110,7 @@ def get_projects() -> str:
 
 4. JisangFolio (jisangfolio.streamlit.app)
    - 이력서 기반 AI 면접 챗봇 + 데이터 분석 도구
-   - Groq + Qwen3 32B, 시스템 프롬프트 전문 주입(RAG 불필요)
+   - Groq + Qwen3 27B, 시스템 프롬프트 전문 주입(RAG 불필요)
    - LLM 라우터 → pandas 코드 생성·샌드박스 실행 or FAISS RAG
    - 현재 보고 계신 이 MCP 서버도 JisangFolio의 일부입니다
    - 스택: Streamlit, Groq, LangChain, FAISS, Plotly, fastmcp
@@ -180,7 +180,7 @@ def get_publications() -> str:
 @mcp.tool()
 def ask_jisang(question: str) -> str:
     """
-    박지상에게 자유롭게 질문하세요. Groq + Qwen3 32B가 1인칭으로 답변합니다.
+    박지상에게 자유롭게 질문하세요. Groq + Qwen3 27B가 1인칭으로 답변합니다.
     사용하려면 GROQ_API_KEY 환경변수가 필요합니다.
     """
     import os
@@ -210,7 +210,7 @@ def ask_jisang(question: str) -> str:
 
     client = Groq(api_key=api_key)
     response = client.chat.completions.create(
-        model="qwen/qwen3-32b",
+        model="qwen/qwen3.6-27b",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question},

@@ -136,7 +136,7 @@ if user_input:
 
         try:
             stream = client.chat.completions.create(
-                model="qwen/qwen3-32b",
+                model="qwen/qwen3.6-27b",
                 messages=messages,
                 stream=True,
             )
