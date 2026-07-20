@@ -19,7 +19,7 @@ except KeyError:
     st.error("⚠️ Secrets에 groq_api_key가 설정되지 않았습니다.")
     st.stop()
 
-GROQ_MODEL = "qwen/qwen3-32b"
+GROQ_MODEL = "qwen/qwen3.6-27b"
 SAMPLE_PATH = os.path.join(os.path.dirname(__file__), "..", "tebo_sample.xlsx")
 SAMPLE_NAME = "tebo_sample.xlsx"
 TEBO_SAMPLE_QUESTIONS = [
