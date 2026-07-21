@@ -18,6 +18,60 @@ JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOp
 - **Data Analysis** — upload a CSV/Excel file and an LLM router decides between generating & sandbox-executing pandas code (for aggregates) and hybrid retrieval — FAISS (dense) + BM25 (sparse) fused with RRF — for search, with automatic RAG fallback on code failure.
 - **MCP Server** — the portfolio data is exposed over the Model Context Protocol, so Claude Desktop / Cursor / Cline can query it directly.
 
+## Architecture
+
+Three pipelines behind one Streamlit surface, wired through two shared **single-source-of-truth** modules — `prompts.py` (prompt / post-processing) and `profile_graph.py` (the profile knowledge graph). Those same modules feed the app pages, the MCP server, the eval harness, *and* the tests, so the graph and the bot never drift apart. The two SSOT hubs are highlighted:
+
+```mermaid
+graph LR
+  subgraph App
+    n_jisangfolio["jisangfolio.py"]
+  end
+  subgraph Pages
+    n_1_Chat["1_Chat.py"]
+    n_2_Data_Analysis["2_Data_Analysis.py"]
+    n_3_Observability["3_Observability.py"]
+  end
+  subgraph MCP
+    n_jisangfolio_mcp["jisangfolio_mcp.py"]
+  end
+  subgraph Eval
+    n_run_evals["run_evals.py"]
+  end
+  subgraph Tests
+    tests["tests/"]
+  end
+  subgraph ssot["Shared / SSOT"]
+    n_guardrails["guardrails.py"]
+    n_observability["observability.py"]
+    n_profile_graph["profile_graph.py"]
+    n_prompts["prompts.py"]
+    n_ui["ui.py"]
+  end
+  n_1_Chat --> n_guardrails
+  n_1_Chat --> n_observability
+  n_1_Chat --> n_profile_graph
+  n_1_Chat --> n_prompts
+  n_1_Chat --> n_ui
+  n_2_Data_Analysis --> n_observability
+  n_2_Data_Analysis --> n_prompts
+  n_2_Data_Analysis --> n_ui
+  n_3_Observability --> n_observability
+  n_3_Observability --> n_ui
+  n_jisangfolio --> n_profile_graph
+  n_jisangfolio --> n_ui
+  n_jisangfolio_mcp --> n_prompts
+  n_prompts --> n_profile_graph
+  n_run_evals --> n_prompts
+  tests --> n_guardrails
+  tests --> n_profile_graph
+  tests --> n_prompts
+  classDef hub fill:#7AA2F7,stroke:#3b5bdb,color:#fff,font-weight:bold;
+  class n_prompts,n_profile_graph hub;
+```
+
+> Module-import graph, auto-derived from the codebase (GitHub renders this natively). An interactive, function-level version (vis-network, 88 nodes) is embedded on the [live site](https://jisangfolio.streamlit.app) and in `assets/codegraph.html`.
+
 ## Highlights
 
 - **The home is the portfolio** — a photo hero, About, a career timeline, Projects, Skills, Education, the pipeline diagrams, and two knowledge graphs, all on one page.
