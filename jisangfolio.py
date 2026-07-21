@@ -54,11 +54,9 @@ T = {
     "한국어": {
         "title": "박지상 (Jisang Park)",
         "subtitle": "Data Engineer · AI Researcher",
-        "location": "📍 KETI AX연구본부 &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "location": "📍 KETI AX연구본부<br>🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 대화하는 이력서",
         "hero_tagline": "읽지 말고, 물어보세요. 이력서에 대해 무엇이든 제 AI에게 직접 질문할 수 있습니다.",
-        "about_head": "## 소개",
-        "about_body": "미국에서 정보과학과 데이터를 공부하다, 군대에서 통역병으로 2년을 보내고 돌아왔습니다. 지금은 KETI에서 도시가 얼마나 뜨거워질지 예측하는 AI를 GPU 위에 올려, 원래 수십 분 걸리던 계산을 약 200밀리초 안에 답하게 만들고 있습니다.\n\n화려한 모델보다 \"새벽 3시에 이 서버가 죽어도 누가 고칠 수 있는가\"를 더 오래 고민하는 쪽입니다. 배포·서빙·모니터링처럼 지루하지만 안 죽는 걸 만드는 일을 좋아합니다.",
         "edu_head": "## 학력",
         "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — Information Science + Data Science 학사 · GPA 3.89/4.0 · 2025.12  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**주요 이수 과목** (강의 프로젝트 수준): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means 직접구현) · INFO330 Database (T-SQL) · STAT207 · MATH227",
         "how_head": "## 파이프라인",
@@ -146,11 +144,9 @@ T = {
     "English": {
         "title": "Jisang Park (박지상)",
         "subtitle": "Data Engineer · AI Researcher",
-        "location": "📍 KETI AX Research Division &nbsp;|&nbsp; 🎓 UIUC Information Science + Data Science",
+        "location": "📍 KETI AX Research Division<br>🎓 UIUC Information Science + Data Science",
         "tagline_head": "## A Resume You Talk To",
         "hero_tagline": "Don't read it — ask it. You can ask my AI anything about my resume, live.",
-        "about_head": "## About",
-        "about_body": "I studied information science and data in the U.S., spent two years as a military interpreter, and came back to build things that don't fall over. At KETI I put an urban-cooling AI on a GPU so that a computation that used to take tens of minutes now answers in about 200 milliseconds.\n\nI care less about flashy models and more about \"who fixes this server when it dies at 3 a.m.\" I like the unglamorous work — deployment, serving, monitoring — that keeps things alive.",
         "edu_head": "## Education",
         "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — B.S., Information Science + Data Science · GPA 3.89/4.0 · Dec 2025  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**Selected coursework** (course projects): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means from scratch) · INFO330 Database (T-SQL) · STAT207 · MATH227",
         "how_head": "## Pipelines",
@@ -305,14 +301,11 @@ with _hero_photo:
 
 st.divider()
 
-# ── 소개 ──────────────────────────────────────────────────────────
-st.markdown(t["about_head"])
-st.markdown(t["about_body"])
-
-st.divider()
-
 # ── 경력 타임라인 ─────────────────────────────────────────────────
 st.markdown(t["timeline_head"])
+
+# y축을 '가장 이른 시작일' 기준 시간순으로 정렬 → 위에서 아래로 읽으면 시간 흐름(계단식)
+_y_order = df.sort_values(col_시작)[col_항목].drop_duplicates().tolist()
 
 fig = px.timeline(
     df,
@@ -325,9 +318,10 @@ fig = px.timeline(
     hover_data={col_상세: True, col_시작: "|%Y.%m", col_종료: "|%Y.%m", col_구분: False, col_항목: False},
     labels={col_항목: "", col_구분: ""},
 )
-fig.update_yaxes(autorange="reversed")
+fig.update_yaxes(categoryorder="array", categoryarray=_y_order, autorange="reversed")
 fig.update_layout(
-    height=320,
+    height=460,
+    bargap=0.28,
     margin=dict(l=0, r=10, t=10, b=10),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     xaxis_title="",
