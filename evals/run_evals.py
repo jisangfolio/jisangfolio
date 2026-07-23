@@ -21,7 +21,9 @@ import re
 import sys
 import time
 import tomllib
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+_KST = timezone(timedelta(hours=9))  # 표시용 한국 표준시
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -243,7 +245,7 @@ def pct(n, d):
 
 def write_report(chat_results, router_results, use_judge, judge_model):
     lines = ["# JisangFolio 평가 리포트", ""]
-    lines.append(f"- 생성: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    lines.append(f"- 생성: {datetime.now(_KST).strftime('%Y-%m-%d %H:%M')}")
     lines.append(f"- 챗봇 모델: `{CHAT_MODEL}` (temperature=0.2)")
     if use_judge:
         lines.append(f"- 심사(judge) 모델: `{judge_model}` (temperature=0) — 자기채점 편향 회피용 별도 모델")

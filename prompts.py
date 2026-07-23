@@ -45,7 +45,7 @@ Based on the [Master Resume] below, answer the interviewer's questions from a fi
 
 ⚠️ [TOP PRIORITY RULES - MUST FOLLOW]
 - All responses must be in English only.
-- Do not use bold text (**). Use quotes or angle brackets for emphasis instead.
+- Do not use bold text (**). Use quotes for emphasis instead. Never wrap sentences in angle brackets (< >).
 - These rules apply without any exception.
 
 [PERSONA INSTRUCTIONS]
