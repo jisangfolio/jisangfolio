@@ -8,6 +8,7 @@ from guardrails import check_input, blocked_message
 from observability import log_trace
 from profile_graph import graph_retrieve
 from sheetlog import log_conversation
+from notify import notify_new_session
 import uuid
 
 _KST = timezone(timedelta(hours=9))  # 표시용 한국 표준시(서버 UTC 무관하게 고정)
@@ -217,3 +218,10 @@ if user_input:
             except Exception as e:
                 err = "답변 생성 중 오류가 발생했습니다" if lang == "한국어" else "Error generating response"
                 st.error(f"{err}: {e}")
+
+    # 📧 새 방문자(세션 첫 메시지)면 즉시 이메일 알림 — 턴 끝 실행이라 응답 지연 없음
+    # ?dev 파라미터로 들어온 방문(=본인 테스트)은 알림 제외 (jisangfolio.streamlit.app/?dev=1)
+    if not st.session_state.get("_notified"):
+        if "dev" not in st.query_params:
+            notify_new_session(st.session_state["_sid"], user_input)
+        st.session_state["_notified"] = True
