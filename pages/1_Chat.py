@@ -7,6 +7,8 @@ import time
 from guardrails import check_input, blocked_message
 from observability import log_trace
 from profile_graph import graph_retrieve
+from sheetlog import log_conversation
+import uuid
 
 st.set_page_config(page_title="JisangFolio · Chat", page_icon="💬")
 apply_style()
@@ -43,6 +45,8 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "pending_question" not in st.session_state:
     st.session_state.pending_question = None
+if "_sid" not in st.session_state:
+    st.session_state["_sid"] = uuid.uuid4().hex[:8]  # 익명 방문 세션 식별자
 
 
 def format_chat_for_export(history, lang):
@@ -138,6 +142,8 @@ if user_input:
             st.session_state.chat_history.append(("assistant", guard_msg))
             log_trace(page="chat", model="qwen/qwen3.6-27b", route="blocked",
                       latency_ms=0, guard=verdict["category"], ok=False)
+            log_conversation(st.session_state["_sid"], "chat", user_input, guard_msg,
+                             guard=verdict["category"], model="qwen/qwen3.6-27b")
         else:
             # 🕸 GraphRAG — 질문 관련 서브그래프를 탐색해 '집중 근거'로 주입
             gr = graph_retrieve(user_input, lang=lang)
@@ -201,6 +207,9 @@ if user_input:
                 log_trace(page="chat", model="qwen/qwen3.6-27b", route="chat",
                           latency_ms=int((time.time() - t0) * 1000),
                           guard="ok", nodes=gr["seeds"], ok=True)
+                log_conversation(st.session_state["_sid"], "chat", user_input, full_response,
+                                 latency_ms=int((time.time() - t0) * 1000), guard="ok",
+                                 model="qwen/qwen3.6-27b")
                 if gr["seeds"]:
                     st.caption(f"🕸 GraphRAG · traversed {len(gr['nodes'])} nodes: " + " · ".join(gr["nodes"][:8]))
             except Exception as e:
