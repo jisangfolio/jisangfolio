@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from ui import apply_style
 from observability import get_traces, clear_traces
+
+_KST = timezone(timedelta(hours=9))  # 표시용 한국 표준시(서버 UTC 무관하게 고정)
 
 st.set_page_config(page_title="JisangFolio · Observability", page_icon="📈")
 apply_style()
@@ -30,7 +32,7 @@ if not traces:
     st.stop()
 
 df = pd.DataFrame(traces)
-df["time"] = df["ts"].apply(lambda t: datetime.fromtimestamp(t).strftime("%H:%M:%S"))
+df["time"] = df["ts"].apply(lambda t: datetime.fromtimestamp(t, _KST).strftime("%H:%M:%S"))
 df["nodes_str"] = df["nodes"].apply(lambda n: ", ".join(n) if isinstance(n, list) else "")
 
 # --- Metrics ---
@@ -52,5 +54,5 @@ with col_b:
 
 st.subheader("Recent traces")
 show = df[["time", "page", "route", "model", "latency_ms", "guard", "nodes_str"]].iloc[::-1].head(50)
-show = show.rename(columns={"latency_ms": "latency(ms)", "nodes_str": "graph nodes"})
+show = show.rename(columns={"time": "time (KST)", "latency_ms": "latency(ms)", "nodes_str": "graph nodes"})
 st.dataframe(show, use_container_width=True, hide_index=True)

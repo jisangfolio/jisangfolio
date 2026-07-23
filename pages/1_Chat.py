@@ -1,6 +1,6 @@
 import streamlit as st
 from groq import Groq
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from prompts import build_system_prompt, clean_response
 from ui import apply_style
 import time
@@ -9,6 +9,8 @@ from observability import log_trace
 from profile_graph import graph_retrieve
 from sheetlog import log_conversation
 import uuid
+
+_KST = timezone(timedelta(hours=9))  # 표시용 한국 표준시(서버 UTC 무관하게 고정)
 
 st.set_page_config(page_title="JisangFolio · Chat", page_icon="💬")
 apply_style()
@@ -53,7 +55,7 @@ def format_chat_for_export(history, lang):
     label_user = "면접관" if lang == "한국어" else "Interviewer"
     label_ai = "박지상" if lang == "한국어" else "Jisang"
     header = "JisangFolio 대화 기록" if lang == "한국어" else "JisangFolio Chat Log"
-    lines = [f"{header} ({datetime.now().strftime('%Y-%m-%d %H:%M')})", "=" * 40, ""]
+    lines = [f"{header} ({datetime.now(_KST).strftime('%Y-%m-%d %H:%M')})", "=" * 40, ""]
     for role, msg in history:
         label = label_user if role == "user" else label_ai
         lines.append(f"[{label}]")
@@ -104,7 +106,7 @@ with st.sidebar:
         st.download_button(
             label=export_label,
             data=format_chat_for_export(st.session_state.chat_history, lang),
-            file_name=f"jisangfolio_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+            file_name=f"jisangfolio_{datetime.now(_KST).strftime('%Y%m%d_%H%M')}.txt",
             mime="text/plain",
             use_container_width=True,
         )
