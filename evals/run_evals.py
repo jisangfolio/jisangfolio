@@ -234,6 +234,56 @@ def run_router_evals(client, cases):
     return results
 
 
+# ── Agentic RAG 평가 ────────────────────────────────────────────────
+def run_rag_evals(secrets, cases):
+    """MLOps 문서 Agentic RAG 평가 — 검색 히트·근거·거절을 검증.
+
+    앱 페이지(pages/4)와 동일한 agentic_answer(검색→관련성평가→재작성→생성→근거점검)를
+    그대로 호출하므로 '실제 운영 경로'를 채점한다.
+    채점: 결정적(키워드 포함/금지) + 검색 vendor 히트 + 근거 자기점검(grounded).
+    """
+    from langchain_groq import ChatGroq
+    from rag_corpus import build_retriever
+    from agent_rag import agentic_answer
+
+    print("  검색기 구축(임베딩)...")
+    retriever = build_retriever(k=5)
+    llm = ChatGroq(model=CHAT_MODEL, groq_api_key=secrets["groq_api_key"],
+                   temperature=0, reasoning_effort="none", max_tokens=1500)
+
+    results = []
+    for i, case in enumerate(cases, 1):
+        res = agentic_answer(llm, retriever, case["q"], max_retries=1)
+        answer = res["answer"]
+        grounded = (res["grounded"] == "YES")
+        inc_ok, inc_note = check_includes(answer, case.get("must_include_any", []))
+        exc_ok, exc_note = check_excludes(answer, case.get("must_not_include", []))
+
+        # 검색 히트: 기대 vendor가 검색된 청크에 포함됐는가
+        vendors = sorted({c.metadata.get("vendor", "") for c in res["chunks"]})
+        ret_ok, ret_note = True, ""
+        if case.get("expect_vendor"):
+            ret_ok = case["expect_vendor"] in vendors
+            ret_note = f"검색 vendor={vendors}"
+
+        if case["category"] == "refuse":
+            passed = inc_ok and exc_ok and grounded
+        else:  # factual
+            passed = inc_ok and exc_ok and ret_ok and grounded
+
+        results.append({
+            "id": case["id"], "category": case["category"], "q": case["q"],
+            "answer": answer, "inc_ok": inc_ok, "inc_note": inc_note,
+            "exc_ok": exc_ok, "exc_note": exc_note, "ret_ok": ret_ok, "ret_note": ret_note,
+            "grounded": grounded, "rewrote": res["rewrote"], "passed": passed,
+        })
+        mark = "PASS" if passed else "FAIL"
+        print(f"  [{i:2}/{len(cases)}] {mark}  {case['id']} ({case['category']})"
+              + ("  ✏️rewrote" if res["rewrote"] else ""))
+        time.sleep(SLEEP)
+    return results
+
+
 # ── 리포트 ──────────────────────────────────────────────────────────
 def load_jsonl(path):
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
@@ -243,7 +293,7 @@ def pct(n, d):
     return f"{(100 * n / d):.0f}%" if d else "N/A"
 
 
-def write_report(chat_results, router_results, use_judge, judge_model):
+def write_report(chat_results, router_results, rag_results, use_judge, judge_model):
     lines = ["# JisangFolio 평가 리포트", ""]
     lines.append(f"- 생성: {datetime.now(_KST).strftime('%Y-%m-%d %H:%M')}")
     lines.append(f"- 챗봇 모델: `{CHAT_MODEL}` (temperature=0.2)")
@@ -293,12 +343,48 @@ def write_report(chat_results, router_results, use_judge, judge_model):
                 lines.append(f"- **{r['id']}**: 기대=`{r['expected']}` 예측=`{r['pred']}` — {r['q']}")
             lines.append("")
 
+    if rag_results:
+        n = len(rag_results)
+        passed = sum(r["passed"] for r in rag_results)
+        rew = sum(r["rewrote"] for r in rag_results)
+        lines += [f"## 3. Agentic RAG 평가 — {passed}/{n} 통과 ({pct(passed, n)})", ""]
+        lines.append("- 코퍼스: MLOps 파이프라인 공식 문서(Google·AWS·Azure·Vertex) + 온프레 KETI 파이프라인(정제본)")
+        lines.append(f"- 경로: agentic_answer(검색→관련성평가→쿼리재작성→생성→근거 자기점검) — 재작성 발동 {rew}/{n}건")
+        lines.append("- 채점: 결정적 키워드(포함·금지) + 검색 vendor 히트 + 근거 자기점검(grounded)")
+        lines.append("")
+        cats = {}
+        for r in rag_results:
+            cats.setdefault(r["category"], []).append(r["passed"])
+        lines.append("| 카테고리 | 통과율 |")
+        lines.append("|---|---|")
+        for c, vals in cats.items():
+            lines.append(f"| {c} | {sum(vals)}/{len(vals)} ({pct(sum(vals), len(vals))}) |")
+        lines.append("")
+        fails = [r for r in rag_results if not r["passed"]]
+        if fails:
+            lines += ["### 실패 케이스", ""]
+            for r in fails:
+                notes = []
+                if not r["inc_ok"]:
+                    notes.append(r["inc_note"])
+                if not r["exc_ok"]:
+                    notes.append(r["exc_note"])
+                if not r["ret_ok"]:
+                    notes.append("검색 미스: " + r["ret_note"])
+                if not r["grounded"]:
+                    notes.append("근거 자기점검 실패(grounded=NO)")
+                lines.append(f"- **{r['id']}** ({r['category']}) — {'; '.join(notes) or '판정 불일치'}")
+                lines.append(f"  - Q: {r['q']}")
+                lines.append(f"  - A: {r['answer'][:200]}{'...' if len(r['answer']) > 200 else ''}")
+            lines.append("")
+
     lines += [
         "## 한계 (정직한 표기)", "",
         "- 결정적 키워드 채점은 표면 문자열 매칭이라 '키워드는 있으나 맥락이 틀린' 거짓 통과가 가능 → LLM judge가 grounding을 보조 점검.",
         "- LLM judge는 비결정적이라 동일 답변에도 판정이 흔들릴 수 있음 → 하드 게이트는 결정적 채점에 둠.",
         "- 라우터 정확도는 표본 n이 작고 라벨 경계가 일부 주관적(요약·의미 질문). 절대 수치보다 프롬프트 변경 전후 비교에 의미.",
         "- 챗봇 평가는 단발(single-turn) 경로이며 멀티턴 회귀는 범위 밖.",
+        "- RAG 근거 자기점검(grounded)은 LLM 판정이라 비결정적이고, 키워드 기반 사실 채점은 '맥락 틀린 거짓 통과' 여지가 있음. 표본 n도 작아 회귀 비교용 지표로 사용.",
         "",
         "## 사용 패턴 (회귀 게이트)", "",
         "프롬프트나 모델을 바꾸기 전 이 스크립트를 돌려 통과율을 기록하고, 변경 후 다시 돌려 **before/after**를 비교한다. "
@@ -316,6 +402,7 @@ def main():
     ap.add_argument("--no-judge", action="store_true", help="LLM judge 생략")
     ap.add_argument("--chat-only", action="store_true")
     ap.add_argument("--router-only", action="store_true")
+    ap.add_argument("--rag-only", action="store_true")
     args = ap.parse_args()
 
     secrets = load_secrets()
@@ -325,6 +412,7 @@ def main():
 
     chat_cases = load_jsonl(EVAL_DIR / "golden_chat.jsonl")
     router_cases = load_jsonl(EVAL_DIR / "golden_router.jsonl")
+    rag_cases = load_jsonl(EVAL_DIR / "golden_rag.jsonl")
 
     if args.quick:
         seen, picked = set(), []
@@ -333,19 +421,25 @@ def main():
                 seen.add(c["category"]); picked.append(c)
         chat_cases = picked
         router_cases = router_cases[:4]
+        rag_cases = rag_cases[:4]
 
-    chat_results, router_results = [], []
+    chat_results, router_results, rag_results = [], [], []
     judge_model = JUDGE_MODEL
+    run_all = not (args.chat_only or args.router_only or args.rag_only)
 
-    if not args.router_only:
+    if run_all or args.chat_only:
         print(f"\n■ 챗봇 평가 ({len(chat_cases)}건, judge={'ON' if use_judge else 'OFF'})")
         chat_results = run_chat_evals(client, resume, chat_cases, use_judge, judge_model)
 
-    if not args.chat_only:
+    if run_all or args.rag_only:
+        print(f"\n■ Agentic RAG 평가 ({len(rag_cases)}건)")
+        rag_results = run_rag_evals(secrets, rag_cases)
+
+    if run_all or args.router_only:
         print(f"\n■ 라우터 평가 ({len(router_cases)}건)")
         router_results = run_router_evals(client, router_cases)
 
-    write_report(chat_results, router_results, use_judge, judge_model)
+    write_report(chat_results, router_results, rag_results, use_judge, judge_model)
 
 
 if __name__ == "__main__":

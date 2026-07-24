@@ -96,6 +96,69 @@ ROUTER_PROMPT_TEMPLATE = """/no_think
 PANDAS 또는 RAG 중 하나만 출력하세요. 다른 말은 하지 마세요."""
 
 
+# ── MLOps 문서 Agentic RAG 프롬프트 (pages/4 · rag_corpus.py · evals 공유) ──
+# 코퍼스 = 공식 클라우드 MLOps 문서(Google/AWS/Azure/Vertex) + 온프레 KETI 파이프라인.
+# 규칙: 제공된 컨텍스트만 근거로, 출처 번호 인용, 질문 언어로 답변.
+RAG_ANSWER_PROMPT_TEMPLATE = """/no_think
+You are an assistant that answers questions about MLOps pipelines using ONLY the documentation excerpts provided below. The corpus contains official cloud docs (Google Cloud, AWS SageMaker, Azure ML, Vertex AI) and an on-prem KETI MLOps pipeline reference.
+
+Rules:
+1. Answer ONLY from the [Context] below. If the answer is not in the context, say plainly that it is not in the indexed docs — do NOT use outside knowledge or guess.
+2. Cite every claim with the bracket number(s) of the excerpt(s) you used, e.g. [1], [3].
+3. Answer in the SAME language as the question (Korean question → Korean answer, English → English).
+4. Be concise and technical. Do not use markdown bold (**).
+
+[Context]
+{context}
+
+[Question]
+{question}
+
+Answer (with [n] citations):"""
+
+
+# ── 관련성 평가 프롬프트 (Agentic RAG: 검색 결과가 질문에 쓸모있나?) ──
+# Phase 2 에이전트 루프의 판단 단계. "yes/no"만 출력하게 해 결정적으로 파싱.
+RAG_GRADE_PROMPT_TEMPLATE = """/no_think
+You are a relevance grader for a retrieval system. Decide whether the retrieved excerpts contain enough information to answer the question.
+
+[Question]
+{question}
+
+[Retrieved excerpts]
+{context}
+
+Answer with exactly one word: YES if the excerpts are sufficient to answer, or NO if they are off-topic or insufficient. Output only YES or NO."""
+
+
+# ── 쿼리 재작성 프롬프트 (Agentic RAG: 검색 실패 시 질문을 바꿔 재검색) ──
+# 교차언어(한↔영)·키워드 보강을 위해 검색용 쿼리를 다시 쓴다.
+RAG_REWRITE_PROMPT_TEMPLATE = """/no_think
+The following search query returned poor results from a bilingual (English + Korean) MLOps documentation corpus. Rewrite it into a better search query.
+
+Guidance:
+- If the query is English but the target docs may be Korean (e.g., the on-prem KETI pipeline), add key Korean technical terms.
+- Add concrete technical keywords (tool names, pipeline stages) that would appear in the docs.
+- Output ONLY the rewritten query, one line, no explanation.
+
+Original query: {question}
+Rewritten query:"""
+
+
+# ── 근거 자기점검 프롬프트 (Agentic RAG: 생성한 답이 컨텍스트로 뒷받침되나?) ──
+# 생성 후 검증 단계. 답변이 컨텍스트 밖 사실을 지어냈는지 잡는 faithfulness 게이트.
+RAG_GROUNDEDNESS_PROMPT_TEMPLATE = """/no_think
+You are a groundedness checker. Determine whether the ANSWER is fully supported by the CONTEXT excerpts, with no fabricated claims beyond the context. A refusal like "not in the indexed docs" counts as grounded.
+
+[Context]
+{context}
+
+[Answer]
+{answer}
+
+Reply with exactly one word: YES if every factual claim in the answer is supported by the context (or it is a refusal), or NO if the answer contains unsupported/fabricated claims. Output only YES or NO."""
+
+
 # ── <think> 스트리밍 후처리 (앱 여러 곳에 흩어진 로직의 순수 함수 버전) ──
 _THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL)
 
