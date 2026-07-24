@@ -60,7 +60,7 @@ T = {
         "edu_head": "## 학력",
         "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — Information Science + Data Science 학사 · GPA 3.89/4.0 · 2025.12  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**주요 이수 과목** (강의 프로젝트 수준): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means 직접구현) · INFO330 Database (T-SQL) · STAT207 · MATH227",
         "how_head": "## 파이프라인",
-        "how_intro": "챗봇·데이터분석·MCP 서버가 각각 별도의 파이프라인으로 돌아갑니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
+        "how_intro": "챗봇·데이터분석·MCP 서버·MLOps 문서 Agentic RAG가 각각 별도의 파이프라인으로 돌아갑니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
         "graph_head": "## 코드베이스 구조 그래프",
         "graph_bullets": (
             "- **단일 소스(SSOT):** 프롬프트·후처리(`prompts.py`)를 앱 페이지와 평가 하니스가 공유합니다 — 그래프에서 `build_system_prompt`이 여러 파이프라인을 잇는 허브로 나타납니다.  \n"

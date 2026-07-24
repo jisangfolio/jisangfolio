@@ -142,8 +142,11 @@ NODES = [
      "desc_ko": "챗·데이터 매 턴을 트레이싱(지연·모델·라우팅·가드결과) — Langfuse/Phoenix 개념 인하우스 대시보드.",
      "desc_en": "Every chat/data turn is traced (latency·model·routing·guard verdict) — a Langfuse/Phoenix-style in-house dashboard."},
     {"id": "hybrid", "group": "skill", "ko": "Hybrid RAG", "en": "Hybrid RAG",
-     "desc_ko": "FAISS(dense) + BM25(sparse)를 Reciprocal Rank Fusion으로 융합 — JisangData 검색 경로.",
-     "desc_en": "FAISS (dense) + BM25 (sparse) fused with Reciprocal Rank Fusion — JisangData's search path."},
+     "desc_ko": "FAISS(dense) + BM25(sparse)를 Reciprocal Rank Fusion으로 융합 — JisangData·MLOps Docs 검색 경로.",
+     "desc_en": "FAISS (dense) + BM25 (sparse) fused with Reciprocal Rank Fusion — JisangData & MLOps Docs search path."},
+    {"id": "agenticrag", "group": "skill", "ko": "Agentic RAG", "en": "Agentic RAG",
+     "desc_ko": "MLOps 문서 코퍼스(클라우드 4사+온프레 KETI)에 대한 자기교정 루프 — 검색→관련성 평가→쿼리 재작성·재검색→근거 인용→근거 자기점검. 코퍼스 밖 질문 거절, 골든셋 회귀 평가(9/9).",
+     "desc_en": "A self-correcting loop over an MLOps docs corpus (4 clouds + on-prem KETI) — retrieve→grade→rewrite & re-retrieve→cite→self-check groundedness. Refuses out-of-corpus questions; golden-set regression (9/9)."},
 ]
 
 EDGES = [
@@ -165,6 +168,10 @@ EDGES = [
     # 개인 프로젝트 → 기술 (공유 노드로 교차연결)
     ("jf", "eval"), ("jf", "groq"), ("jf", "streamlit"),
     ("jf", "graphrag"), ("jf", "guardrails"), ("jf", "observability"),
+    ("jf", "agenticrag"),
+    # Agentic RAG → 기술 (교차연결: 코퍼스에 온프레 MLOps 파이프라인 포함)
+    ("agenticrag", "hybrid"), ("agenticrag", "faiss"), ("agenticrag", "langchain"),
+    ("agenticrag", "groq"), ("agenticrag", "eval"), ("agenticrag", "mlops"),
     ("jd", "langchain"), ("jd", "faiss"), ("jd", "groq"), ("jd", "streamlit"),
     ("jd", "hybrid"), ("jd", "observability"),
     ("mcp", "groq"),
