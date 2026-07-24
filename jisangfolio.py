@@ -87,6 +87,13 @@ T = {
             "**fastmcp 서버**\n\n프로필·경력·프로젝트·기술·논문\n6개 툴 노출",
             "**동적 Q&A**\n\n`ask_jisang` → Groq · Qwen3 27B\n1인칭 실시간 답변",
         ],
+        "arch_tab4": "Agentic RAG 파이프라인",
+        "arch_agentic": [
+            "**하이브리드 검색**\n\nFAISS(dense) + BM25(sparse)\nRRF로 융합",
+            "**관련성 평가 + 재작성**\n\n부실하면 쿼리 재작성 후\n재검색 (자기교정 루프)",
+            "**근거 인용 생성**\n\n검색된 청크만 근거로 [n] 인용\n코퍼스 밖이면 거절",
+            "**근거 자기점검**\n\n답이 컨텍스트로 뒷받침되나\nfaithfulness 확인",
+        ],
         "rag_note": "",
         "timeline_head": "## 경력 타임라인",
         "proj_head": "## 주요 프로젝트",
@@ -113,7 +120,7 @@ T = {
         "stack_head": "## 기술 스택",
         "profilegraph_head": "## 프로필 구조 그래프",
         "stacks": [
-            ("**AI / LLM**", "LangChain · RAG · GraphRAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
+            ("**AI / LLM**", "LangChain · RAG · GraphRAG · Agentic RAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
             ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · GitHub Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
         ],
@@ -126,10 +133,16 @@ T = {
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
+                "title": "MLOps Docs Assistant",
+                "desc": "방대한 MLOps 파이프라인 문서(Google·AWS·Azure·Vertex 공식 문서 + 온프레 KETI 파이프라인)를 질의하는 Agentic RAG입니다. 검색→관련성 평가→쿼리 재작성·재검색→근거 인용→근거 자기점검의 자기교정 루프로, 코퍼스 밖 질문은 거절하고 검색·근거 충실성을 골든셋으로 회귀 평가(9/9)합니다.",
+                "tags": "`Agentic RAG` `FAISS+BM25` `Self-correction` `Groundedness eval`",
+                "link": "page:pages/4_MLOps_Docs.py",
+            },
+            {
                 "title": "JisangData",
                 "desc": "LLM 라우터가 질문 유형을 판별해 집계·통계 질문은 pandas 코드를 생성·샌드박스 실행하고, 검색·요약 질문은 FAISS RAG로 처리합니다. 코드 실행 실패 시 RAG 자동 폴백.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas 코드 생성` `Streamlit`",
-                "link": "page:데이터분석",
+                "link": "page:pages/2_Data_Analysis.py",
             },
             {
                 "title": "JisangFolio MCP Server",
@@ -177,6 +190,13 @@ T = {
             "**fastmcp Server**\n\nProfile·Experience·Projects·Skills·Publications\n6 tools exposed",
             "**Dynamic Q&A**\n\n`ask_jisang` → Groq · Qwen3 27B\nFirst-person real-time answers",
         ],
+        "arch_tab4": "Agentic RAG Pipeline",
+        "arch_agentic": [
+            "**Hybrid Retrieval**\n\nFAISS (dense) + BM25 (sparse)\nfused with RRF",
+            "**Grade + Rewrite**\n\nIf weak, rewrite the query\n& re-retrieve (self-correction)",
+            "**Cited Generation**\n\nAnswer only from retrieved chunks\nwith [n] citations; refuse if out-of-corpus",
+            "**Groundedness Self-check**\n\nVerify the answer is supported\nby the context (faithfulness)",
+        ],
         "rag_note": "",
         "timeline_head": "## Career Timeline",
         "proj_head": "## Key Projects",
@@ -203,7 +223,7 @@ T = {
         "stack_head": "## Tech Stack",
         "profilegraph_head": "## Profile graph",
         "stacks": [
-            ("**AI / LLM**", "LangChain · RAG · GraphRAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
+            ("**AI / LLM**", "LangChain · RAG · GraphRAG · Agentic RAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
             ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · GitHub Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
         ],
@@ -216,10 +236,16 @@ T = {
                 "link": "https://jisangfolio.streamlit.app",
             },
             {
+                "title": "MLOps Docs Assistant",
+                "desc": "An Agentic RAG over a large MLOps pipeline corpus (official Google/AWS/Azure/Vertex docs + an on-prem KETI pipeline reference). A self-correcting loop — retrieve → grade relevance → rewrite & re-retrieve → answer with citations → self-check groundedness — refuses out-of-corpus questions and is regression-tested (retrieval hit + faithfulness) on a golden set (9/9).",
+                "tags": "`Agentic RAG` `FAISS+BM25` `Self-correction` `Groundedness eval`",
+                "link": "page:pages/4_MLOps_Docs.py",
+            },
+            {
                 "title": "JisangData",
                 "desc": "An LLM router classifies each question: aggregation/stats queries generate and sandbox-execute pandas code; search/summary queries use FAISS RAG. Auto-fallback to RAG on code error.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas Code Gen` `Streamlit`",
-                "link": "page:데이터분석",
+                "link": "page:pages/2_Data_Analysis.py",
             },
             {
                 "title": "JisangFolio MCP Server",
@@ -380,7 +406,7 @@ st.divider()
 # ── 작동 원리 ─────────────────────────────────────────────────────
 st.markdown(t["how_head"])
 st.caption(t["how_intro"])
-tab1, tab2, tab3 = st.tabs([t["arch_tab1"], t["arch_tab2"], t["arch_tab3"]])
+tab1, tab2, tab3, tab4 = st.tabs([t["arch_tab1"], t["arch_tab2"], t["arch_tab3"], t["arch_tab4"]])
 with tab1:
     col1, col2, col3, col4, col5 = st.columns([3, 1, 3, 1, 3])
     with col1:
@@ -404,6 +430,12 @@ with tab3:
     for box, content in zip([m1, m3, m5], t["arch_mcp"]):
         box.info(content)
     for arrow in [m2, m4]:
+        arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+with tab4:
+    a1, a2, a3, a4, a5, a6, a7 = st.columns([3, 1, 3, 1, 3, 1, 3])
+    for box, content in zip([a1, a3, a5, a7], t["arch_agentic"]):
+        box.info(content)
+    for arrow in [a2, a4, a6]:
         arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
 
 # ── 프로필 구조 그래프 (프로필 SSOT — 챗봇과 데이터 공유) ──────────
@@ -439,4 +471,4 @@ for col, proj in zip(cols, t["personal_projects"]):
             st.caption(proj["tags"])
             if proj["link"] and proj["link"].startswith("page:"):
                 if st.button("사용해 보기 →" if lang == "한국어" else "Try it →", key=proj["title"], use_container_width=True):
-                    st.switch_page("pages/2_Data_Analysis.py")
+                    st.switch_page(proj["link"].split("page:", 1)[1])

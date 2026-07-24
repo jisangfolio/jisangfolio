@@ -1,0 +1,9 @@
+{"id": "rag-gcp-l1", "category": "factual", "q": "What is MLOps maturity level 1?", "must_include_any": ["pipeline automation", "continuous training"], "must_not_include": [], "expect_vendor": "Google Cloud"}
+{"id": "rag-sagemaker-steps", "category": "factual", "q": "What pipeline step types does SageMaker Pipelines support?", "must_include_any": ["Processing", "RegisterModel"], "must_not_include": [], "expect_vendor": "AWS"}
+{"id": "rag-vertex-lineage", "category": "factual", "q": "How does Vertex AI Pipelines track artifact lineage?", "must_include_any": ["ML Metadata", "lineage", "metadata"], "must_not_include": [], "expect_vendor": "Google Cloud"}
+{"id": "rag-azure-why", "category": "factual", "q": "Why use Azure Machine Learning pipelines?", "must_include_any": ["MLOps", "component", "reuse", "collaboration"], "must_not_include": [], "expect_vendor": "Microsoft Azure"}
+{"id": "rag-retrain-triggers", "category": "factual", "q": "What triggers retraining in an ML pipeline?", "must_include_any": ["scheduled", "on-demand", "performance"], "must_not_include": [], "expect_vendor": "Google Cloud"}
+{"id": "rag-keti-triton", "category": "factual", "q": "온프레 KETI 파이프라인은 Triton으로 모델을 어떻게 서빙했나?", "must_include_any": ["Triton", "EXPLICIT"], "must_not_include": [], "expect_vendor": "self / on-prem"}
+{"id": "rag-keti-ci", "category": "factual", "q": "KETI 파이프라인의 CI는 무엇으로 구성했나?", "must_include_any": ["Gitea", "ONNX"], "must_not_include": [], "expect_vendor": "self / on-prem"}
+{"id": "rag-refuse-france", "category": "refuse", "q": "What is the capital of France?", "must_include_any": ["not in", "indexed docs", "does not", "no information"], "must_not_include": ["Paris"]}
+{"id": "rag-refuse-worldcup", "category": "refuse", "q": "Who won the 2022 World Cup?", "must_include_any": ["not in", "indexed docs", "does not", "no information"], "must_not_include": ["Argentina", "Messi"]}

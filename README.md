@@ -12,15 +12,16 @@
 
 ## Overview
 
-JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOps engineer. Three independent pipelines run behind one Streamlit surface:
+JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOps engineer. Four independent pipelines run behind one Streamlit surface:
 
 - **Chat** — the résumé is injected directly into the system prompt (no document RAG needed for ~3K tokens), GraphRAG retrieves a focused profile subgraph per question as extra grounding, and the bot answers in the first person, as me. Runs on Groq (Qwen3, reasoning disabled for low latency), with a Korean/English toggle, a guardrails layer + off-topic scope guard, and a post-processing filter that keeps Korean answers Korean.
 - **Data Analysis** — upload a CSV/Excel file and an LLM router decides between generating & sandbox-executing pandas code (for aggregates) and hybrid retrieval — FAISS (dense) + BM25 (sparse) fused with RRF — for search, with automatic RAG fallback on code failure.
 - **MCP Server** — the portfolio data is exposed over the Model Context Protocol, so Claude Desktop / Cursor / Cline can query it directly.
+- **MLOps Docs Assistant (Agentic RAG)** — a self-correcting RAG over a large MLOps pipeline corpus (official Google/AWS/Azure/Vertex docs + an on-prem KETI pipeline reference): retrieve → grade relevance → rewrite & re-retrieve → answer with citations → self-check groundedness. It refuses out-of-corpus questions and is regression-tested on a golden set.
 
 ## Architecture
 
-Three pipelines behind one Streamlit surface, wired through two shared **single-source-of-truth** modules — `prompts.py` (prompt / post-processing) and `profile_graph.py` (the profile knowledge graph). Those same modules feed the app pages, the MCP server, the eval harness, *and* the tests, so the graph and the bot never drift apart. The two SSOT hubs are highlighted:
+Four pipelines behind one Streamlit surface, wired through two shared **single-source-of-truth** modules — `prompts.py` (prompt / post-processing) and `profile_graph.py` (the profile knowledge graph). Those same modules feed the app pages, the MCP server, the eval harness, *and* the tests, so the graph and the bot never drift apart. The two SSOT hubs are highlighted:
 
 ```mermaid
 graph LR
@@ -31,6 +32,11 @@ graph LR
     n_1_Chat["1_Chat.py"]
     n_2_Data_Analysis["2_Data_Analysis.py"]
     n_3_Observability["3_Observability.py"]
+    n_4_MLOps_Docs["4_MLOps_Docs.py"]
+  end
+  subgraph RAG["Agentic RAG"]
+    n_agent_rag["agent_rag.py"]
+    n_rag_corpus["rag_corpus.py"]
   end
   subgraph MCP
     n_jisangfolio_mcp["jisangfolio_mcp.py"]
@@ -63,6 +69,14 @@ graph LR
   n_jisangfolio_mcp --> n_prompts
   n_prompts --> n_profile_graph
   n_run_evals --> n_prompts
+  n_run_evals --> n_agent_rag
+  n_run_evals --> n_rag_corpus
+  n_4_MLOps_Docs --> n_agent_rag
+  n_4_MLOps_Docs --> n_guardrails
+  n_4_MLOps_Docs --> n_observability
+  n_4_MLOps_Docs --> n_ui
+  n_agent_rag --> n_rag_corpus
+  n_agent_rag --> n_prompts
   tests --> n_guardrails
   tests --> n_profile_graph
   tests --> n_prompts
@@ -82,6 +96,7 @@ graph LR
 - **Guardrails layer** — a programmatic input guard (prompt-injection · scope · length) runs *before* anything reaches the model, on top of the persona's scope rule.
 - **LLM observability** — every chat / data turn is traced (latency · model · routing · guardrail verdict) on a self-hosted-style dashboard page — same idea as Langfuse / Arize Phoenix, built in-house to match the on-prem, no-external-SaaS approach.
 - **Hybrid retrieval** — the data page fuses dense (FAISS) and sparse (BM25) search with Reciprocal Rank Fusion, on top of the LLM router.
+- **Agentic RAG (MLOps Docs Assistant)** — a self-correcting loop over official cloud + on-prem MLOps docs: it grades its own retrieval, rewrites the query and re-retrieves when results are weak (which also bridges English queries to Korean docs), cites its sources, refuses out-of-corpus questions, and self-checks groundedness. The agent's step trace is shown live under each answer, and it's regression-tested (retrieval hit + faithfulness) on a golden set.
 - **Tested & CI'd** — a `pytest` suite (guardrails · GraphRAG · post-processing · graph integrity) runs on every push via GitHub Actions. The quality bar is enforced, not assumed.
 - **Real artifacts** — a Prometheus + Grafana screenshot from my KETI work, and 745 records from my published SCIE paper loaded into the data page.
 
@@ -93,14 +108,18 @@ jisangfolio/
 ├── pages/
 │   ├── 1_Chat.py               # AI chatbot (guardrails → GraphRAG → LLM → tracing; EN/KO)
 │   ├── 2_Data_Analysis.py      # JisangData (LLM router + pandas codegen + hybrid RAG)
-│   └── 3_Observability.py      # LLM observability dashboard (traces · latency · routing)
+│   ├── 3_Observability.py      # LLM observability dashboard (traces · latency · routing)
+│   └── 4_MLOps_Docs.py         # MLOps Docs Assistant (Agentic RAG over the docs corpus)
+├── agent_rag.py                # Agentic RAG loop (retrieve → grade → rewrite → generate → self-check)
+├── rag_corpus.py               # Docs corpus loader + hybrid retriever (FAISS + BM25)
+├── rag_docs/                   # MLOps pipeline corpus (Google/AWS/Azure/Vertex + on-prem KETI)
 ├── jisangfolio_mcp.py          # MCP server (6 tools)
 ├── prompts.py                  # Prompt/post-processing SSOT (shared by app + evals + tests)
 ├── profile_graph.py            # Profile knowledge graph SSOT (home graph · chatbot · GraphRAG)
 ├── guardrails.py               # Input guardrails layer (injection · scope · length)
 ├── observability.py            # Trace store + metrics (self-hosted-style LLM observability)
 ├── ui.py                       # Shared styling (Pretendard font · rounding)
-├── evals/                      # Regression eval harness (deterministic + LLM judge)
+├── evals/                      # Regression eval harness — chat · router · agentic RAG (deterministic + LLM judge)
 ├── tests/                      # pytest unit tests (guardrails · GraphRAG · post-processing · graph)
 ├── .github/workflows/ci.yml    # CI — runs the test suite on every push
 ├── assets/                     # Static assets (grouped to keep the root clean)
@@ -119,7 +138,7 @@ jisangfolio/
 |------|-------|
 | UI | Streamlit · custom CSS (Pretendard) |
 | LLM | Groq (Qwen3) · reasoning disabled for latency |
-| RAG / retrieval | LangChain · FAISS · BM25 (hybrid, RRF) · GraphRAG · HuggingFace Embeddings (all-MiniLM-L6-v2) |
+| RAG / retrieval | LangChain · FAISS · BM25 (hybrid, RRF) · GraphRAG · Agentic RAG (grade → rewrite → self-check) · HuggingFace Embeddings (all-MiniLM-L6-v2) |
 | Testing / CI | pytest · GitHub Actions |
 | Eval judge | Llama-3.3-70B (separate model) |
 | MCP | fastmcp |
