@@ -106,9 +106,33 @@ if user_input:
     else:
         with st.chat_message("assistant"):
             # Agentic RAG: 검색 → 관련성 평가 → (부실하면) 재작성+재검색 → 생성 → 근거점검
+            # 이 루프는 한 턴에 LLM을 3~5회 부른다(판단 2 + 생성 1 + 자기점검 1, 재작성 시 +1).
+            # 즉 단방향 RAG보다 호출·토큰을 몇 배 쓰므로, 무료 티어의 분당·일일 한도에
+            # 단방향 경로보다 훨씬 빨리 닿는다. 실패를 사용자에게 그대로 노출하지 않는다.
+            result = None
             with timer() as t:
                 with st.spinner("🔁 Agent: retrieve → grade → (rewrite) → answer → self-check..."):
-                    result = agentic_answer(llm, retriever, user_input, max_retries=1)
+                    try:
+                        result = agentic_answer(llm, retriever, user_input, max_retries=1)
+                    except Exception as e:                     # noqa: BLE001
+                        result = None
+                        err = e
+
+            if result is None:
+                name = type(err).__name__
+                if "RateLimit" in name or "429" in str(err):
+                    msg = ("⚠️ 지금은 모델 사용 한도에 걸려 답할 수 없습니다. "
+                           "이 데모는 무료 티어를 쓰고, 이 에이전트는 한 번 답할 때 모델을 "
+                           "3~5회 부르기 때문에 한도에 빨리 닿습니다. 잠시 후 다시 시도해 주세요.")
+                else:
+                    msg = f"⚠️ 답변 생성 중 오류가 발생했습니다 ({name}). 잠시 후 다시 시도해 주세요."
+                st.warning(msg)
+                st.caption("검색 단계까지는 정상 동작했고, 실패한 지점은 모델 호출입니다.")
+                st.session_state["rag_messages"].append(ChatMessage(role="assistant", content=msg))
+                log_trace(page="rag_docs", route="agentic_rag", model=GROQ_MODEL,
+                          latency_ms=t.ms, guard="ok", nodes=["llm_error"], ok=False)
+                st.stop()
+
             answer = result["answer"]
             chunks = result["chunks"]
 
@@ -120,7 +144,7 @@ if user_input:
             else:
                 st.caption("⚠️ Self-check: answer may contain unsupported claims")
 
-            # 🔁 에이전트 단계 — 자기교정 루프를 눈에 보이게 (L3 에이전트의 증거)
+            # 🔁 단계 트레이스 — 자기교정 루프(판단·재시도)를 눈에 보이게
             _icon = {"retrieve": "🔎", "grade": "⚖️", "rewrite": "✏️",
                      "generate": "💬", "self_check": "✅"}
             title = "🔁 Agent steps" + (" · rewrote the query & retried" if result["rewrote"] else "")

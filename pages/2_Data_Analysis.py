@@ -7,7 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_groq import ChatGroq
-from prompts import ROUTER_PROMPT_TEMPLATE
+from prompts import ROUTER_PROMPT_TEMPLATE, strip_think
 from ui import apply_style
 from observability import log_trace
 # Heavy torch/faiss deps (FAISS · HuggingFaceEmbeddings) are imported lazily,
@@ -168,11 +168,18 @@ def get_df_info(df: pd.DataFrame) -> str:
 
 
 def classify_question(llm, question: str, df_info: str) -> str:
-    """The LLM decides whether to handle the question with pandas (codegen) or RAG search."""
-    # The router prompt is shared from prompts.py (SSOT) — the eval harness scores the same prompt.
+    """The LLM decides whether to handle the question with pandas (codegen) or RAG search.
+
+    Routing runs on a dedicated LLM handle with reasoning disabled: the router only has
+    to emit one word, and with reasoning on the chain-of-thought was being parsed as if
+    it were the answer — any stray mention of "PANDAS" inside the thinking flipped the
+    route. Stripping <think> as well makes the parse defensive either way. The eval
+    harness (evals/run_evals.py classify) uses the same prompt AND the same setting, so
+    the measured routing accuracy represents what the app actually does.
+    """
     prompt = ChatPromptTemplate.from_template(ROUTER_PROMPT_TEMPLATE)
     result = (prompt | llm).invoke({"question": question, "df_info": df_info})
-    answer = result.content.strip().upper()
+    answer = strip_think(result.content).strip().upper()
     if "PANDAS" in answer:
         return "PANDAS"
     return "RAG"
@@ -275,6 +282,10 @@ for msg in st.session_state["data_messages"]:
     st.chat_message(msg.role).write(msg.content)
 
 llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0)
+# 라우팅 전용 핸들 — 한 단어만 내면 되므로 추론을 끈다(사고 텍스트가 파싱을 오염시키던
+# 문제 제거 + 지연 감소). 평가 하니스 classify()와 동일 설정이라 측정값이 앱을 대변한다.
+router_llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0,
+                      reasoning_effort="none", max_tokens=200)
 user_input = st.chat_input("Ask anything about this data")
 if not user_input and st.session_state["data_pending"]:
     user_input = st.session_state["data_pending"]
@@ -285,7 +296,7 @@ if user_input and retriever:
     st.session_state["data_messages"].append(ChatMessage(role="user", content=user_input))
 
     df_info = get_df_info(df)
-    route = classify_question(llm, user_input, df_info)
+    route = classify_question(router_llm, user_input, df_info)
     _t0 = time.time()
 
     if route == "PANDAS":

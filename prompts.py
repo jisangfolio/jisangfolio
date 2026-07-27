@@ -146,7 +146,8 @@ Rewritten query:"""
 
 
 # ── 근거 자기점검 프롬프트 (Agentic RAG: 생성한 답이 컨텍스트로 뒷받침되나?) ──
-# 생성 후 검증 단계. 답변이 컨텍스트 밖 사실을 지어냈는지 잡는 faithfulness 게이트.
+# 생성 후 검증 단계. 답변이 컨텍스트 밖 사실을 지어냈는지 이진(YES/NO)으로 판정한다.
+# 게이트가 아니라 라벨 — 판정 결과는 UI 배지·트레이스·평가 채점에만 쓰이고 답변을 막지 않는다.
 RAG_GROUNDEDNESS_PROMPT_TEMPLATE = """/no_think
 You are a groundedness checker. Determine whether the ANSWER is fully supported by the CONTEXT excerpts, with no fabricated claims beyond the context. A refusal like "not in the indexed docs" counts as grounded.
 

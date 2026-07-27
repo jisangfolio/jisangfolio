@@ -149,6 +149,11 @@ def ask_bot(client, resume, case):
         ],
         temperature=0.2,
         max_tokens=600,
+        # 앱(pages/1_Chat.py)과 동일한 추론 설정. 이게 빠지면 qwen3은 사고에
+        # 토큰을 다 써 본문을 못 내고, 후처리가 미완결 <think>를 버려 빈 답이 된다
+        # → 전 케이스 오탐 실패. 프롬프트만 공유하고 추론 설정이 어긋나면
+        #   평가가 앱을 대변하지 못한다(2026-07-27 실측으로 발견·수정).
+        reasoning_effort="none",
     )
     # 앱과 동일한 후처리(clean_response)를 적용해 '사용자가 실제 보는 출력'을 채점
     return clean_response(r.choices[0].message.content or "")
@@ -213,6 +218,7 @@ def classify(client, df_info, question):
         messages=[{"role": "user", "content": ROUTER_PROMPT_TEMPLATE.format(df_info=df_info, question=question)}],
         temperature=0,
         max_tokens=200,
+        reasoning_effort="none",  # 앱 라우터와 동일 설정 (pages/2_Data_Analysis.py)
     )
     out = strip_think(r.choices[0].message.content or "").strip().upper()
     return "PANDAS" if "PANDAS" in out else "RAG"

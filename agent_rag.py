@@ -1,14 +1,24 @@
-"""Agentic RAG 루프 — 검색을 한 번에 끝내지 않고 스스로 판단·재시도하는 L3 에이전트.
+"""Agentic RAG 루프 — 검색을 한 번에 끝내지 않고 판단·재시도하는 자기교정 파이프라인.
+
+수준 표기(정직): 자율 에이전트가 아니다. 판단 지점 3개(관련성·재작성 발동·근거점검),
+그중 실제로 제어를 바꾸는 분기는 1개, 재시도 상한 1회로 경계가 명시된 L2 루프다.
+도구 선택(function calling)·상태기계·계획 수립은 없다.
 
 루프:
   ① 검색(retrieve)
   ② 관련성 평가(grade) — 검색 결과가 질문에 충분한가? (YES/NO)
   ③ 부실하면 쿼리 재작성(rewrite) + 재검색  ← 자기교정 (교차언어·키워드 보강)
   ④ 근거 기반 생성(generate) + 인용
-  ⑤ 근거 자기점검(self-check) — 답이 컨텍스트로 뒷받침되나? (faithfulness)
+  ⑤ 근거 자기점검(self-check) — 답이 컨텍스트로 뒷받침되나?
 
-각 단계를 trace로 남겨 "에이전트가 스스로 판단하고 재시도했다"를 눈으로 보여준다.
-이 다단계 루프가 단방향 RAG(L1)와 에이전트(L3)를 가르는 지점.
+각 단계를 trace로 남겨 판단·재시도 과정을 눈으로 확인할 수 있게 한다.
+
+알려진 한계(설계상 인지하고 남긴 것):
+  · ⑤ 근거점검은 게이트가 아니라 라벨이다 — grounded=NO여도 답변은 이미 반환된다.
+  · ③ 재작성은 이전 쿼리가 아니라 원본 질문을 다시 넘기므로 점진적 개선이 안 된다
+    (그래서 재시도 상한 1이 실질적 한계).
+  · ② 관련성 평가는 청크 세트 단위 1회 YES/NO이며, 나쁜 청크를 버리는 필터가 아니다.
+  · 재검색 결과는 기존 검색 결과를 덮어쓴다(비교·병합 없음).
 """
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -70,7 +80,8 @@ def agentic_answer(llm, retriever, question: str, max_retries: int = 1) -> dict:
     answer = _ask(llm, RAG_ANSWER_PROMPT_TEMPLATE, context=ctx, question=question)
     trace.append({"step": "generate", "detail": f"{len(answer)} chars"})
 
-    # 근거 자기점검 (faithfulness)
+    # 근거 자기점검 — LLM에 YES/NO 이진 판정 1회. RAGAS faithfulness(claim 단위 분해·
+    # 연속값)와는 다르며, 게이트가 아니라 라벨로만 쓴다(답변은 이미 생성됨).
     grounded = _yesno(llm, RAG_GROUNDEDNESS_PROMPT_TEMPLATE, answer=answer, context=ctx)
     trace.append({"step": "self_check", "detail": f"grounded = {grounded}"})
 
