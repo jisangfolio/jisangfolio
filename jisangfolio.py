@@ -134,7 +134,7 @@ T = {
             },
             {
                 "title": "MLOps Docs Assistant",
-                "desc": "방대한 MLOps 파이프라인 문서(Google·AWS·Azure·Vertex 공식 문서 + 온프레 KETI 파이프라인)를 질의하는 Agentic RAG입니다. 검색→관련성 평가→쿼리 재작성·재검색→근거 인용→근거 자기점검의 자기교정 루프로, 코퍼스 밖 질문은 거절하고 검색·근거 충실성을 골든셋으로 회귀 평가(9/9)합니다.",
+                "desc": "방대한 MLOps 파이프라인 문서(Google·AWS·Azure·Vertex 공식 문서 + 온프레 KETI 파이프라인)를 질의하는 Agentic RAG입니다. 검색→관련성 평가→쿼리 재작성·재검색→근거 인용→근거 자기점검의 자기교정 루프로, 코퍼스 밖 질문은 거절하고 검색·근거 충실성을 골든셋으로 회귀 평가합니다(통과율은 `evals/report.md`에 실행마다 기록).",
                 "tags": "`Agentic RAG` `FAISS+BM25` `Self-correction` `Groundedness eval`",
                 "link": "page:pages/4_MLOps_Docs.py",
             },
@@ -237,7 +237,7 @@ T = {
             },
             {
                 "title": "MLOps Docs Assistant",
-                "desc": "An Agentic RAG over a large MLOps pipeline corpus (official Google/AWS/Azure/Vertex docs + an on-prem KETI pipeline reference). A self-correcting loop — retrieve → grade relevance → rewrite & re-retrieve → answer with citations → self-check groundedness — refuses out-of-corpus questions and is regression-tested (retrieval hit + faithfulness) on a golden set (9/9).",
+                "desc": "An Agentic RAG over a large MLOps pipeline corpus (official Google/AWS/Azure/Vertex docs + an on-prem KETI pipeline reference). A self-correcting loop — retrieve → grade relevance → rewrite & re-retrieve → answer with citations → self-check groundedness — refuses out-of-corpus questions and is regression-tested (retrieval hit + faithfulness) on a golden set — pass rates are recorded per run in `evals/report.md`.",
                 "tags": "`Agentic RAG` `FAISS+BM25` `Self-correction` `Groundedness eval`",
                 "link": "page:pages/4_MLOps_Docs.py",
             },

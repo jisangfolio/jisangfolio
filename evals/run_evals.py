@@ -36,6 +36,13 @@ CHAT_MODEL = "qwen/qwen3.6-27b"          # 앱 챗봇과 동일
 JUDGE_MODEL = "llama-3.3-70b-versatile"  # 자기채점 편향 회피 위해 다른 계열
 SLEEP = 1.0                            # 무료 티어 레이트리밋 완화용 호출 간 간격
 
+# 경로별 temperature. 리포트 헤더가 이 상수를 그대로 찍으므로 호출부와 표기가 어긋나지
+# 않는다(리터럴로 박아두면 경로마다 값이 다른데 헤더는 하나만 주장하는 드리프트 발생).
+CHAT_TEMPERATURE = 0.2    # 앱 챗봇과 동일
+ROUTER_TEMPERATURE = 0    # 분류는 결정적으로
+RAG_TEMPERATURE = 0       # agentic 경로도 결정적으로
+JUDGE_TEMPERATURE = 0
+
 HANJA = re.compile(r"[一-鿿]")          # 한중일 통합 한자
 KANA = re.compile(r"[぀-ヿ]")           # 히라가나 + 가타카나
 
@@ -125,7 +132,7 @@ def judge(client, case, answer, judge_model):
             client,
             model=judge_model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0,
+            temperature=JUDGE_TEMPERATURE,
             max_tokens=200,
             response_format={"type": "json_object"},
         )
@@ -147,7 +154,7 @@ def ask_bot(client, resume, case):
             {"role": "system", "content": sys_prompt},
             {"role": "user", "content": case["q"]},
         ],
-        temperature=0.2,
+        temperature=CHAT_TEMPERATURE,
         max_tokens=600,
         # 앱(pages/1_Chat.py)과 동일한 추론 설정. 이게 빠지면 qwen3은 사고에
         # 토큰을 다 써 본문을 못 내고, 후처리가 미완결 <think>를 버려 빈 답이 된다
@@ -216,7 +223,7 @@ def classify(client, df_info, question):
         client,
         model=CHAT_MODEL,
         messages=[{"role": "user", "content": ROUTER_PROMPT_TEMPLATE.format(df_info=df_info, question=question)}],
-        temperature=0,
+        temperature=ROUTER_TEMPERATURE,
         max_tokens=200,
         reasoning_effort="none",  # 앱 라우터와 동일 설정 (pages/2_Data_Analysis.py)
     )
@@ -255,7 +262,7 @@ def run_rag_evals(secrets, cases):
     print("  검색기 구축(임베딩)...")
     retriever = build_retriever(k=5)
     llm = ChatGroq(model=CHAT_MODEL, groq_api_key=secrets["groq_api_key"],
-                   temperature=0, reasoning_effort="none", max_tokens=1500)
+                   temperature=RAG_TEMPERATURE, reasoning_effort="none", max_tokens=1500)
 
     results = []
     for i, case in enumerate(cases, 1):
@@ -302,10 +309,22 @@ def pct(n, d):
 def write_report(chat_results, router_results, rag_results, use_judge, judge_model):
     lines = ["# JisangFolio 평가 리포트", ""]
     lines.append(f"- 생성: {datetime.now(_KST).strftime('%Y-%m-%d %H:%M')}")
-    lines.append(f"- 챗봇 모델: `{CHAT_MODEL}` (temperature=0.2)")
+    # 이번 실행에 실제로 돈 경로만 표기(--rag-only 등 부분 실행 시 안 돈 경로의 설정을 주장하지 않도록)
+    ran = []
+    if chat_results:
+        ran.append(f"챗봇 temperature={CHAT_TEMPERATURE}")
+    if router_results:
+        ran.append(f"라우터 temperature={ROUTER_TEMPERATURE}")
+    if rag_results:
+        ran.append(f"RAG temperature={RAG_TEMPERATURE}")
+    lines.append(f"- 모델: `{CHAT_MODEL}`" + (f" — {', '.join(ran)}" if ran else ""))
     if use_judge:
-        lines.append(f"- 심사(judge) 모델: `{judge_model}` (temperature=0) — 자기채점 편향 회피용 별도 모델")
-    lines.append("- 채점: 결정적 규칙(키워드·금지어·형식)이 백본, LLM judge는 보조(offtopic/injection은 judge가 게이트)")
+        lines.append(f"- 심사(judge) 모델: `{judge_model}` (temperature={JUDGE_TEMPERATURE}) — 자기채점 편향 회피용 별도 모델")
+    lines.append(
+        "- 채점: 결정적 규칙(키워드·금지어·형식)이 백본, LLM judge는 보조(offtopic/injection은 judge가 게이트)"
+        if use_judge else
+        "- 채점: 결정적 규칙(키워드·금지어·형식)만 사용 (--no-judge 실행이라 LLM judge 게이트는 생략)"
+    )
     lines.append("")
 
     if chat_results:
@@ -384,19 +403,27 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
                 lines.append(f"  - A: {r['answer'][:200]}{'...' if len(r['answer']) > 200 else ''}")
             lines.append("")
 
-    lines += [
-        "## 한계 (정직한 표기)", "",
-        "- 결정적 키워드 채점은 표면 문자열 매칭이라 '키워드는 있으나 맥락이 틀린' 거짓 통과가 가능 → LLM judge가 grounding을 보조 점검.",
-        "- LLM judge는 비결정적이라 동일 답변에도 판정이 흔들릴 수 있음 → 하드 게이트는 결정적 채점에 둠.",
-        "- 라우터 정확도는 표본 n이 작고 라벨 경계가 일부 주관적(요약·의미 질문). 절대 수치보다 프롬프트 변경 전후 비교에 의미.",
-        "- 챗봇 평가는 단발(single-turn) 경로이며 멀티턴 회귀는 범위 밖.",
-        "- RAG 근거 자기점검(grounded)은 LLM 판정이라 비결정적이고, 키워드 기반 사실 채점은 '맥락 틀린 거짓 통과' 여지가 있음. 표본 n도 작아 회귀 비교용 지표로 사용.",
-        "",
-        "## 사용 패턴 (회귀 게이트)", "",
-        "프롬프트나 모델을 바꾸기 전 이 스크립트를 돌려 통과율을 기록하고, 변경 후 다시 돌려 **before/after**를 비교한다. "
-        "이로써 '프롬프트 한 줄 수정이 사실 정확성·형식 규칙·라우팅을 깨뜨리지 않았는지'를 정량 확인한다.",
-        "",
-    ]
+    # 한계도 이번 실행에 해당하는 것만 — 돌리지 않은 경로의 한계를 나열하면 리포트가
+    # 실행 내용을 잘못 대변한다(수치 옆에 캐비엇을 붙이는 것이 이 섹션의 목적).
+    limits = []
+    if chat_results or rag_results:
+        limits.append(
+            "- 결정적 키워드 채점은 표면 문자열 매칭이라 '키워드는 있으나 맥락이 틀린' 거짓 통과가 가능"
+            + (" → LLM judge가 grounding을 보조 점검." if use_judge else " (이번 실행은 judge 없이 결정적 채점만).")
+        )
+    if use_judge:
+        limits.append("- LLM judge는 비결정적이라 동일 답변에도 판정이 흔들릴 수 있음 → 하드 게이트는 결정적 채점에 둠.")
+    if router_results:
+        limits.append("- 라우터 정확도는 표본 n이 작고 라벨 경계가 일부 주관적(요약·의미 질문). 절대 수치보다 프롬프트 변경 전후 비교에 의미.")
+    if chat_results:
+        limits.append("- 챗봇 평가는 단발(single-turn) 경로이며 멀티턴 회귀는 범위 밖.")
+    if rag_results:
+        limits.append("- RAG 근거 자기점검(grounded)은 LLM 판정이라 비결정적이고, 키워드 기반 사실 채점은 '맥락 틀린 거짓 통과' 여지가 있음. 표본 n도 작아 회귀 비교용 지표로 사용.")
+    if limits:
+        lines += ["## 한계", ""] + limits + [""]
+
+    # 하니스 설계·실행법은 evals/README.md가 단일 출처 — 여기 복제하면 갈라진다.
+    lines += ["> 하니스 설계·실행법·회귀 사례: `evals/README.md`", ""]
     (EVAL_DIR / "report.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"\n→ 리포트 저장: {EVAL_DIR / 'report.md'}")
 

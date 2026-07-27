@@ -5,7 +5,7 @@ rag_docs/ 안의 공식 MLOps 파이프라인 문서(Google/AWS/Azure/Vertex + �
 
 설계 포인트
 - 청킹: 마크다운 헤딩(##/###) 단위로 먼저 나눠 "어느 문서·어느 섹션"을 메타데이터로
-  보존(출처 인용의 근거). 긴 섹션만 1200자로 재분할.
+  보존(출처 인용의 근거). 긴 섹션만 CHUNK_SIZE로 재분할(임베딩 절단 상한 기준).
 - 검색: FAISS(dense, 의미) + BM25(sparse, 키워드)를 Reciprocal Rank Fusion으로 융합.
   pages/2_Data_Analysis.py의 HybridRetriever와 동일 패턴(일관성).
 - 임베딩: sentence-transformers/all-MiniLM-L6-v2 (로컬, 외부 API 없음 — 온프레 철학).
@@ -17,6 +17,13 @@ import glob
 # 무거운 torch/faiss/embeddings 의존은 build_retriever 안에서 지연 임포트한다.
 
 RAG_DIR = os.path.join(os.path.dirname(__file__), "rag_docs")
+
+# 청킹 크기. 임베딩 인코더(all-MiniLM-L6-v2)의 max_seq_length=256 word piece가 상한이라,
+# 이 값이 크면 청크 뒷부분이 dense 벡터에 아예 들어가지 않는다(BM25만 보게 됨).
+# 한국어는 word piece가 잘게 쪼개져 같은 글자 수라도 토큰이 훨씬 많다 → 한국어 기준으로 잡는다.
+# 실측 근거: python retrieval_probe.py (절단률·도달률 출력).
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 80
 
 
 # ── 토크나이저 / RRF (2_Data_Analysis.py와 동일 구현) ──────────────
@@ -65,10 +72,11 @@ def _parse_header(text: str) -> dict:
     return meta
 
 
-def load_corpus():
+def load_corpus(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
     """rag_docs/*.md 를 헤딩 단위로 청킹한 Document 리스트로 반환.
 
     각 청크 metadata: source_file, vendor, title, url, section(헤딩 경로).
+    chunk_size는 retrieval_probe.py로 절단률을 재며 튜닝하라고 인자로 열어 둔다.
     """
     from langchain_text_splitters import (
         MarkdownHeaderTextSplitter,
@@ -80,7 +88,7 @@ def load_corpus():
         headers_to_split_on=[("#", "h1"), ("##", "h2"), ("###", "h3")],
         strip_headers=False,   # 헤딩 텍스트를 본문에 남겨 문맥·BM25 키워드로 활용
     )
-    char_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=150)
+    char_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 
     docs = []
     for path in sorted(glob.glob(os.path.join(RAG_DIR, "*.md"))):

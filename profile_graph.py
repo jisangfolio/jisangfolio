@@ -145,8 +145,8 @@ NODES = [
      "desc_ko": "FAISS(dense) + BM25(sparse)를 Reciprocal Rank Fusion으로 융합 — JisangData·MLOps Docs 검색 경로.",
      "desc_en": "FAISS (dense) + BM25 (sparse) fused with Reciprocal Rank Fusion — JisangData & MLOps Docs search path."},
     {"id": "agenticrag", "group": "skill", "ko": "Agentic RAG", "en": "Agentic RAG",
-     "desc_ko": "MLOps 문서 코퍼스(클라우드 4사+온프레 KETI)에 대한 자기교정 루프 — 검색→관련성 평가→쿼리 재작성·재검색→근거 인용→근거 자기점검. 코퍼스 밖 질문 거절, 골든셋 회귀 평가(9/9).",
-     "desc_en": "A self-correcting loop over an MLOps docs corpus (4 clouds + on-prem KETI) — retrieve→grade→rewrite & re-retrieve→cite→self-check groundedness. Refuses out-of-corpus questions; golden-set regression (9/9)."},
+     "desc_ko": "MLOps 문서 코퍼스(클라우드 4사+온프레 KETI)에 대한 자기교정 루프 — 검색→관련성 평가→쿼리 재작성·재검색→근거 인용→근거 자기점검. 코퍼스 밖 질문 거절, 골든셋 회귀 평가(통과율은 evals/report.md에 실행마다 기록).",
+     "desc_en": "A self-correcting loop over an MLOps docs corpus (4 clouds + on-prem KETI) — retrieve→grade→rewrite & re-retrieve→cite→self-check groundedness. Refuses out-of-corpus questions; golden-set regression (pass rates recorded per run in evals/report.md)."},
 ]
 
 EDGES = [
