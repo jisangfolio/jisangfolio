@@ -117,10 +117,13 @@ Rules:
 Answer (with [n] citations):"""
 
 
-# ── 관련성 평가 프롬프트 (Agentic RAG: 검색 결과가 질문에 쓸모있나?) ──
-# Phase 2 에이전트 루프의 판단 단계. "yes/no"만 출력하게 해 결정적으로 파싱.
+# ── 관련성 평가 프롬프트 (Agentic RAG: 다시 검색할 것인가?) ──
+# 이 판정이 실제로 결정하는 것은 "답할 수 있는가"가 아니라 "질의를 바꿔 다시 검색하면
+# 나아질 것인가"다. 이전 판본은 "sufficient to answer"를 물어서 사양이 어긋나 있었다 —
+# 비교형 질문처럼 여러 문서를 합쳐야 하는 경우 검색이 잘 됐는데도 NO가 나왔다.
+# 질문을 용도에 맞춰 '주제 적합성'으로 바꾼다. yes/no만 출력해 결정적으로 파싱.
 RAG_GRADE_PROMPT_TEMPLATE = """/no_think
-You are a relevance grader for a retrieval system. Decide whether the retrieved excerpts contain enough information to answer the question.
+You are deciding ONE thing for a retrieval system: should we discard these results and search again with a differently-worded query?
 
 [Question]
 {question}
@@ -128,7 +131,11 @@ You are a relevance grader for a retrieval system. Decide whether the retrieved 
 [Retrieved excerpts]
 {context}
 
-Answer with exactly one word: YES if the excerpts are sufficient to answer, or NO if they are off-topic or insufficient. Output only YES or NO."""
+Judge only whether these excerpts are on-topic and usable as source material for the question.
+- Answer YES if they are on-topic and usable — even if they cover the question only partially, or if answering fully would require combining several of them. Partial coverage is normal and is NOT a reason to search again.
+- Answer NO only if they are off-topic, about a different subject, or so unrelated that a differently-worded search would clearly do better.
+
+Output exactly one word: YES or NO."""
 
 
 # ── 쿼리 재작성 프롬프트 (Agentic RAG: 검색 실패 시 질문을 바꿔 재검색) ──

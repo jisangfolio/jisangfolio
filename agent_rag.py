@@ -63,10 +63,13 @@ def agentic_answer(llm, retriever, question: str, max_retries: int = 1) -> dict:
     trace.append({"step": "retrieve", "detail": f"\"{query[:60]}\" → {len(chunks)} chunks"})
 
     rewrote = False
-    for attempt in range(max_retries + 1):
+    # 판정은 "재검색을 할까?"를 결정할 때만 부른다. 재시도 예산이 남아있지 않으면
+    # 판정 결과가 제어를 바꿀 수 없으므로 호출하지 않는다 — 예전에는 마지막 회차에도
+    # 판정을 불러 결과를 버렸고, 그건 답변에 영향 없이 LLM 호출만 한 번 더 쓰는 낭비였다.
+    for attempt in range(max_retries):
         grade = _yesno(llm, RAG_GRADE_PROMPT_TEMPLATE, question=question, context=format_context(chunks))
         trace.append({"step": "grade", "detail": f"relevant = {grade}"})
-        if grade == "YES" or attempt == max_retries:
+        if grade == "YES":
             break
         # 부실 → 쿼리 재작성 후 재검색 (자기교정)
         query = _rewrite(llm, question)
