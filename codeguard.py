@@ -17,9 +17,23 @@ Streamlit 페이지는 import 시점에 `st.set_page_config()` 등을 실행해�
    열거해 막았는데 `to_string(buf=)`·`to_html(buf=)`·`to_markdown(buf=)`·
    `df.style.to_html(path)`로 파일이 그대로 써졌다. pandas가 writer를 추가하면 열거형
    denylist는 그날로 뚫린다 → **아는 것만 허용**한다.
+4. **속성 탐색을 대신해 주는 함수도 막는다.** AST는 `Attribute`/`Name` 노드만 보므로
+   문자열 리터럴 *안*의 dunder는 원칙 2를 그냥 지나간다. 그리고 `str.format`은 실행
+   시점에 그 문자열을 읽어 대신 속성을 타 준다:
 
-여전히 샌드박스가 아니다: 타임아웃도, 메모리 상한도, 프로세스 격리도 없다.
-'축소된 권한의 네임스페이스'이고 README에도 그렇게 적혀 있다.
+       result = '{0.__class__.__init__.__globals__[sys].modules[os].environ}'.format(df)
+
+   정적 검사를 통과하고 프로세스 환경변수 전체를 돌려줬다(재현 확인). 배포 컨테이너엔
+   Groq 키·GCP 개인키·SMTP 자격증명이 있으므로 이건 자격증명 유출 프리미티브다.
+   → 문자열 리터럴에 `__`가 있으면 정적 거부 + `format`/`format_map`을 금지 속성으로.
+   `df.query`도 `df.eval`과 같은 pandas 표현식 엔진이라 함께 막는다(원래 누락).
+
+여전히 샌드박스가 아니다: 메모리 상한도 프로세스 격리도 없다. `while`은 정적으로
+막지만(codegen 프롬프트는 벡터화 pandas만 요구하므로 정당한 용례가 없다) `for i in
+range(10**12)`이나 거대 comprehension은 여전히 워커를 멈출 수 있다 — 스레드에서 도는
+Streamlit 스크립트라 `signal.alarm`이 안 먹어서, 제대로 고치려면 별도 프로세스 +
+벽시계 타임아웃이 필요하다. 지금은 '축소된 권한의 네임스페이스'이고 README에도
+그렇게 적혀 있다.
 """
 import ast
 
@@ -43,8 +57,9 @@ class PandasFacade:
 
 PD_FACADE = PandasFacade()
 
-# pandas 자체 표현식 평가기(eval)와 Styler(style → to_html/to_excel/to_latex 재노출)를 막는다.
-BANNED_ATTRS = frozenset({"eval", "style"})
+# pandas 자체 표현식 평가기(eval·query)와 Styler(style → to_html/to_excel/to_latex 재노출),
+# 그리고 실행 시점에 문자열을 읽어 속성 탐색을 대신해 주는 str.format 계열을 막는다(§4).
+BANNED_ATTRS = frozenset({"eval", "query", "style", "format", "format_map"})
 
 # to_* 중 **읽기/변환만** 허용. 나머지 to_* 는 전부 거부된다(§3 원칙).
 ALLOWED_TO = frozenset({
@@ -74,6 +89,15 @@ def check_generated_code(code: str):
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             return "imports are not allowed"
+        # §4: 문자열 리터럴 안의 dunder. AST는 여기를 안 보는데 str.format 이 실행 시점에
+        # 대신 읽어서 속성을 타 준다. 정당한 pandas 코드에 "__" 리터럴이 나올 일은 없다.
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if "__" in node.value:
+                return "dunder inside a string literal is not allowed"
+        # 타임아웃이 없으므로(스레드라 signal.alarm 불가) 무한루프는 워커를 그대로 멈춘다.
+        # 벡터화 pandas 를 요구하는 codegen 프롬프트에 while 의 정당한 용례가 없다.
+        if isinstance(node, ast.While):
+            return "while loops are not allowed"
         if isinstance(node, ast.Attribute):
             if node.attr.startswith("__"):
                 return f"dunder attribute access is not allowed ({node.attr})"

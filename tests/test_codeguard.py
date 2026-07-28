@@ -1,14 +1,20 @@
 """codeguard.py 회귀 테스트 — LLM 생성 코드의 실행 경계.
 
-이 리포에서 가장 위험한 코드다. 실제로 두 번 뚫렸고 둘 다 여기 케이스로 박아둔다:
+이 리포에서 가장 위험한 코드다. 실제로 세 번 뚫렸고 셋 다 여기 케이스로 박아둔다:
 
   1. `pd` 모듈을 그대로 넘겨 `pd.io.common.os.popen(...)` 으로 임의 명령 실행이 됐다.
      배포 컨테이너엔 Groq 키·GCP 개인키·SMTP 자격증명·비공개 이력서가 있었다.
   2. 쓰기 메서드를 열거해 막았더니 `to_string(buf=)`·`to_html(buf=)`·
      `to_markdown(buf=)`·`df.style.to_html(path)` 로 파일이 그대로 써졌다.
+  3. dunder 를 문자열 리터럴에 숨기고 `str.format` 에게 속성 탐색을 시키니
+     `'{0.__class__.__init__.__globals__[sys].modules[os].environ}'.format(df)` 로
+     프로세스 환경변수 전체가 나왔다 — AST 는 문자열 *안*을 안 보기 때문이다.
 
-그래서 이 테스트는 "막혔는가"만 보지 않고 **실제로 디스크에 파일이 생겼는지**까지 본다.
+그래서 이 테스트는 "막혔는가"만 보지 않고 **실제로 디스크에 파일이 생겼는지**,
+**심어둔 카나리가 결과에 섞여 나왔는지**까지 본다.
 """
+import os
+
 import pandas as pd
 import pytest
 
@@ -30,7 +36,14 @@ ESCAPES = [
     ("import",           "import os\nresult = os.getcwd()"),
     ("from import",      "from os import system\nresult = system('id')"),
     ("pandas eval",      "result = df.eval('a * 2')"),
+    ("pandas query",     "result = df.query('a > 1')"),
     ("dunder 이름",       "result = __import__('os').getcwd()"),
+    # ── §4: 문자열 리터럴에 숨긴 dunder + str.format 이 대신 타 주는 속성 체인
+    ("format 환경변수",   "result = '{0.__class__.__init__.__globals__[sys].modules[os].environ}'.format(df)"),
+    ("format 변수 경유",  "s = '{0.__class__.__mro__}'\nresult = s.format(df)"),
+    ("format_map",       "result = '{d.__class__}'.format_map({'d': df})"),
+    ("문자열 dunder 단독", "result = str(df) + '__class__'"),
+    ("무한루프",          "while True:\n    pass\nresult = 1"),
 ]
 
 
@@ -69,6 +82,21 @@ def test_no_file_created_by_any_escape(df, tmp_path):
     for _, code in ESCAPES:
         run_generated_code(code, df)
     assert list(tmp_path.iterdir()) == []
+
+
+def test_no_secret_leaks_through_any_escape(df, monkeypatch):
+    """'막혔다'가 아니라 '안 샜다'를 본다.
+
+    Streamlit Cloud 는 시크릿을 환경변수로도 노출한다. 카나리를 심고 모든 탈출
+    시도의 결과·에러 문자열 어디에도 안 섞여 나오는지 확인한다 — 차단 사유만
+    보면 값이 에러 메시지에 실려 나가는 경우를 놓친다.
+    """
+    monkeypatch.setenv("PLANTED_SECRET", "CANARY_123")
+    for label, code in ESCAPES:
+        result, chart, err = run_generated_code(code, df)
+        blob = f"{result}{chart}{err}"
+        assert "CANARY_123" not in blob, f"카나리 유출: {label}"
+    assert os.environ["PLANTED_SECRET"] == "CANARY_123"  # 카나리가 실제로 심겼는지
 
 
 # ── 정상 코드는 그대로 돌아야 한다 (과차단 방지) ──────────────────────
