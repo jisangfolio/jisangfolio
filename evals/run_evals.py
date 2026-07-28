@@ -52,6 +52,14 @@ JUDGE_MAX_TOKENS = 96     # {"pass":bool,"reason":"한 문장"} JSON
 # RAG 생성 예산은 agent_rag.ANSWER_MAX_TOKENS가 SSOT — 앱(pages/4)과 같은 값을 써야
 # 평가가 앱을 대변한다. 여기서 따로 숫자를 들면 둘이 갈라진다.
 
+# ── 예산 ────────────────────────────────────────────────────────────
+# Groq 무료 티어의 일일 토큰(TPD). **배포된 앱이 같은 키·같은 예산을 쓴다** —
+# 평가가 하루치를 다 먹으면 사이트 방문자가 429를 본다. 채용담당자에게 보여주려고
+# 만든 포트폴리오에서 이건 평가 실패보다 나쁘다.
+DAILY_TOKEN_BUDGET = 200_000
+# 평가에 허용할 최대 지분. 나머지는 방문자 몫으로 남긴다(챗 1턴 ≈ 6k).
+SAFE_SHARE = 0.40
+
 HANJA = re.compile(r"[一-鿿]")          # 한중일 통합 한자
 KANA = re.compile(r"[぀-ヿ]")           # 히라가나 + 가타카나
 
@@ -665,16 +673,70 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
     print(f"\n→ 리포트 저장: {EVAL_DIR / 'report.md'}")
 
 
+# ── 예산 프리플라이트 ───────────────────────────────────────────────
+def estimate_run_cost(chat_cases, router_cases, rag_cases, resume, use_judge=True):
+    """실행 전에 토큰 비용을 추정한다. 호출은 하지 않는다.
+
+    Groq 은 요청한 max_tokens 를 그대로 예약하므로 (프롬프트 + max_tokens) 로 잡으면
+    실제 소비의 상한에 가깝다. 정확할 필요는 없다 — '하루치를 넘는가'만 알면 된다.
+    """
+    from agent_rag import ANSWER_MAX_TOKENS, _YESNO_TOKENS
+
+    chat = sum(estimate_tokens(build_system_prompt(c.get("lang", "en"), resume) + c["q"]) + 600
+               for c in chat_cases)
+    gate = {"factual-guard", "offtopic", "injection"}
+    judge = (sum(1 for c in chat_cases if c.get("category") in gate)
+             * (800 + JUDGE_MAX_TOKENS)) if use_judge else 0
+    router = sum(estimate_tokens(ROUTER_PROMPT_TEMPLATE) + 400
+                 + estimate_tokens(c["q"]) + 200 for c in router_cases)
+    # agentic 경로 = 관련성평가 + 생성 + 근거자기점검 (재작성 시 +2). 컨텍스트는 청크 합.
+    rag = len(rag_cases) * (3 * 1800 + ANSWER_MAX_TOKENS + 2 * _YESNO_TOKENS + 400)
+    return {"챗봇": chat, "judge": judge, "라우터": router, "RAG": rag,
+            "합계": chat + judge + router + rag}
+
+
+def preflight_budget(chat_cases, router_cases, rag_cases, resume, use_judge, force):
+    """예상 비용을 보여주고, 하루치의 SAFE_SHARE 를 넘으면 막는다."""
+    est = estimate_run_cost(chat_cases, router_cases, rag_cases, resume, use_judge)
+    total = est["합계"]
+    share = total / DAILY_TOKEN_BUDGET
+    print("■ 예상 토큰 비용 (실행 전 추정)")
+    for k in ("챗봇", "judge", "라우터", "RAG"):
+        if est[k]:
+            print(f"    {k:<7} {est[k]:>7,}")
+    print(f"    {'합계':<7} {total:>7,}  = 무료 일일한도의 {share*100:.0f}%")
+    remaining = max(0, DAILY_TOKEN_BUDGET - total)
+    print(f"    → 실행 후 방문자 몫 ≈ {remaining:,} 토큰 (챗 약 {remaining // 6000}턴)\n")
+    if share > SAFE_SHARE and not force:
+        print(f"  ⛔ 이 실행이 하루 예산의 {share*100:.0f}% 를 씁니다 "
+              f"(상한 {SAFE_SHARE*100:.0f}%).")
+        print("     배포된 앱이 같은 키를 쓰므로 그대로 돌리면 오늘 방문자가 429를 봅니다.")
+        print("     · 기본 실행(core 집합)으로 돌리려면 --full 을 빼세요")
+        print("     · 그래도 강행하려면 --force")
+        sys.exit(2)
+    return est
+
+
 # ── 엔트리포인트 ────────────────────────────────────────────────────
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--quick", action="store_true", help="카테고리별 소수만 실행 (저비용 스모크)")
+    ap = argparse.ArgumentParser(
+        description="골든셋 회귀 평가. 기본값은 예산 안에 드는 core 집합이다 "
+                    "(전체는 --full, 무료 일일한도를 넘고 라이브 앱까지 굶긴다).")
+    ap.add_argument("--full", action="store_true",
+                    help="골든셋 전체 실행. 무료 티어 일일한도를 넘고 배포된 앱이 같은 "
+                         "키를 쓰므로 방문자가 429를 받는다. 유료 키에서만 권장.")
+    ap.add_argument("--quick", action="store_true",
+                    help="(기본값과 동일 · 하위호환용) core 집합만 실행")
     ap.add_argument("--no-judge", action="store_true", help="LLM judge 생략")
     ap.add_argument("--chat-only", action="store_true")
     ap.add_argument("--router-only", action="store_true")
     ap.add_argument("--rag-only", action="store_true")
     ap.add_argument("--resume", action="store_true",
                     help="이전 실행에서 끝난 케이스는 건너뛴다 (레이트리밋으로 중단됐을 때 이어 돌리기)")
+    ap.add_argument("--force", action="store_true",
+                    help="예산 프리플라이트 경고를 무시하고 실행")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="비용 추정만 출력하고 종료 (API 호출 없음)")
     args = ap.parse_args()
 
     secrets = load_secrets()
@@ -688,12 +750,18 @@ def main():
 
     totals = {"챗봇": len(chat_cases), "라우터": len(router_cases), "RAG": len(rag_cases)}
 
-    if args.quick:
-        # `core: true` 로 지정된 케이스만 — 전체 실행이 무료 일일한도(20만 토큰)의 대부분을
-        # 먹어서 프롬프트를 만질 때마다 게이트를 돌릴 수 없었다. 못 돌리는 게이트는 없는
-        # 게이트라, '자주 돌릴 수 있는 최소 집합'을 골든셋 안에 명시해 둔다(약 4만 토큰).
-        # 선정 기준 = 깨지면 가장 아픈 것: 사실 가드(Kubeflow 미사용·TEBO 표현) + 인젝션 +
-        # 주제이탈 + 한국어 문서 검색(RAG 최난이도) + 코퍼스 밖 거절.
+    if not args.full:
+        # 기본값이 core 집합이다. 예전엔 전체 실행이 기본이었는데, 전체 1회가 무료
+        # 일일한도(20만 토큰)를 넘고 **배포된 앱이 같은 키를 쓴다** — 아무 생각 없이
+        # 인자 없이 돌리면 그날 방문자(=채용담당자)가 429를 본다. 위험한 쪽이 기본값이면
+        # 안 되므로 뒤집었다. 실제로 이 함정을 한 번 밟고 나서 바꾼 것이다.
+        #
+        # 선정 기준 = **모델에 물어봐야만 알 수 있는 것**을 남긴다:
+        #   · injection / offtopic / factual-guard — 페르소나가 버티는지는 문자열 검사로
+        #     알 수 없다. 전부 유지한다.
+        #   · factual — 이력서 드리프트는 `tests/test_resume_facts.py` 가 **토큰 0** 으로
+        #     이미 잡는다(골든셋 근거 문구가 이력서에 살아있는지 검사). 유료 호출이
+        #     추가로 답하는 질문은 "봇이 그걸 실제로 꺼내오는가" 하나뿐이라 표본만 남긴다.
         # core 태그가 없으면 카테고리별 1건씩으로 폴백한다(뒤쪽 카테고리 누락 방지).
         def pick_core(cases, key="category"):
             core = [c for c in cases if c.get("core")]
@@ -710,6 +778,19 @@ def main():
         chat_cases = pick_core(chat_cases)
         rag_cases = pick_core(rag_cases)
         router_cases = pick_core(router_cases, key="expected")
+
+    # 섹션 한정 실행도 추정에 반영한다 — --router-only 로 하루치를 태운 적이 있다.
+    if args.chat_only:
+        router_cases, rag_cases = [], []
+    elif args.router_only:
+        chat_cases, rag_cases = [], []
+    elif args.rag_only:
+        chat_cases, router_cases = [], []
+
+    preflight_budget(chat_cases, router_cases, rag_cases, resume, use_judge, args.force)
+    if args.dry_run:
+        print("  (--dry-run: 추정만 하고 종료합니다)")
+        return
 
     chat_results, router_results, rag_results = [], [], []
     judge_model = JUDGE_MODEL
