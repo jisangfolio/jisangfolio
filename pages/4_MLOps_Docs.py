@@ -14,7 +14,7 @@ from langchain_groq import ChatGroq
 from guardrails import check_input, blocked_message
 from observability import log_trace, timer
 from rag_corpus import build_retriever, source_lines
-from agent_rag import agentic_answer
+from agent_rag import ANSWER_MAX_TOKENS, agentic_answer
 from ui import apply_style
 
 st.set_page_config(page_title="JisangFolio · MLOps Docs", page_icon="📚")
@@ -84,7 +84,7 @@ for msg in st.session_state["rag_messages"]:
 # 문서 RAG는 검색된 근거로 바로 답하면 되므로 사고가 불필요하고, 켜두면 토큰을
 # 사고에 다 써(2048 cap) 답이 잘리는 문제가 있었다 → 끄니 빠르고·안 잘리고·인용 정확.
 llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0,
-               reasoning_effort="none", max_tokens=1500)
+               reasoning_effort="none", max_tokens=ANSWER_MAX_TOKENS)
 
 user_input = st.chat_input("Ask about MLOps pipelines...")
 if not user_input and st.session_state["rag_pending"]:

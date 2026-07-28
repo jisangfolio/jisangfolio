@@ -7,3 +7,6 @@
 __pycache__/
 *.pyc
 graphify-out/
+
+.cache_results.json
+evals/.cache_results.json

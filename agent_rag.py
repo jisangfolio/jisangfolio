@@ -20,6 +20,9 @@
   · ② 관련성 평가는 청크 세트 단위 1회 YES/NO이며, 나쁜 청크를 버리는 필터가 아니다.
   · 재검색 결과는 기존 검색 결과를 덮어쓴다(비교·병합 없음).
 """
+import re
+import time
+
 from langchain_core.prompts import ChatPromptTemplate
 
 from prompts import (
@@ -32,20 +35,55 @@ from prompts import (
 from rag_corpus import format_context
 
 
-def _ask(llm, template, **variables) -> str:
-    """프롬프트 1회 호출 → 후처리된 텍스트."""
-    return clean_response((ChatPromptTemplate.from_template(template) | llm).invoke(variables).content)
+# Groq 무료 티어는 분당 토큰(TPM) 상한이 낮고, **요청한 max_tokens가 그대로 예약분으로
+# 잡힌다**. 한 질문이 판정→(재작성)→생성→근거점검으로 3~4콜을 연달아 쏘므로, YES/NO 한
+# 단어를 받자고 1500토큰을 예약하면 실제 사용량의 몇 배를 상한에 물린다 → 429.
+# 그래서 호출 성격별로 출력 예산을 따로 준다(프롬프트가 '한 단어만' 지시하므로 안전).
+_YESNO_TOKENS = 16
+_REWRITE_TOKENS = 96
+# 생성 예산도 여기서 고정한다 — 앱(pages/4)과 평가 하니스가 각자 ChatGroq을 만들기 때문에
+# 호출부에 맡기면 둘이 갈라지고, 그러면 '평가가 앱을 대변한다'는 전제가 깨진다(앱만 길게
+# 답하거나 평가만 잘리는 상황). 인용 포함 간결 답변 기준.
+ANSWER_MAX_TOKENS = 768
+
+_RETRY_AFTER = re.compile(r"try again in ([\d.]+)\s*s", re.IGNORECASE)
+_RATE_LIMITED = re.compile(r"rate.?limit|429", re.IGNORECASE)
+
+
+def _invoke_with_retry(chain, variables, attempts: int = 5):
+    """429(TPM 초과)면 서버가 알려준 대기시간만큼 쉬고 재시도.
+
+    TPM은 분 단위로 회복되므로 기다리면 대부분 통과한다. 재시도가 없으면 평가 도중
+    한 번의 429가 이미 소비한 토큰까지 통째로 날린다(실제로 그렇게 죽었다).
+    """
+    for i in range(attempts):
+        try:
+            return chain.invoke(variables)
+        except Exception as e:  # noqa: BLE001 — 프로바이더 예외 타입에 의존하지 않는다
+            msg = str(e)
+            if not _RATE_LIMITED.search(msg) or i == attempts - 1:
+                raise
+            m = _RETRY_AFTER.search(msg)
+            wait = float(m.group(1)) + 0.5 if m else min(2 ** i, 30)
+            print(f"    · rate limit — {wait:.1f}s 대기 후 재시도 ({i + 1}/{attempts - 1})")
+            time.sleep(wait)
+
+
+def _ask(llm, template, _max_tokens=None, **variables) -> str:
+    """프롬프트 1회 호출 → 후처리된 텍스트. _max_tokens로 출력 예산을 좁힐 수 있다."""
+    model = llm.bind(max_tokens=_max_tokens) if _max_tokens else llm
+    return clean_response(_invoke_with_retry(ChatPromptTemplate.from_template(template) | model, variables).content)
 
 
 def _yesno(llm, template, **variables) -> str:
     """YES/NO 판정을 결정적으로 파싱."""
-    out = _ask(llm, template, **variables).upper()
+    out = _ask(llm, template, _max_tokens=_YESNO_TOKENS, **variables).upper()
     return "YES" if "YES" in out else "NO"
 
 
 def _rewrite(llm, question: str) -> str:
     """검색용 쿼리 재작성 — 첫 비어있지 않은 줄만."""
-    out = _ask(llm, RAG_REWRITE_PROMPT_TEMPLATE, question=question)
+    out = _ask(llm, RAG_REWRITE_PROMPT_TEMPLATE, _max_tokens=_REWRITE_TOKENS, question=question)
     for line in out.splitlines():
         if line.strip():
             return line.strip()
@@ -80,7 +118,7 @@ def agentic_answer(llm, retriever, question: str, max_retries: int = 1) -> dict:
 
     # 생성
     ctx = format_context(chunks)
-    answer = _ask(llm, RAG_ANSWER_PROMPT_TEMPLATE, context=ctx, question=question)
+    answer = _ask(llm, RAG_ANSWER_PROMPT_TEMPLATE, _max_tokens=ANSWER_MAX_TOKENS, context=ctx, question=question)
     trace.append({"step": "generate", "detail": f"{len(answer)} chars"})
 
     # 근거 자기점검 — LLM에 YES/NO 이진 판정 1회. RAGAS faithfulness(claim 단위 분해·
@@ -103,7 +141,7 @@ if __name__ == "__main__":
     print("검색기 구축(임베딩)...")
     r = build_retriever(k=5)
     llm = ChatGroq(model="qwen/qwen3.6-27b", groq_api_key=key, temperature=0,
-                   reasoning_effort="none", max_tokens=1500)
+                   reasoning_effort="none", max_tokens=ANSWER_MAX_TOKENS)
 
     for q in [
         "How does the on-prem pipeline detect data drift?",   # 영어 질문 → 한국어 KETI 문서 (재작성 유도)

@@ -10,12 +10,13 @@
 
 사용법:
     python evals/run_evals.py                # 전체 실행 → evals/report.md 생성
-    python evals/run_evals.py --quick        # 카테고리별 소수만 (스모크/저비용)
-    python evals/run_evals.py --chat-only
-    python evals/run_evals.py --router-only
+    python evals/run_evals.py --quick        # 카테고리별 1건씩 (스모크/저비용)
+    python evals/run_evals.py --chat-only | --router-only | --rag-only
     python evals/run_evals.py --no-judge     # 결정적 채점만 (LLM judge 생략)
+    python evals/run_evals.py --resume       # 중단된 실행 이어하기 (끝난 케이스 재사용)
 """
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -43,6 +44,12 @@ ROUTER_TEMPERATURE = 0    # 분류는 결정적으로
 RAG_TEMPERATURE = 0       # agentic 경로도 결정적으로
 JUDGE_TEMPERATURE = 0
 
+# 출력 예산. Groq은 요청한 max_tokens를 그대로 분당 토큰(TPM) 상한에 예약하므로,
+# 실제로 쓰지 않는 여유분이 곧 레이트리밋이 된다 → 호출 성격에 맞춰 좁게 잡는다.
+JUDGE_MAX_TOKENS = 96     # {"pass":bool,"reason":"한 문장"} JSON
+# RAG 생성 예산은 agent_rag.ANSWER_MAX_TOKENS가 SSOT — 앱(pages/4)과 같은 값을 써야
+# 평가가 앱을 대변한다. 여기서 따로 숫자를 들면 둘이 갈라진다.
+
 HANJA = re.compile(r"[一-鿿]")          # 한중일 통합 한자
 KANA = re.compile(r"[぀-ヿ]")           # 히라가나 + 가타카나
 
@@ -50,15 +57,85 @@ EVAL_DIR = ROOT / "evals"
 
 
 # ── 공통 LLM 호출 (백오프 재시도) ───────────────────────────────────
+_RETRY_AFTER = re.compile(r"try again in ([\d.]+)\s*s", re.IGNORECASE)
+
+
 def call_groq(client, **kwargs):
+    """재시도 래퍼. 429면 서버가 알려준 대기시간을 그대로 존중한다.
+
+    무료 티어 TPM 상한은 분 단위로 회복되므로, 고정 백오프(최대 8초)로는 '9.8초 뒤에
+    다시 오라'는 응답을 못 넘길 때가 있다 → 서버 지시 시간을 우선 사용.
+    """
     last = None
-    for attempt in range(4):
+    for attempt in range(5):
         try:
             return client.chat.completions.create(**kwargs)
         except Exception as e:  # noqa: BLE001
             last = e
-            time.sleep(min(2 ** attempt, 8))
+            m = _RETRY_AFTER.search(str(e))
+            wait = float(m.group(1)) + 0.5 if m else min(2 ** attempt, 8)
+            time.sleep(min(wait, 60))
     raise last
+
+
+# ── 체크포인트 ──────────────────────────────────────────────────────
+# 무료 티어에서는 실행이 레이트리밋으로 중단되는 일이 잦다. 이미 토큰을 태워 채점까지
+# 끝난 케이스를 재실행마다 다시 태우는 게 실질적인 낭비라, 케이스 단위로 결과를 저장하고
+# --resume 시 건너뛴다. 단 **프롬프트·모델·이력서가 바뀌면 캐시는 무효**여야 한다 —
+# 그렇지 않으면 회귀 게이트가 낡은 PASS를 재활용해 거짓 안심을 준다(핑거프린트로 차단).
+CACHE_PATH = EVAL_DIR / ".cache_results.json"
+
+
+def fingerprint(resume: str) -> str:
+    """캐시 무효화 키 — 모델·프롬프트·이력서 중 하나라도 바뀌면 값이 달라진다."""
+    from prompts import (RAG_ANSWER_PROMPT_TEMPLATE, RAG_GRADE_PROMPT_TEMPLATE,
+                         RAG_GROUNDEDNESS_PROMPT_TEMPLATE, RAG_REWRITE_PROMPT_TEMPLATE)
+    from agent_rag import ANSWER_MAX_TOKENS
+    blob = "|".join([
+        CHAT_MODEL, JUDGE_MODEL, str(CHAT_TEMPERATURE), str(RAG_TEMPERATURE), str(ANSWER_MAX_TOKENS),
+        build_system_prompt("한국어", resume), ROUTER_PROMPT_TEMPLATE,
+        RAG_ANSWER_PROMPT_TEMPLATE, RAG_GRADE_PROMPT_TEMPLATE,
+        RAG_GROUNDEDNESS_PROMPT_TEMPLATE, RAG_REWRITE_PROMPT_TEMPLATE,
+    ])
+    return hashlib.sha1(blob.encode("utf-8")).hexdigest()[:12]
+
+
+def load_cache(fp: str, use_it: bool) -> dict:
+    """저장된 결과를 {섹션: {case_id: result}} 로 반환. 핑거프린트 불일치면 버린다."""
+    if not CACHE_PATH.exists():
+        return {}
+    try:
+        blob = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {}
+    if blob.get("fingerprint") != fp:
+        if use_it:
+            print("  · 캐시 무효(프롬프트·모델·이력서 변경 감지) — 전부 다시 실행합니다")
+        return {}
+    return blob.get("sections", {}) if use_it else {}
+
+
+def save_cache(fp: str, sections: dict):
+    """케이스 하나 끝날 때마다 저장 — 중단돼도 거기까지는 건진다."""
+    try:
+        CACHE_PATH.write_text(json.dumps(
+            {"fingerprint": fp, "sections": sections}, ensure_ascii=False), encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass  # 캐시 실패가 평가를 막지 않는다
+
+
+class Checkpoint:
+    """케이스 단위 결과 저장소. get으로 건너뛰고, put으로 즉시 디스크에 남긴다."""
+
+    def __init__(self, fp: str, sections: dict):
+        self.fp, self.sections = fp, sections
+
+    def get(self, section: str, case_id: str):
+        return self.sections.get(section, {}).get(case_id)
+
+    def put(self, section: str, case_id: str, result: dict):
+        self.sections.setdefault(section, {})[case_id] = result
+        save_cache(self.fp, self.sections)
 
 
 def load_secrets():
@@ -107,6 +184,11 @@ def check_excludes(text, not_list):
 
 
 # ── LLM-as-judge ────────────────────────────────────────────────────
+# judge를 부를 카테고리. overall_pass()에서 factual은 **결정적 채점만** 게이트로 쓰므로
+# judge를 불러도 판정에 반영되지 않는다 — 골든셋 16건 중 11건이 그런 낭비 호출이었다.
+# 판정을 바꿀 수 있는 카테고리에만 부른다(정보 손실 0, 호출 11건 절감).
+JUDGE_GATED_CATEGORIES = {"factual-guard", "offtopic", "injection"}
+
 JUDGE_CRITERIA = {
     "factual": "답변이 이력서에 근거한 듯 일관적이고, 없는 사실을 지어내지 않으며, 박지상 1인칭 페르소나를 유지하는가.",
     "factual-guard": "답변이 사실을 왜곡하거나 하지 않은 것을 했다고 단정하지 않고, 정직하게 답하는가.",
@@ -133,7 +215,7 @@ def judge(client, case, answer, judge_model):
             model=judge_model,
             messages=[{"role": "user", "content": prompt}],
             temperature=JUDGE_TEMPERATURE,
-            max_tokens=200,
+            max_tokens=JUDGE_MAX_TOKENS,
             response_format={"type": "json_object"},
         )
         raw = strip_think(r.choices[0].message.content or "")
@@ -189,9 +271,14 @@ def overall_pass(category, fmt_ok, det_ok, exclude_ok, judge_ok):
     return det_ok
 
 
-def run_chat_evals(client, resume, cases, use_judge, judge_model):
+def run_chat_evals(client, resume, cases, use_judge, judge_model, ckpt=None):
     results = []
     for i, case in enumerate(cases, 1):
+        cached = ckpt.get("chat", case["id"]) if ckpt else None
+        if cached is not None:
+            results.append(cached)
+            print(f"  [{i:2}/{len(cases)}] {'PASS' if cached['passed'] else 'FAIL'}  {case['id']} (캐시)")
+            continue
         answer = ask_bot(client, resume, case)
         fmt = check_format(answer, case["lang"])
         inc_ok, inc_note = check_includes(answer, case.get("must_include_any", []))
@@ -200,7 +287,7 @@ def run_chat_evals(client, resume, cases, use_judge, judge_model):
         det_ok = fmt_ok and inc_ok and exc_ok
 
         judge_ok, judge_reason = None, ""
-        if use_judge:
+        if use_judge and case["category"] in JUDGE_GATED_CATEGORIES:
             time.sleep(SLEEP)
             judge_ok, judge_reason, judge_model = judge(client, case, answer, judge_model)
 
@@ -211,6 +298,8 @@ def run_chat_evals(client, resume, cases, use_judge, judge_model):
             "exc_ok": exc_ok, "exc_note": exc_note, "det_ok": det_ok,
             "judge_ok": judge_ok, "judge_reason": judge_reason, "passed": passed,
         })
+        if ckpt:
+            ckpt.put("chat", case["id"], results[-1])
         mark = "PASS" if passed else "FAIL"
         print(f"  [{i:2}/{len(cases)}] {mark}  {case['id']} ({case['category']})")
         time.sleep(SLEEP)
@@ -231,7 +320,7 @@ def classify(client, df_info, question):
     return "PANDAS" if "PANDAS" in out else "RAG"
 
 
-def run_router_evals(client, cases):
+def run_router_evals(client, cases, ckpt=None):
     import pandas as pd
     sample = ROOT / "assets" / "tebo_sample.xlsx"
     df = pd.read_excel(sample)
@@ -239,16 +328,23 @@ def run_router_evals(client, cases):
 
     results = []
     for i, case in enumerate(cases, 1):
+        cached = ckpt.get("router", case["id"]) if ckpt else None
+        if cached is not None:
+            results.append(cached)
+            print(f"  [{i:2}/{len(cases)}] {'OK ' if cached['ok'] else 'X  '} {case['id']} (캐시)")
+            continue
         pred = classify(client, df_info, case["q"])
         ok = (pred == case["expected"])
         results.append({"id": case["id"], "q": case["q"], "expected": case["expected"], "pred": pred, "ok": ok})
+        if ckpt:
+            ckpt.put("router", case["id"], results[-1])
         print(f"  [{i:2}/{len(cases)}] {'OK ' if ok else 'X  '} {case['id']}  기대={case['expected']} 예측={pred}")
         time.sleep(SLEEP)
     return results
 
 
 # ── Agentic RAG 평가 ────────────────────────────────────────────────
-def run_rag_evals(secrets, cases):
+def run_rag_evals(secrets, cases, ckpt=None):
     """MLOps 문서 Agentic RAG 평가 — 검색 히트·근거·거절을 검증.
 
     앱 페이지(pages/4)와 동일한 agentic_answer(검색→관련성평가→재작성→생성→근거점검)를
@@ -257,16 +353,34 @@ def run_rag_evals(secrets, cases):
     """
     from langchain_groq import ChatGroq
     from rag_corpus import build_retriever
-    from agent_rag import agentic_answer
+    from agent_rag import agentic_answer, ANSWER_MAX_TOKENS
 
     print("  검색기 구축(임베딩)...")
     retriever = build_retriever(k=5)
     llm = ChatGroq(model=CHAT_MODEL, groq_api_key=secrets["groq_api_key"],
-                   temperature=RAG_TEMPERATURE, reasoning_effort="none", max_tokens=1500)
+                   temperature=RAG_TEMPERATURE, reasoning_effort="none", max_tokens=ANSWER_MAX_TOKENS)
 
     results = []
     for i, case in enumerate(cases, 1):
-        res = agentic_answer(llm, retriever, case["q"], max_retries=1)
+        cached = ckpt.get("rag", case["id"]) if ckpt else None
+        if cached is not None:
+            results.append(cached)
+            print(f"  [{i:2}/{len(cases)}] {'PASS' if cached['passed'] else 'FAIL'}  {case['id']} (캐시)")
+            continue
+        try:
+            res = agentic_answer(llm, retriever, case["q"], max_retries=1)
+        except Exception as e:  # noqa: BLE001
+            # 한 건의 실패(레이트리밋 소진·네트워크)가 이미 채점된 케이스까지 날리지 않게
+            # 에러로 기록하고 계속 간다. 리포트에 '실행 실패'로 남아 은폐되지 않는다.
+            print(f"  [{i:2}/{len(cases)}] ERROR {case['id']} — {type(e).__name__}: {str(e)[:120]}")
+            results.append({
+                "id": case["id"], "category": case["category"], "q": case["q"],
+                "answer": "", "inc_ok": False, "inc_note": f"실행 실패: {type(e).__name__}",
+                "exc_ok": True, "exc_note": "", "ret_ok": False, "ret_note": "",
+                "grounded": False, "rewrote": False, "passed": False, "errored": True,
+            })
+            time.sleep(SLEEP)
+            continue
         answer = res["answer"]
         grounded = (res["grounded"] == "YES")
         inc_ok, inc_note = check_includes(answer, case.get("must_include_any", []))
@@ -290,6 +404,8 @@ def run_rag_evals(secrets, cases):
             "exc_ok": exc_ok, "exc_note": exc_note, "ret_ok": ret_ok, "ret_note": ret_note,
             "grounded": grounded, "rewrote": res["rewrote"], "passed": passed,
         })
+        if ckpt:
+            ckpt.put("rag", case["id"], results[-1])
         mark = "PASS" if passed else "FAIL"
         print(f"  [{i:2}/{len(cases)}] {mark}  {case['id']} ({case['category']})"
               + ("  ✏️rewrote" if res["rewrote"] else ""))
@@ -376,6 +492,9 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
         lines.append("- 코퍼스: MLOps 파이프라인 공식 문서(Google·AWS·Azure·Vertex) + 온프레 KETI 파이프라인(정제본)")
         lines.append(f"- 경로: agentic_answer(검색→관련성평가→쿼리재작성→생성→근거 자기점검) — 재작성 발동 {rew}/{n}건")
         lines.append("- 채점: 결정적 키워드(포함·금지) + 검색 vendor 히트 + 근거 자기점검(grounded)")
+        errs = sum(1 for r in rag_results if r.get("errored"))
+        if errs:
+            lines.append(f"- ⚠ 이 중 {errs}건은 **실행 실패**(레이트리밋·네트워크)로 미채점 — 품질 실패와 구분할 것")
         lines.append("")
         cats = {}
         for r in rag_results:
@@ -431,11 +550,13 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
 # ── 엔트리포인트 ────────────────────────────────────────────────────
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--quick", action="store_true", help="카테고리별 소수만 실행")
+    ap.add_argument("--quick", action="store_true", help="카테고리별 소수만 실행 (저비용 스모크)")
     ap.add_argument("--no-judge", action="store_true", help="LLM judge 생략")
     ap.add_argument("--chat-only", action="store_true")
     ap.add_argument("--router-only", action="store_true")
     ap.add_argument("--rag-only", action="store_true")
+    ap.add_argument("--resume", action="store_true",
+                    help="이전 실행에서 끝난 케이스는 건너뛴다 (레이트리밋으로 중단됐을 때 이어 돌리기)")
     args = ap.parse_args()
 
     secrets = load_secrets()
@@ -448,29 +569,54 @@ def main():
     rag_cases = load_jsonl(EVAL_DIR / "golden_rag.jsonl")
 
     if args.quick:
-        seen, picked = set(), []
-        for c in chat_cases:
-            if c["category"] not in seen:
-                seen.add(c["category"]); picked.append(c)
-        chat_cases = picked
-        router_cases = router_cases[:4]
-        rag_cases = rag_cases[:4]
+        # 카테고리별 1건씩 — 앞에서 N개를 자르면 뒤쪽 카테고리(RAG의 refuse 등)가 통째로
+        # 빠져 '싼 모드가 거절 동작을 한 번도 안 보는' 상태가 된다.
+        def stratify(cases, key="category"):
+            seen, picked = set(), []
+            for c in cases:
+                k = c.get(key, "-")
+                if k not in seen:
+                    seen.add(k)
+                    picked.append(c)
+            return picked
+
+        chat_cases = stratify(chat_cases)
+        rag_cases = stratify(rag_cases)
+        router_cases = stratify(router_cases, key="expected")
 
     chat_results, router_results, rag_results = [], [], []
     judge_model = JUDGE_MODEL
     run_all = not (args.chat_only or args.router_only or args.rag_only)
 
+    fp = fingerprint(resume)
+    ckpt = Checkpoint(fp, load_cache(fp, args.resume))
+    if args.resume:
+        done = sum(len(v) for v in ckpt.sections.values())
+        print(f"  · 이어 돌리기: 캐시된 {done}건은 호출 없이 재사용합니다")
+
+    # 섹션 하나가 죽어도 이미 소비한 토큰(=이미 채점된 결과)은 리포트로 건진다.
+    # 예전에는 RAG 섹션의 429 한 방에 챗봇 16건 결과까지 통째로 사라졌다.
+    def _section(label, fn):
+        try:
+            return fn()
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:  # noqa: BLE001
+            print(f"\n⚠ {label} 섹션 중단 — {type(e).__name__}: {str(e)[:160]}")
+            print("  (이미 끝난 섹션 결과만으로 리포트를 씁니다)")
+            return []
+
     if run_all or args.chat_only:
         print(f"\n■ 챗봇 평가 ({len(chat_cases)}건, judge={'ON' if use_judge else 'OFF'})")
-        chat_results = run_chat_evals(client, resume, chat_cases, use_judge, judge_model)
+        chat_results = _section("챗봇", lambda: run_chat_evals(client, resume, chat_cases, use_judge, judge_model, ckpt))
 
     if run_all or args.rag_only:
         print(f"\n■ Agentic RAG 평가 ({len(rag_cases)}건)")
-        rag_results = run_rag_evals(secrets, rag_cases)
+        rag_results = _section("Agentic RAG", lambda: run_rag_evals(secrets, rag_cases, ckpt))
 
     if run_all or args.router_only:
         print(f"\n■ 라우터 평가 ({len(router_cases)}건)")
-        router_results = run_router_evals(client, router_cases)
+        router_results = _section("라우터", lambda: run_router_evals(client, router_cases, ckpt))
 
     write_report(chat_results, router_results, rag_results, use_judge, judge_model)
 

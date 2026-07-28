@@ -7,9 +7,16 @@ JisangFolio 챗봇과 데이터분석 라우터의 출력 품질을 **재현 가
 
 ```bash
 python evals/run_evals.py            # 전체 → evals/report.md 생성
-python evals/run_evals.py --quick    # 카테고리별 소수만 (저비용 스모크)
+python evals/run_evals.py --quick    # 카테고리별 1건씩 (저비용 스모크)
 python evals/run_evals.py --no-judge # 결정적 채점만
+python evals/run_evals.py --resume   # 중단된 실행 이어하기 (끝난 케이스는 호출 없이 재사용)
 ```
+
+무료 티어는 **분당 토큰(TPM)** 상한이 낮아 긴 실행이 429로 끊길 수 있다. 그래서
+① 429는 서버가 알려준 대기시간만큼 쉬고 재시도하고, ② 한 케이스가 실패해도 나머지는 계속
+돌며, ③ 섹션이 죽어도 이미 채점된 결과로 리포트를 쓰고, ④ `--resume`이 남은 케이스만
+이어서 돌린다. 캐시는 **프롬프트·모델·이력서가 바뀌면 자동 폐기**된다 — 회귀 게이트가
+낡은 PASS를 재활용하면 거짓 안심이 되기 때문.
 
 `.streamlit/secrets.toml` 의 `groq_api_key`, `resume_text` 를 사용한다.
 
@@ -26,6 +33,9 @@ python evals/run_evals.py --no-judge # 결정적 채점만
   썼다고 주장하지 않는가, 출처를 정확히 밝히는가.
 - **LLM judge(보조)**: 자기채점 편향을 피하려 챗봇과 **다른 모델**로 grounding·페르소나·거절을 판정.
   유도질문/주제이탈/인젝션처럼 substring으로 판별 불가한 케이스의 게이트.
+  **판정을 바꿀 수 있는 카테고리(`factual-guard`·`offtopic`·`injection`)에만 호출한다** —
+  `factual`은 결정적 채점이 게이트라 judge를 불러도 결과에 반영되지 않았고, 골든셋 16건 중
+  11건이 그런 낭비 호출이었다(정보 손실 없이 judge 호출 69% 절감).
 - **앱과 동일 경로(모델 계층)**: 프롬프트(`prompts.py`)와 출력 후처리(`clean_response`)를 앱 페이지와
   공유해 '사용자가 실제로 보는 출력'을 검증한다. RAG는 앱 페이지와 같은 `agentic_answer`
   (검색→관련성평가→쿼리재작성→생성→근거 자기점검)를 그대로 호출한다.
