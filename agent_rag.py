@@ -33,6 +33,7 @@ from prompts import (
     clean_response,
 )
 from rag_corpus import format_context
+from ratelimit import estimate_tokens, is_daily_limit, pacer_for, parse_wait_seconds
 
 
 # Groq 무료 티어는 분당 토큰(TPM) 상한이 낮고, **요청한 max_tokens가 그대로 예약분으로
@@ -46,33 +47,52 @@ _REWRITE_TOKENS = 96
 # 답하거나 평가만 잘리는 상황). 인용 포함 간결 답변 기준.
 ANSWER_MAX_TOKENS = 768
 
-_RETRY_AFTER = re.compile(r"try again in ([\d.]+)\s*s", re.IGNORECASE)
 _RATE_LIMITED = re.compile(r"rate.?limit|429", re.IGNORECASE)
+# 폴백 백오프. TPM 버킷은 최대 60초까지 기다려야 회복될 수 있으므로 1·2·4·8초처럼
+# 창보다 짧은 대기는 사실상 재시도를 포기하는 것과 같다(실측으로 확인).
+_FALLBACK_WAITS = (10, 30, 60, 60)
 
 
 def _invoke_with_retry(chain, variables, attempts: int = 5):
-    """429(TPM 초과)면 서버가 알려준 대기시간만큼 쉬고 재시도.
-
-    TPM은 분 단위로 회복되므로 기다리면 대부분 통과한다. 재시도가 없으면 평가 도중
-    한 번의 429가 이미 소비한 토큰까지 통째로 날린다(실제로 그렇게 죽었다).
-    """
+    """429면 서버가 알려준 대기시간만큼 쉬고 재시도. 일일 한도면 즉시 중단."""
     for i in range(attempts):
         try:
             return chain.invoke(variables)
         except Exception as e:  # noqa: BLE001 — 프로바이더 예외 타입에 의존하지 않는다
-            msg = str(e)
-            if not _RATE_LIMITED.search(msg) or i == attempts - 1:
+            if not _RATE_LIMITED.search(str(e)) or i == attempts - 1:
                 raise
-            m = _RETRY_AFTER.search(msg)
-            wait = float(m.group(1)) + 0.5 if m else min(2 ** i, 30)
+            if is_daily_limit(e):
+                print("    · 일일 한도(TPD/RPD) 소진 — 기다려도 안 풀리므로 중단합니다")
+                raise
+            wait = parse_wait_seconds(e) or _FALLBACK_WAITS[min(i, len(_FALLBACK_WAITS) - 1)]
+            wait = min(wait + 0.5, 90)
             print(f"    · rate limit — {wait:.1f}s 대기 후 재시도 ({i + 1}/{attempts - 1})")
             time.sleep(wait)
 
 
+def _usage_tokens(resp, fallback: int) -> int:
+    """응답에서 실제 사용 토큰을 꺼낸다(없으면 추정치)."""
+    meta = getattr(resp, "usage_metadata", None) or {}
+    total = meta.get("total_tokens") if isinstance(meta, dict) else None
+    return int(total) if total else fallback
+
+
 def _ask(llm, template, _max_tokens=None, **variables) -> str:
-    """프롬프트 1회 호출 → 후처리된 텍스트. _max_tokens로 출력 예산을 좁힐 수 있다."""
+    """프롬프트 1회 호출 → 후처리된 텍스트. _max_tokens로 출력 예산을 좁힐 수 있다.
+
+    호출 전 페이서에 예산을 신청하고(선제 대기), 호출 후 실제 사용량을 되먹인다.
+    """
+    prompt = ChatPromptTemplate.from_template(template)
     model = llm.bind(max_tokens=_max_tokens) if _max_tokens else llm
-    return clean_response(_invoke_with_retry(ChatPromptTemplate.from_template(template) | model, variables).content)
+
+    rendered = prompt.format(**variables)
+    need = estimate_tokens(rendered) + (_max_tokens or ANSWER_MAX_TOKENS)
+    pacer = pacer_for(getattr(llm, "model_name", None) or str(getattr(llm, "model", "unknown")))
+    pacer.wait_for(need)
+
+    resp = _invoke_with_retry(prompt | model, variables)
+    pacer.record(_usage_tokens(resp, need))
+    return clean_response(resp.content)
 
 
 def _yesno(llm, template, **variables) -> str:

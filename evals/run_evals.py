@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from prompts import build_system_prompt, ROUTER_PROMPT_TEMPLATE, strip_think, clean_response  # noqa: E402
+from ratelimit import estimate_tokens, is_daily_limit, pacer_for, parse_wait_seconds  # noqa: E402
 from groq import Groq  # noqa: E402
 
 CHAT_MODEL = "qwen/qwen3.6-27b"          # 앱 챗봇과 동일
@@ -57,24 +58,39 @@ EVAL_DIR = ROOT / "evals"
 
 
 # ── 공통 LLM 호출 (백오프 재시도) ───────────────────────────────────
-_RETRY_AFTER = re.compile(r"try again in ([\d.]+)\s*s", re.IGNORECASE)
+_FALLBACK_WAITS = (10, 30, 60, 60)
 
 
 def call_groq(client, **kwargs):
-    """재시도 래퍼. 429면 서버가 알려준 대기시간을 그대로 존중한다.
+    """페이싱 + 재시도 래퍼 (ratelimit.py와 같은 정책, 원본 SDK 경로용).
 
-    무료 티어 TPM 상한은 분 단위로 회복되므로, 고정 백오프(최대 8초)로는 '9.8초 뒤에
-    다시 오라'는 응답을 못 넘길 때가 있다 → 서버 지시 시간을 우선 사용.
+    호출 전 최근 1분 사용량을 보고 미리 자고, 그래도 429면 서버가 알려준 대기시간을
+    존중한다. 일일 한도면 기다려도 안 풀리므로 즉시 올린다.
     """
+    model = kwargs.get("model", "unknown")
+    pacer = pacer_for(model)
+    need = estimate_tokens("".join(m.get("content", "") for m in kwargs.get("messages", []))) \
+        + int(kwargs.get("max_tokens", 512))
+    pacer.wait_for(need)
+
     last = None
     for attempt in range(5):
         try:
-            return client.chat.completions.create(**kwargs)
+            r = client.chat.completions.with_raw_response.create(**kwargs)
+            pacer.update_limit(dict(r.headers))
+            parsed = r.parse()
+            used = getattr(getattr(parsed, "usage", None), "total_tokens", None)
+            pacer.record(int(used) if used else need)
+            return parsed
         except Exception as e:  # noqa: BLE001
             last = e
-            m = _RETRY_AFTER.search(str(e))
-            wait = float(m.group(1)) + 0.5 if m else min(2 ** attempt, 8)
-            time.sleep(min(wait, 60))
+            if is_daily_limit(e):
+                print("  · 일일 한도(TPD/RPD) 소진 — 중단합니다")
+                raise
+            wait = parse_wait_seconds(e) or _FALLBACK_WAITS[min(attempt, len(_FALLBACK_WAITS) - 1)]
+            wait = min(wait + 0.5, 90)
+            print(f"  · rate limit — {wait:.0f}s 대기 후 재시도 ({attempt + 1}/4)")
+            time.sleep(wait)
     raise last
 
 
@@ -279,7 +295,13 @@ def run_chat_evals(client, resume, cases, use_judge, judge_model, ckpt=None):
             results.append(cached)
             print(f"  [{i:2}/{len(cases)}] {'PASS' if cached['passed'] else 'FAIL'}  {case['id']} (캐시)")
             continue
-        answer = ask_bot(client, resume, case)
+        try:
+            answer = ask_bot(client, resume, case)
+        except Exception as e:  # noqa: BLE001
+            if not is_daily_limit(e):
+                raise
+            print(f"  · 일일 한도 소진 — 남은 {len(cases) - i + 1}건은 실행하지 않고 중단합니다")
+            break
         fmt = check_format(answer, case["lang"])
         inc_ok, inc_note = check_includes(answer, case.get("must_include_any", []))
         exc_ok, exc_note = check_excludes(answer, case.get("must_not_include", []))
@@ -333,7 +355,13 @@ def run_router_evals(client, cases, ckpt=None):
             results.append(cached)
             print(f"  [{i:2}/{len(cases)}] {'OK ' if cached['ok'] else 'X  '} {case['id']} (캐시)")
             continue
-        pred = classify(client, df_info, case["q"])
+        try:
+            pred = classify(client, df_info, case["q"])
+        except Exception as e:  # noqa: BLE001
+            if not is_daily_limit(e):
+                raise
+            print(f"  · 일일 한도 소진 — 남은 {len(cases) - i + 1}건은 실행하지 않고 중단합니다")
+            break
         ok = (pred == case["expected"])
         results.append({"id": case["id"], "q": case["q"], "expected": case["expected"], "pred": pred, "ok": ok})
         if ckpt:
@@ -370,7 +398,13 @@ def run_rag_evals(secrets, cases, ckpt=None):
         try:
             res = agentic_answer(llm, retriever, case["q"], max_retries=1)
         except Exception as e:  # noqa: BLE001
-            # 한 건의 실패(레이트리밋 소진·네트워크)가 이미 채점된 케이스까지 날리지 않게
+            if is_daily_limit(e):
+                # 일일 한도는 기다려도 안 풀린다 → 남은 케이스를 시도해봐야 전부 실패한다.
+                # '시도했으나 실패'로 기록하면 리포트가 품질 실패처럼 보이므로, 아예
+                # 실행하지 않은 것으로 남기고 중단한다(커버리지 표기가 이를 드러낸다).
+                print(f"  · 일일 한도 소진 — 남은 {len(cases) - i + 1}건은 실행하지 않고 중단합니다")
+                break
+            # 한 건의 실패(일시적 레이트리밋·네트워크)가 이미 채점된 케이스까지 날리지 않게
             # 에러로 기록하고 계속 간다. 리포트에 '실행 실패'로 남아 은폐되지 않는다.
             print(f"  [{i:2}/{len(cases)}] ERROR {case['id']} — {type(e).__name__}: {str(e)[:120]}")
             results.append({
@@ -422,7 +456,7 @@ def pct(n, d):
     return f"{(100 * n / d):.0f}%" if d else "N/A"
 
 
-def write_report(chat_results, router_results, rag_results, use_judge, judge_model):
+def write_report(chat_results, router_results, rag_results, use_judge, judge_model, coverage=None):
     lines = ["# JisangFolio 평가 리포트", ""]
     lines.append(f"- 생성: {datetime.now(_KST).strftime('%Y-%m-%d %H:%M')}")
     # 이번 실행에 실제로 돈 경로만 표기(--rag-only 등 부분 실행 시 안 돈 경로의 설정을 주장하지 않도록)
@@ -434,11 +468,22 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
     if rag_results:
         ran.append(f"RAG temperature={RAG_TEMPERATURE}")
     lines.append(f"- 모델: `{CHAT_MODEL}`" + (f" — {', '.join(ran)}" if ran else ""))
-    if use_judge:
+    # 부분 실행을 표시하지 않으면 "2/2 100%"가 전체 통과로 읽힌다. --quick 표본이든
+    # 한도 소진으로 잘렸든, 골든셋 대비 몇 건을 실제로 돌렸는지가 리포트의 신뢰 조건이다.
+    if coverage:
+        partial = {k: v for k, v in coverage.items() if v[0] < v[1]}
+        if partial:
+            detail = ", ".join(f"{k} {n}/{tot}" for k, (n, tot) in partial.items())
+            lines.append(f"- ⚠ **부분 실행** ({detail}) — 골든셋 전체를 돌리지 않았으므로 "
+                         "회귀 판단 근거로 쓰지 말 것")
+    # judge는 챗봇 섹션에서만 쓴다 — RAG만 돌린 실행에 judge 모델을 적으면 쓰지도 않은
+    # 구성요소를 주장하는 셈이 된다.
+    judge_used = use_judge and bool(chat_results)
+    if judge_used:
         lines.append(f"- 심사(judge) 모델: `{judge_model}` (temperature={JUDGE_TEMPERATURE}) — 자기채점 편향 회피용 별도 모델")
     lines.append(
         "- 채점: 결정적 규칙(키워드·금지어·형식)이 백본, LLM judge는 보조(offtopic/injection은 judge가 게이트)"
-        if use_judge else
+        if judge_used else
         "- 채점: 결정적 규칙(키워드·금지어·형식)만 사용 (--no-judge 실행이라 LLM judge 게이트는 생략)"
     )
     lines.append("")
@@ -528,9 +573,9 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
     if chat_results or rag_results:
         limits.append(
             "- 결정적 키워드 채점은 표면 문자열 매칭이라 '키워드는 있으나 맥락이 틀린' 거짓 통과가 가능"
-            + (" → LLM judge가 grounding을 보조 점검." if use_judge else " (이번 실행은 judge 없이 결정적 채점만).")
+            + (" → LLM judge가 grounding을 보조 점검." if judge_used else " (이번 실행은 judge 없이 결정적 채점만).")
         )
-    if use_judge:
+    if judge_used:
         limits.append("- LLM judge는 비결정적이라 동일 답변에도 판정이 흔들릴 수 있음 → 하드 게이트는 결정적 채점에 둠.")
     if router_results:
         limits.append("- 라우터 정확도는 표본 n이 작고 라벨 경계가 일부 주관적(요약·의미 질문). 절대 수치보다 프롬프트 변경 전후 비교에 의미.")
@@ -568,6 +613,8 @@ def main():
     router_cases = load_jsonl(EVAL_DIR / "golden_router.jsonl")
     rag_cases = load_jsonl(EVAL_DIR / "golden_rag.jsonl")
 
+    totals = {"챗봇": len(chat_cases), "라우터": len(router_cases), "RAG": len(rag_cases)}
+
     if args.quick:
         # 카테고리별 1건씩 — 앞에서 N개를 자르면 뒤쪽 카테고리(RAG의 refuse 등)가 통째로
         # 빠져 '싼 모드가 거절 동작을 한 번도 안 보는' 상태가 된다.
@@ -583,6 +630,7 @@ def main():
         chat_cases = stratify(chat_cases)
         rag_cases = stratify(rag_cases)
         router_cases = stratify(router_cases, key="expected")
+        pass  # 실제 커버리지는 실행 후 결과 수로 계산한다(한도 중단도 같이 잡히도록)
 
     chat_results, router_results, rag_results = [], [], []
     judge_model = JUDGE_MODEL
@@ -618,7 +666,12 @@ def main():
         print(f"\n■ 라우터 평가 ({len(router_cases)}건)")
         router_results = _section("라우터", lambda: run_router_evals(client, router_cases, ckpt))
 
-    write_report(chat_results, router_results, rag_results, use_judge, judge_model)
+    # 실제로 채점된 건수 vs 골든셋 전체 — --quick 표본이든 한도 중단이든 동일하게 드러난다.
+    coverage = {}
+    for label, results in (("챗봇", chat_results), ("라우터", router_results), ("RAG", rag_results)):
+        if results:
+            coverage[label] = (len(results), totals[label])
+    write_report(chat_results, router_results, rag_results, use_judge, judge_model, coverage)
 
 
 if __name__ == "__main__":
