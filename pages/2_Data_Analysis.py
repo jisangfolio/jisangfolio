@@ -9,7 +9,7 @@ from langchain_core.documents import Document
 from langchain_groq import ChatGroq
 from prompts import ROUTER_PROMPT_TEMPLATE, strip_think
 from guardrails import check_input, blocked_message
-from ui import apply_style
+from ui import apply_style, finalize_stream, friendly_llm_error
 from observability import log_trace
 from codeguard import run_generated_code
 # Heavy torch/faiss deps (FAISS · HuggingFaceEmbeddings) are imported lazily,
@@ -310,14 +310,37 @@ if user_input and retriever:
         st.stop()
 
     df_info = get_df_info(df)
-    route = classify_question(router_llm, user_input, df_info)
     _t0 = time.time()
+
+    # 이 페이지의 모델 호출은 전부 bare 였다. 무료 티어에서 429가 나면 빨간
+    # 트레이스백이 그대로 화면에 떴다(다른 페이지들은 처리하고 있었다).
+    # 라우팅·코드생성·스트리밍이 모두 Groq 를 부르므로 턴 전체를 감싼다.
+    try:
+        route = classify_question(router_llm, user_input, df_info)
+    except Exception as e:                                  # noqa: BLE001
+        msg = friendly_llm_error(e)
+        with st.chat_message("assistant"):
+            st.warning(msg)
+        st.session_state["data_messages"].append(ChatMessage(role="assistant", content=msg))
+        log_trace(page="data", route="error", model=GROQ_MODEL,
+                  latency_ms=int((time.time() - _t0) * 1000), guard="ok",
+                  nodes=["llm_error"], ok=False)
+        st.stop()
 
     if route == "PANDAS":
         # --- pandas codegen path ---
         with st.chat_message("assistant"):
             with st.spinner("Generating code..."):
-                code, result, chart_df, error = generate_and_run_code(llm, user_input, df_info, df)
+                try:
+                    code, result, chart_df, error = generate_and_run_code(llm, user_input, df_info, df)
+                except Exception as e:                      # noqa: BLE001
+                    msg = friendly_llm_error(e)
+                    st.warning(msg)
+                    st.session_state["data_messages"].append(ChatMessage(role="assistant", content=msg))
+                    log_trace(page="data", route="pandas", model=GROQ_MODEL,
+                              latency_ms=int((time.time() - _t0) * 1000), guard="ok",
+                              nodes=["llm_error"], ok=False)
+                    st.stop()
 
             # Show generated code
             st.caption("🔧 Generated pandas code")
@@ -344,25 +367,32 @@ Answer:"""
                 response_container = st.empty()
                 in_think = None
                 buffer = ""
-                for chunk in (fallback_prompt | llm).stream({"question": user_input, "context": context_text}):
-                    delta = chunk.content
-                    if in_think is None:
-                        buffer += delta
-                        if "<think>" in buffer:
-                            in_think = True
-                        elif len(buffer) >= 50:
-                            in_think = False
-                            full_response = buffer
+                try:
+                    for chunk in (fallback_prompt | llm).stream({"question": user_input, "context": context_text}):
+                        delta = chunk.content
+                        if in_think is None:
+                            buffer += delta
+                            if "<think>" in buffer:
+                                in_think = True
+                            elif len(buffer) >= 50:
+                                in_think = False
+                                full_response = buffer
+                                response_container.markdown(full_response)
+                        elif in_think:
+                            buffer += delta
+                            if "</think>" in buffer:
+                                full_response = buffer.split("</think>", 1)[1].lstrip("\n")
+                                in_think = False
+                                response_container.markdown(full_response)
+                        else:
+                            full_response += delta
                             response_container.markdown(full_response)
-                    elif in_think:
-                        buffer += delta
-                        if "</think>" in buffer:
-                            full_response = buffer.split("</think>", 1)[1].lstrip("\n")
-                            in_think = False
-                            response_container.markdown(full_response)
-                    else:
-                        full_response += delta
-                        response_container.markdown(full_response)
+                except Exception as e:                      # noqa: BLE001
+                    full_response = friendly_llm_error(e)
+                else:
+                    # 50자 미만 응답이 buffer 에만 남아 사라지던 버그(1_Chat.py 와 동일)
+                    full_response = finalize_stream(full_response, buffer, in_think)
+                response_container.markdown(full_response)
                 st.session_state["data_messages"].append(ChatMessage(role="assistant", content=full_response))
             else:
                 # Show result
@@ -428,30 +458,37 @@ Answer:"""
             buffer = ""
             in_think = None
             with st.spinner("Analyzing..."):
-                for chunk in (prompt | llm).stream({
-                    "question": user_input,
-                    "context": context_text,
-                    "history": history_text,
-                }):
-                    delta = chunk.content
-                    if in_think is None:
-                        buffer += delta
-                        if "<think>" in buffer:
-                            in_think = True
-                        elif len(buffer) >= 50:
-                            in_think = False
-                            full_response = buffer
+                try:
+                    for chunk in (prompt | llm).stream({
+                        "question": user_input,
+                        "context": context_text,
+                        "history": history_text,
+                    }):
+                        delta = chunk.content
+                        if in_think is None:
+                            buffer += delta
+                            if "<think>" in buffer:
+                                in_think = True
+                            elif len(buffer) >= 50:
+                                in_think = False
+                                full_response = buffer
+                                response_container.markdown(full_response)
+                        elif in_think:
+                            buffer += delta
+                            if "</think>" in buffer:
+                                after = buffer.split("</think>", 1)[1].lstrip("\n")
+                                full_response = after
+                                in_think = False
+                                response_container.markdown(full_response)
+                        else:
+                            full_response += delta
                             response_container.markdown(full_response)
-                    elif in_think:
-                        buffer += delta
-                        if "</think>" in buffer:
-                            after = buffer.split("</think>", 1)[1].lstrip("\n")
-                            full_response = after
-                            in_think = False
-                            response_container.markdown(full_response)
-                    else:
-                        full_response += delta
-                        response_container.markdown(full_response)
+                except Exception as e:                      # noqa: BLE001
+                    full_response = friendly_llm_error(e)
+                else:
+                    # 50자 미만 응답이 buffer 에만 남아 사라지던 버그(1_Chat.py 와 동일)
+                    full_response = finalize_stream(full_response, buffer, in_think)
+            response_container.markdown(full_response)
             st.session_state["data_messages"].append(ChatMessage(role="assistant", content=full_response))
 
     # 📈 Observability — 데이터 분석 턴도 트레이스로 기록

@@ -1,8 +1,8 @@
 import streamlit as st
 from groq import Groq
 from datetime import datetime, timezone, timedelta
-from prompts import build_system_prompt, clean_response
-from ui import apply_style
+from prompts import build_system_prompt
+from ui import apply_style, finalize_stream, friendly_llm_error
 import time
 from guardrails import check_input, blocked_message
 from observability import log_trace
@@ -209,14 +209,10 @@ if user_input:
                     else:
                         full_response += delta
                         message_placeholder.markdown(full_response + "▌")
-                # 스트림 종료 후 확정: 50자 미만 짧은 응답이 버퍼에만 남아 빈 화면이 되던 버그 수정
-                if in_think is None:
-                    full_response = buffer
-                full_response = clean_response(full_response)
-                if not full_response.strip():
-                    full_response = clean_response(buffer)
-                if not full_response.strip():
-                    full_response = "(응답이 비어 있어요. 다시 한 번 물어봐 주세요.)" if lang == "한국어" else "(Empty response — please try again.)"
+                # 스트림 종료 후 확정: 50자 미만 짧은 응답이 버퍼에만 남아 빈 화면이 되던
+                # 버그 수정. ui.finalize_stream 으로 옮겼다 — 여기서만 고쳐두는 바람에
+                # 2_Data_Analysis.py 에는 같은 버그가 그대로 남아 있었다.
+                full_response = finalize_stream(full_response, buffer, in_think, lang)
                 message_placeholder.markdown(full_response)
                 st.session_state.chat_history.append(("assistant", full_response))
                 # 📈 Observability — 이 턴을 트레이스로 기록
@@ -228,9 +224,10 @@ if user_input:
                                  model="qwen/qwen3.6-27b")
                 if gr["seeds"]:
                     st.caption(f"🕸 GraphRAG · traversed {len(gr['nodes'])} nodes: " + " · ".join(gr["nodes"][:8]))
-            except Exception as e:
-                err = "답변 생성 중 오류가 발생했습니다" if lang == "한국어" else "Error generating response"
-                st.error(f"{err}: {e}")
+            except Exception as e:                          # noqa: BLE001
+                # 예외 원문을 렌더링하지 않는다: Groq 의 429 본문에는 조직 ID 와
+                # 쿼터가 실려 나와서, 그대로 뿌리면 방문자에게 계정 정보가 보인다.
+                st.warning(friendly_llm_error(e, lang))
 
     # 📧 새 방문자(세션 첫 메시지)면 즉시 이메일 알림 — 턴 끝 실행이라 응답 지연 없음
     # ?dev 파라미터로 들어온 방문(=본인 테스트)은 알림 제외 (jisangfolio.streamlit.app/?dev=1)
