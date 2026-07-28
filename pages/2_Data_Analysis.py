@@ -1,4 +1,3 @@
-import ast
 import time
 import os
 import streamlit as st
@@ -12,6 +11,7 @@ from prompts import ROUTER_PROMPT_TEMPLATE, strip_think
 from guardrails import check_input, blocked_message
 from ui import apply_style
 from observability import log_trace
+from codeguard import run_generated_code
 # Heavy torch/faiss deps (FAISS · HuggingFaceEmbeddings) are imported lazily,
 # only when embedding is actually needed — keeps first render light.
 
@@ -187,71 +187,9 @@ def classify_question(llm, question: str, df_info: str) -> str:
     return "RAG"
 
 
-# ── Restricted execution for LLM-generated pandas code ─────────────────────
-# The generated code runs through exec(), so **the namespace it sees is the
-# security boundary** — the builtins allowlist alone is not one. Two rules:
-#
-#   1. Never hand the code the `pandas` module. A module object is a path out
-#      of any allowlist: `pd.io.common.os.popen(...)` reaches the OS and
-#      `pd.io.common.__builtins__` hands back the full builtins dict. So `pd`
-#      is a small facade exposing only the top-level helpers the prompt asks for.
-#   2. Reject dunder access statically. Without `__class__` / `__globals__` /
-#      `__subclasses__`, an ordinary object (a DataFrame) is a dead end.
-#
-# Still not a sandbox: no timeout, no memory cap, no process isolation — a
-# reduced-capability namespace, documented as such in the README.
-
-_ALLOWED_PD = (
-    "to_numeric", "to_datetime", "to_timedelta", "isna", "notna",
-    "concat", "merge", "cut", "qcut", "pivot_table", "crosstab",
-    "DataFrame", "Series", "date_range", "NA", "NaT",
-)
-
-
-class _PandasFacade:
-    """Only the top-level pandas helpers the codegen prompt needs — not the module."""
-
-    def __init__(self):
-        for name in _ALLOWED_PD:
-            setattr(self, name, getattr(pd, name))
-
-
-_PD_FACADE = _PandasFacade()
-
-# Methods that write to disk / DB, plus pandas' own expression evaluator.
-_BANNED_ATTRS = frozenset({
-    "eval", "to_csv", "to_excel", "to_json", "to_pickle", "to_parquet",
-    "to_hdf", "to_sql", "to_feather", "to_stata", "to_orc", "to_xml",
-    "to_latex", "to_clipboard",
-})
-
-_SAFE_BUILTINS = {
-    "len": len, "sum": sum, "min": min, "max": max, "round": round,
-    "sorted": sorted, "list": list, "dict": dict, "set": set, "tuple": tuple,
-    "str": str, "int": int, "float": float, "bool": bool, "abs": abs,
-    "enumerate": enumerate, "zip": zip, "range": range, "type": type,
-    "isinstance": isinstance, "True": True, "False": False, "None": None,
-    "print": lambda *a, **kw: None,
-}
-
-
-def check_generated_code(code: str):
-    """Static AST check on LLM-generated code. Returns a reason string, or None if OK."""
-    try:
-        tree = ast.parse(code)
-    except SyntaxError as e:
-        return f"syntax error: {e.msg}"
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            return "imports are not allowed"
-        if isinstance(node, ast.Attribute):
-            if node.attr.startswith("__"):
-                return f"dunder attribute access is not allowed ({node.attr})"
-            if node.attr in _BANNED_ATTRS:
-                return f"attribute is not allowed ({node.attr})"
-        if isinstance(node, ast.Name) and node.id.startswith("__"):
-            return f"dunder name is not allowed ({node.id})"
-    return None
+# 축소 권한 실행 네임스페이스는 codeguard.py 로 분리했다 —
+# Streamlit 페이지는 import 시 set_page_config()가 돌아 테스트가 못 불러오므로,
+# 리포에서 가장 위험한 코드가 CI 밖에 있었다. 이제 tests/test_codeguard.py가 검증한다.
 
 
 def generate_and_run_code(llm, question: str, df_info: str, df: pd.DataFrame):
@@ -288,20 +226,9 @@ Using the DataFrame info below, write Python pandas code that answers the user's
     if "<think>" in code:
         code = code.split("</think>")[-1].strip()
 
-    # Static check before execution — see check_generated_code above
-    reason = check_generated_code(code)
-    if reason:
-        return code, None, None, f"blocked before execution: {reason}"
-
-    # Execute against a reduced-capability namespace (facade, not the pd module)
-    local_vars = {"df": df.copy(), "pd": _PD_FACADE}
-    try:
-        exec(code, {"__builtins__": _SAFE_BUILTINS}, local_vars)
-        result = local_vars.get("result", "Could not produce a result.")
-        chart_df = local_vars.get("chart_df", None)
-        return code, result, chart_df, None
-    except Exception as e:
-        return code, None, None, str(e)
+    # 정적 검사 + 축소 네임스페이스 실행 (codeguard.py)
+    result, chart_df, error = run_generated_code(code, df)
+    return code, result, chart_df, error
 
 
 # --- Main ---

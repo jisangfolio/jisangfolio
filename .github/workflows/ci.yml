@@ -12,9 +12,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # Tested modules (guardrails, prompts, profile_graph) are stdlib-only —
-      # no Streamlit/torch install needed, so CI is fast and key-free.
-      - run: pip install pytest
+      # 대부분의 테스트 대상(guardrails·prompts·profile_graph)은 stdlib만 쓴다.
+      # pandas는 codeguard.py 때문에 필요하다 — LLM 생성 코드의 실행 경계라
+      # 리포에서 가장 위험한 코드이고, CI 밖에 두면 안 된다.
+      # Streamlit/torch는 여전히 불필요 → CI는 빠르고 키가 없어도 돈다.
+      - run: pip install pytest pandas
       - run: python -m pytest tests/ -q
       # 코드그래프는 stdlib만 쓰므로 CI에서 재생성 가능. 커밋본과 다르면 실패시켜
       # README의 "auto-derived from the codebase" 주장이 사실로 유지되게 강제한다.
