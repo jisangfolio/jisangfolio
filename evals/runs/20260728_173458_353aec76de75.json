@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-07-28T17:34:58.671608+09:00",
+  "fingerprint": "353aec76de75",
+  "partial": true,
+  "coverage": {
+    "라우터": {
+      "ran": 11,
+      "golden": 20
+    }
+  },
+  "config": {
+    "chat_model": "qwen/qwen3.6-27b",
+    "judge_model": "llama-3.3-70b-versatile",
+    "chat_temperature": 0.2,
+    "rag_temperature": 0
+  },
+  "results": {
+    "chat": null,
+    "router": {
+      "passed": 11,
+      "total": 11,
+      "by_category": {
+        "PANDAS": "10/10",
+        "RAG": "1/1"
+      }
+    },
+    "rag": null
+  },
+  "report_md": "# JisangFolio 평가 리포트\n\n- 생성: 2026-07-28 17:34\n- 모델: `qwen/qwen3.6-27b` — 라우터 temperature=0\n- ⚠ **부분 실행** (라우터 11/20) — 골든셋 전체를 돌리지 않았으므로 회귀 판단 근거로 쓰지 말 것\n- 채점: 결정적 규칙(키워드·금지어·형식)만 사용 (--no-judge 실행이라 LLM judge 게이트는 생략)\n\n## 2. 라우터 분류 정확도 — 11/11 (100%, n=11)\n\n## 한계\n\n- 라우터 정확도는 표본 n이 작고 라벨 경계가 일부 주관적(요약·의미 질문). 절대 수치보다 프롬프트 변경 전후 비교에 의미.\n\n> 하니스 설계·실행법·회귀 사례: `evals/README.md`\n"
+}
