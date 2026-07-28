@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-07-28T15:42:31.405208+09:00",
+  "fingerprint": "e82fb5f864f0",
+  "partial": false,
+  "coverage": {},
+  "config": {
+    "chat_model": "qwen/qwen3.6-27b",
+    "judge_model": "llama-3.3-70b-versatile",
+    "chat_temperature": 0.2,
+    "rag_temperature": 0
+  },
+  "results": {
+    "chat": null,
+    "router": null,
+    "rag": null
+  },
+  "report_md": "# JisangFolio 평가 리포트\n\n- 생성: 2026-07-28 15:42\n- 모델: `qwen/qwen3.6-27b`\n- 채점: 결정적 규칙(키워드·금지어·형식)만 사용 (--no-judge 실행이라 LLM judge 게이트는 생략)\n\n> 하니스 설계·실행법·회귀 사례: `evals/README.md`\n"
+}

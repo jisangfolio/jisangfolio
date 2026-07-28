@@ -647,7 +647,10 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
     # 실행마다 한 건씩 누적 — report.md는 덮어쓰기 산출물이라, 이게 없으면
     # "언제 어떤 구성으로 몇 점이었나"의 근거가 리포에 남지 않는다.
     # (README가 인용하는 수치의 출처가 리포에 없던 게 실제 문제였다.)
-    is_partial = any(ran < golden for ran, golden in (coverage or {}).values())
+    nothing_ran = not (chat_results or router_results or rag_results)
+    is_partial = nothing_ran or any(ran < golden for ran, golden in (coverage or {}).values())
+    if nothing_ran:
+        print("\n→ 채점된 케이스가 0건입니다 (한도 소진 등) — report.md를 건드리지 않습니다")
     save_run_record(chat_results, router_results, rag_results,
                     use_judge, judge_model, coverage, is_partial, body)
 
@@ -685,9 +688,16 @@ def main():
     totals = {"챗봇": len(chat_cases), "라우터": len(router_cases), "RAG": len(rag_cases)}
 
     if args.quick:
-        # 카테고리별 1건씩 — 앞에서 N개를 자르면 뒤쪽 카테고리(RAG의 refuse 등)가 통째로
-        # 빠져 '싼 모드가 거절 동작을 한 번도 안 보는' 상태가 된다.
-        def stratify(cases, key="category"):
+        # `core: true` 로 지정된 케이스만 — 전체 실행이 무료 일일한도(20만 토큰)의 대부분을
+        # 먹어서 프롬프트를 만질 때마다 게이트를 돌릴 수 없었다. 못 돌리는 게이트는 없는
+        # 게이트라, '자주 돌릴 수 있는 최소 집합'을 골든셋 안에 명시해 둔다(약 4만 토큰).
+        # 선정 기준 = 깨지면 가장 아픈 것: 사실 가드(Kubeflow 미사용·TEBO 표현) + 인젝션 +
+        # 주제이탈 + 한국어 문서 검색(RAG 최난이도) + 코퍼스 밖 거절.
+        # core 태그가 없으면 카테고리별 1건씩으로 폴백한다(뒤쪽 카테고리 누락 방지).
+        def pick_core(cases, key="category"):
+            core = [c for c in cases if c.get("core")]
+            if core:
+                return core
             seen, picked = set(), []
             for c in cases:
                 k = c.get(key, "-")
@@ -696,10 +706,9 @@ def main():
                     picked.append(c)
             return picked
 
-        chat_cases = stratify(chat_cases)
-        rag_cases = stratify(rag_cases)
-        router_cases = stratify(router_cases, key="expected")
-        pass  # 실제 커버리지는 실행 후 결과 수로 계산한다(한도 중단도 같이 잡히도록)
+        chat_cases = pick_core(chat_cases)
+        rag_cases = pick_core(rag_cases)
+        router_cases = pick_core(router_cases, key="expected")
 
     chat_results, router_results, rag_results = [], [], []
     judge_model = JUDGE_MODEL
@@ -737,9 +746,16 @@ def main():
         router_results = _section("라우터", lambda: run_router_evals(client, router_cases, ckpt))
 
     # 실제로 채점된 건수 vs 골든셋 전체 — --quick 표본이든 한도 중단이든 동일하게 드러난다.
+    # **돌리려 했던** 섹션 전부를 커버리지에 넣는다. 결과가 0건인 섹션을 빼면
+    # 전부 실패한 실행이 coverage={} → is_partial=False → '전체 실행 성공'으로 오판되고,
+    # 빈 리포트가 직전 스냅샷을 덮어쓴다(실제로 한 번 그렇게 날렸다).
     coverage = {}
-    for label, results in (("챗봇", chat_results), ("라우터", router_results), ("RAG", rag_results)):
-        if results:
+    for label, results, scheduled in (
+        ("챗봇", chat_results, run_all or args.chat_only),
+        ("라우터", router_results, run_all or args.router_only),
+        ("RAG", rag_results, run_all or args.rag_only),
+    ):
+        if scheduled or results:
             coverage[label] = (len(results), totals[label])
     write_report(chat_results, router_results, rag_results, use_judge, judge_model, coverage)
 
