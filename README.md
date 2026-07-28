@@ -14,7 +14,7 @@
 
 JisangFolio is an interactive AI portfolio for **Jisang Park** — an AI · MLOps engineer. Four independent pipelines run behind one Streamlit surface:
 
-- **Chat** — the résumé is injected directly into the system prompt (no document RAG needed for ~3K tokens), GraphRAG retrieves a focused profile subgraph per question as extra grounding, and the bot answers in the first person, as me. Runs on Groq (Qwen3, reasoning disabled for low latency), with a Korean/English toggle, a guardrails layer + off-topic scope guard, and a post-processing filter that keeps Korean answers Korean.
+- **Chat** — the résumé is injected directly into the system prompt (no document RAG needed for ~3K tokens), a graph-retrieval step pulls a focused profile subgraph per question as extra grounding (lexical seed + 1-hop traversal — see Highlights for why that is *not* Microsoft's GraphRAG), and the bot answers in the first person, as me. Runs on Groq (Qwen3, reasoning disabled for low latency), with a Korean/English toggle, a guardrails layer + off-topic scope guard, and a post-processing filter that keeps Korean answers Korean.
 - **Data Analysis** — upload a CSV/Excel file and an LLM router decides between generating & executing pandas code (for aggregates) and hybrid retrieval — FAISS (dense) + BM25 (sparse) fused with RRF — for search, with automatic RAG fallback on code failure. The generated code runs against a **reduced-capability namespace**: the `pandas` module is never exposed (a module object is a way out of any allowlist — `pd.io.common.os` reaches the OS), only a facade of the ~15 top-level helpers the prompt needs; an AST pass rejects imports, dunder access and disk/DB writers before `exec`; builtins are allowlisted. Still **not a sandbox** — no timeout, no memory cap, no process isolation — so it is not safe against a determined attacker, only against the escape paths a code-generating LLM actually reaches for.
 - **MCP Server** — the portfolio data is exposed over the Model Context Protocol, so Claude Desktop / Cursor / Cline can query it directly.
 - **MLOps Docs Assistant (Agentic RAG)** — a self-correcting RAG over an MLOps pipeline corpus (official Google/AWS/Azure/Vertex docs + an on-prem KETI pipeline reference): retrieve → grade relevance → rewrite & re-retrieve (max 1 retry) → answer with citations → self-check groundedness. Out-of-corpus refusal is prompt-induced and measured on the golden set, not enforced in code; the groundedness check is a label on the answer, not a gate that blocks it.
@@ -151,7 +151,7 @@ jisangfolio/
 |------|-------|
 | UI | Streamlit · custom CSS (Pretendard) |
 | LLM | Groq (Qwen3) · reasoning disabled for latency |
-| RAG / retrieval | LangChain · FAISS · BM25 (hybrid, RRF) · GraphRAG · Agentic RAG (grade → rewrite → self-check) · HuggingFace Embeddings (all-MiniLM-L6-v2) |
+| RAG / retrieval | LangChain · FAISS · BM25 (hybrid, RRF) · graph retrieval over a hand-authored profile KG (*not* Microsoft GraphRAG) · Agentic RAG (grade → rewrite → self-check) · HuggingFace Embeddings (all-MiniLM-L6-v2) |
 | Testing / CI | pytest · GitHub Actions |
 | Eval judge | Llama-3.3-70B (separate model) |
 | MCP | fastmcp |
