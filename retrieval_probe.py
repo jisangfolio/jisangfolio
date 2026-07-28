@@ -68,9 +68,9 @@ def main():
     stats([r for r in rows if not r[1]], "영어 청크")
 
     # ── ③ 교차언어 검색 ──────────────────────────────────────────
-    print("\n[③ 교차언어 검색 — 영어 질의 → 한국어 목표 문서(KETI)]")
+    print("\n[③ 교차언어 검색 — 영어 질의 → 한국어 목표 문서(온프레)]")
     r = build_retriever(corpus, k=5)
-    KETI = "keti_mlops_pipeline.md"
+    KETI = "onprem_mlops_reference.md"
     probes = [
         "How does the on-prem pipeline serve models with Triton?",
         "What CI pipeline validates ONNX models before deployment?",
