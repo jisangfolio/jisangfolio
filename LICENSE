@@ -1,0 +1,45 @@
+MIT License
+
+Copyright (c) 2026 Jisang Park
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+NOT COVERED BY THE MIT GRANT ABOVE
+
+The MIT terms apply to the source code only. The following are personal or
+third-party material and are NOT licensed for reuse, redistribution, or
+modification:
+
+  assets/profile.jpg        Personal photograph.
+  assets/resume.pdf         Personal résumé and the personal data in it.
+  assets/mlops_grafana.png  Screenshot of a workplace dashboard.
+  assets/tebo_sample.xlsx   Human-subject posture measurements used as a demo
+                            dataset. Included here to make the data-analysis
+                            page runnable; redistribution rights have not been
+                            established, so treat it as sample data only and do
+                            not redistribute it independently of this
+                            repository.
+  rag_docs/                 Redacted internal documentation plus excerpts of
+                            cloud vendors' public MLOps documentation, each
+                            owned by its respective publisher.
+
+The résumé content served by the chatbot (`resume_text` in Streamlit secrets)
+is likewise personal data and is not part of the MIT grant.

@@ -1,5 +1,13 @@
 # Secrets & local-only working files (do NOT commit)
 .streamlit/secrets.toml
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# 서비스 계정 JSON — Streamlit secrets 로 넣는 값이라 파일이 굴러다닐 이유가 없다
+service-account*.json
+gcp-*.json
 
 # OS / cache / build output
 .DS_Store

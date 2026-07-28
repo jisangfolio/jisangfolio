@@ -10,7 +10,7 @@ Connect (claude_desktop_config.json):
   "mcpServers": {
     "jisangfolio": {
       "command": "python",
-      "args": ["/Users/jjpark/Desktop/info/jisangfolio/jisangfolio_mcp.py"],
+      "args": ["/absolute/path/to/jisangfolio/jisangfolio_mcp.py"],
       "env": { "GROQ_API_KEY": "your_groq_api_key" }
     }
   }

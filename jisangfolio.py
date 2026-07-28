@@ -79,7 +79,7 @@ T = {
         "arch_data": [
             "**파일 업로드**\n\nCSV/Excel → DataFrame\nchunk_size=1000 분할 + FAISS 임베딩",
             "**LLM 라우터**\n\n질문 유형 자동 판별\n`PANDAS` or `RAG` 2분기",
-            "**PANDAS 경로**\n\n코드 생성 → 샌드박스 exec\n실패 시 RAG 자동 폴백",
+            "**PANDAS 경로**\n\n코드 생성 → 축소 권한 네임스페이스에서 실행\n실패 시 RAG 자동 폴백",
             "**RAG 경로**\n\n하이브리드: FAISS(dense) + BM25(sparse)\nReciprocal Rank Fusion으로 융합",
         ],
         "arch_mcp": [
@@ -140,7 +140,7 @@ T = {
             },
             {
                 "title": "JisangData",
-                "desc": "LLM 라우터가 질문 유형을 판별해 집계·통계 질문은 pandas 코드를 생성·샌드박스 실행하고, 검색·요약 질문은 FAISS RAG로 처리합니다. 코드 실행 실패 시 RAG 자동 폴백.",
+                "desc": "LLM 라우터가 질문 유형을 판별해 집계·통계 질문은 pandas 코드를 생성해 **축소 권한 네임스페이스**에서 실행하고(모듈 미노출·dunder 정적 거부·writer allowlist — 샌드박스는 아니다), 검색·요약 질문은 FAISS RAG로 처리합니다. 코드 실행 실패 시 RAG 자동 폴백.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas 코드 생성` `Streamlit`",
                 "link": "page:pages/2_Data_Analysis.py",
             },
@@ -163,7 +163,7 @@ T = {
         "edu_head": "## Education",
         "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — B.S., Information Science + Data Science · GPA 3.89/4.0 · Dec 2025  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**Selected coursework** (course projects): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means from scratch) · INFO330 Database (T-SQL) · STAT207 · MATH227",
         "how_head": "## Pipelines",
-        "how_intro": "Three separate pipelines — chat, data analysis, and an MCP server — each doing its own thing. The tabs show why I split them up.",
+        "how_intro": "Four separate pipelines — chat, data analysis, an MCP server, and Agentic RAG over MLOps docs — each doing its own thing. The tabs show why I split them up.",
         "graph_head": "## Codebase structure graph",
         "graph_bullets": (
             "- **Single Source of Truth:** prompts & post-processing (`prompts.py`) are shared by the app pages and the eval harness — in the graph, `build_system_prompt` appears as the hub linking multiple pipelines.  \n"
@@ -182,7 +182,7 @@ T = {
         "arch_data": [
             "**File Upload**\n\nCSV/Excel → DataFrame\nchunk_size=1000 split + FAISS embedding",
             "**LLM Router**\n\nAuto-classifies question type\n`PANDAS` or `RAG`",
-            "**PANDAS Path**\n\nCode gen → sandboxed exec\nAuto-fallback to RAG on error",
+            "**PANDAS Path**\n\nCode gen → reduced-capability exec\nAuto-fallback to RAG on error",
             "**RAG Path**\n\nHybrid: FAISS (dense) + BM25 (sparse)\nfused with Reciprocal Rank Fusion",
         ],
         "arch_mcp": [
@@ -243,7 +243,7 @@ T = {
             },
             {
                 "title": "JisangData",
-                "desc": "An LLM router classifies each question: aggregation/stats queries generate and sandbox-execute pandas code; search/summary queries use FAISS RAG. Auto-fallback to RAG on code error.",
+                "desc": "An LLM router classifies each question: aggregation/stats queries generate pandas code and run it in a **reduced-capability namespace** (no module objects, dunder access statically rejected, writers allowlisted — explicitly not a sandbox); search/summary queries use FAISS RAG. Auto-fallback to RAG on code error.",
                 "tags": "`LangChain` `FAISS` `HuggingFace` `Pandas Code Gen` `Streamlit`",
                 "link": "page:pages/2_Data_Analysis.py",
             },

@@ -113,3 +113,28 @@ def estimate_tokens(text: str) -> int:
         return 0
     hangul = sum(1 for c in text if "가" <= c <= "힣")
     return int(hangul * 0.9 + (len(text) - hangul) / 3.5) + 8
+
+
+# ── 세션 단위 요청 상한 ─────────────────────────────────────────────
+# 위 페이서는 **재우기만** 한다 — 거절하지 않는다. 그래서 요청 수 자체에는 상한이
+# 없었고, 익명 방문자 한 명이 무료 티어 하루치(20만 토큰 ≈ 챗 33턴)를 혼자 태울 수
+# 있었다. 그러면 그날 다른 방문자는 전부 429를 본다.
+#
+# 로그인이 없으므로 세션 단위가 실효 경계다(쿠키를 지우면 리셋된다 = 우회 가능).
+# 목적이 악의적 공격 차단이 아니라 **한 사람이 우연히 예산을 다 쓰는 것**을 막는
+# 것이라, 이 정도가 비용 대비 맞는 선이다. 진짜 차단이 필요하면 인증이 필요하다.
+SESSION_TURN_LIMIT = 25
+
+
+def session_quota_exceeded(turns: int, limit: int = SESSION_TURN_LIMIT) -> bool:
+    return turns >= limit
+
+
+def quota_message(lang: str = "English") -> str:
+    return ("한 세션에서 물어볼 수 있는 횟수를 다 쓰셨어요. 이 데모는 무료 티어라 "
+            "하루 예산이 정해져 있어서, 다른 방문자 몫을 남기려고 세션당 상한을 뒀습니다. "
+            "더 궁금한 점은 이력서 PDF나 메일로 편하게 물어봐 주세요."
+            if lang == "한국어" else
+            "You've reached this session's question limit. The demo runs on a free tier "
+            "with a fixed daily budget, so there's a per-session cap to leave room for "
+            "other visitors. Happy to answer more over email — or see the résumé PDF.")

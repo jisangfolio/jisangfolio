@@ -15,9 +15,14 @@ with st.sidebar:
     if st.button("💬 Chat", use_container_width=True):
         st.switch_page("pages/1_Chat.py")
     st.divider()
-    if st.button("🗑 Clear traces", use_container_width=True):
-        clear_traces()
-        st.rerun()
+    # 트레이스 스토어는 @st.cache_resource 라 **모든 방문자가 공유한다** — 이 버튼은
+    # 누른 사람만이 아니라 전원의 대시보드를 비운다. 개발자 도구로 남기되, 실수로
+    # 누르는 걸 막으려고 ?dev 로 들어온 세션(=본인)에만 노출한다.
+    if "dev" in st.query_params:
+        if st.button("🗑 Clear traces (shared)", use_container_width=True):
+            clear_traces()
+            st.rerun()
+        st.caption("⚠️ Clears the store for every visitor, not just this session.")
 
 st.title("📈 LLM Observability")
 st.caption(

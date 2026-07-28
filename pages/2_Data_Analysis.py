@@ -89,7 +89,10 @@ class HybridRetriever:
 
 
 # --- File processing ---
-@st.cache_resource(show_spinner="Analyzing the uploaded file...")
+# max_entries/ttl 이 없으면 업로드된 파일마다 FAISS 인덱스가 컨테이너 수명 내내 상주한다
+# (방문자가 각자 파일을 올릴수록 단조 증가 → 무료 티어 메모리에서 결국 죽는다).
+# 캐시 미스는 재임베딩 비용일 뿐 정확성 문제가 아니므로 짧게 잡는다.
+@st.cache_resource(show_spinner="Analyzing the uploaded file...", max_entries=3, ttl=1800)
 def build_vectorstore(file_bytes: bytes, file_name: str):
     import io
     from langchain_community.vectorstores import FAISS

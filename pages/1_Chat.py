@@ -5,6 +5,7 @@ from prompts import build_system_prompt
 from ui import apply_style, finalize_stream, friendly_llm_error
 import time
 from guardrails import check_input, blocked_message
+from ratelimit import quota_message, session_quota_exceeded
 from observability import log_trace
 from profile_graph import graph_retrieve
 from sheetlog import log_conversation
@@ -150,8 +151,19 @@ if user_input:
     with st.chat_message("user", avatar="🧐"):
         st.markdown(user_input)
 
+    # 💸 세션 요청 상한 — 페이서는 재우기만 하고 거절하지 않아서, 방문자 한 명이
+    # 무료 티어 하루치를 혼자 태울 수 있었다(그러면 그날 다른 방문자는 429).
+    _turns = st.session_state.get("_turns", 0) + 1
+    st.session_state["_turns"] = _turns
+
     with st.chat_message("assistant", avatar="🧑‍💻"):
-        if not verdict["allowed"]:
+        if session_quota_exceeded(_turns):
+            quota_msg = quota_message(lang)
+            st.warning(quota_msg)
+            st.session_state.chat_history.append(("assistant", quota_msg))
+            log_trace(page="chat", model="qwen/qwen3.6-27b", route="quota",
+                      latency_ms=0, guard="quota", ok=False)
+        elif not verdict["allowed"]:
             guard_msg = blocked_message(verdict, lang)
             st.markdown(guard_msg)
             st.caption(f"🛡 Guardrail blocked · {verdict['category']}")
