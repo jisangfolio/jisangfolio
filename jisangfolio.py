@@ -128,7 +128,7 @@ T = {
         "personal_projects": [
             {
                 "title": "JisangFolio",
-                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 무거운 문서 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 사실 정확도 통과율을 62%에서 94%로 올렸습니다. 여기에 GraphRAG(그래프 탐색 검색)·가드레일·자체호스팅 LLM 옵저버빌리티·하이브리드 RAG·GitHub Actions CI까지 얹었습니다.",
+                "desc": "지금 보고 계신 이 포트폴리오입니다. 이력서 전문(약 3K 토큰)을 시스템 프롬프트에 직접 주입해 무거운 문서 RAG 없이 1인칭 챗봇을 만들었고, 프롬프트·모델을 바꿔도 사실이 깨지지 않는지 검증하는 회귀 평가 하니스(규칙 채점 + 별도 모델 LLM-judge)를 직접 붙였습니다. 낡은 이력서 사본이 새던 문제를 이 하니스가 잡아 챗봇 골든셋 통과율을 10/16에서 15/16으로 올렸습니다(n=16이라 신뢰구간이 넓습니다 — 벤치마크가 아니라 변경 전후 비교용 신호입니다). 여기에 GraphRAG(그래프 탐색 검색)·가드레일·자체호스팅 LLM 옵저버빌리티·하이브리드 RAG·GitHub Actions CI까지 얹었습니다.",
                 "tags": "`Groq · Qwen3 27B` `Streamlit` `eval 하니스` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },
@@ -231,7 +231,7 @@ T = {
         "personal_projects": [
             {
                 "title": "JisangFolio",
-                "desc": "This portfolio itself. The full resume (~3K tokens) is injected into the system prompt — no document RAG needed — and I built a regression eval harness (rule-based scoring + a separate LLM judge) that keeps factual accuracy stable across prompt/model changes. It caught a stale resume copy leaking into the bot and lifted the pass rate from 62% to 94%. On top of that: GraphRAG, a guardrails layer, self-hosted LLM observability, hybrid RAG, and GitHub Actions CI.",
+                "desc": "This portfolio itself. The full resume (~3K tokens) is injected into the system prompt — no document RAG needed — and I built a regression eval harness (rule-based scoring + a separate LLM judge) that keeps factual accuracy stable across prompt/model changes. It caught a stale resume copy leaking into the bot and took the chatbot golden set from 10/16 to 15/16 (n=16, so a wide interval — a before/after signal, not a benchmark). On top of that: GraphRAG, a guardrails layer, self-hosted LLM observability, hybrid RAG, and GitHub Actions CI.",
                 "tags": "`Groq · Qwen3 27B` `Streamlit` `eval harness` `Python`",
                 "link": "https://jisangfolio.streamlit.app",
             },

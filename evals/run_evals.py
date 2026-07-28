@@ -100,6 +100,7 @@ def call_groq(client, **kwargs):
 # --resume 시 건너뛴다. 단 **프롬프트·모델·이력서가 바뀌면 캐시는 무효**여야 한다 —
 # 그렇지 않으면 회귀 게이트가 낡은 PASS를 재활용해 거짓 안심을 준다(핑거프린트로 차단).
 CACHE_PATH = EVAL_DIR / ".cache_results.json"
+_LAST_FINGERPRINT = ""
 
 
 def fingerprint(resume: str) -> str:
@@ -456,6 +457,59 @@ def pct(n, d):
     return f"{(100 * n / d):.0f}%" if d else "N/A"
 
 
+RUNS_DIR = EVAL_DIR / "runs"
+
+
+def save_run_record(chat_results, router_results, rag_results,
+                    use_judge, judge_model, coverage, is_partial, report_body):
+    """실행 1건을 evals/runs/<ts>_<fingerprint>.json 으로 누적 저장한다.
+
+    report.md 는 매 실행 덮어쓰는 '최신 전체 실행' 스냅샷이고, 이 디렉토리가 이력이다.
+    부분 실행도 여기엔 남는다 — 다만 partial=true 로 표시해 회귀 비교에서 걸러낼 수 있게.
+    """
+    def summarize(results):
+        """섹션 요약. 챗봇·RAG는 passed/category, 라우터는 ok/expected 스키마를 쓴다."""
+        if not results:
+            return None
+        def ok_of(r):
+            return bool(r["passed"] if "passed" in r else r.get("ok"))
+        def key_of(r):
+            return r.get("category") or r.get("expected") or "?"
+        by_cat = {}
+        for r in results:
+            n, t = by_cat.get(key_of(r), (0, 0))
+            by_cat[key_of(r)] = (n + ok_of(r), t + 1)
+        return {"passed": sum(1 for r in results if ok_of(r)),
+                "total": len(results),
+                "by_category": {k: f"{n}/{t}" for k, (n, t) in sorted(by_cat.items())}}
+
+    try:
+        RUNS_DIR.mkdir(exist_ok=True)
+        ts = datetime.now(_KST).strftime("%Y%m%d_%H%M%S")
+        fp = _LAST_FINGERPRINT or "nofp"
+        rec = {
+            "timestamp": datetime.now(_KST).isoformat(),
+            "fingerprint": fp,
+            "partial": is_partial,
+            "coverage": {k: {"ran": v[0], "golden": v[1]} for k, v in (coverage or {}).items()},
+            "config": {"chat_model": CHAT_MODEL, "judge_model": judge_model if use_judge else None,
+                       "chat_temperature": CHAT_TEMPERATURE, "rag_temperature": RAG_TEMPERATURE},
+            "results": {"chat": summarize(chat_results),
+                        "router": summarize(router_results),
+                        "rag": summarize(rag_results)},
+            "report_md": report_body,
+        }
+        # 같은 초에 두 번 저장되면(부분 실행 직후 재실행 등) 앞 기록이 덮어써지므로 유일화한다.
+        out = RUNS_DIR / f"{ts}_{fp}.json"
+        n = 2
+        while out.exists():
+            out = RUNS_DIR / f"{ts}_{fp}_{n}.json"
+            n += 1
+        out.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        print(f"  · 실행 기록 저장 실패(무시): {type(e).__name__}")
+
+
 def write_report(chat_results, router_results, rag_results, use_judge, judge_model, coverage=None):
     lines = ["# JisangFolio 평가 리포트", ""]
     lines.append(f"- 생성: {datetime.now(_KST).strftime('%Y-%m-%d %H:%M')}")
@@ -588,7 +642,22 @@ def write_report(chat_results, router_results, rag_results, use_judge, judge_mod
 
     # 하니스 설계·실행법은 evals/README.md가 단일 출처 — 여기 복제하면 갈라진다.
     lines += ["> 하니스 설계·실행법·회귀 사례: `evals/README.md`", ""]
-    (EVAL_DIR / "report.md").write_text("\n".join(lines), encoding="utf-8")
+    body = "\n".join(lines)
+
+    # 실행마다 한 건씩 누적 — report.md는 덮어쓰기 산출물이라, 이게 없으면
+    # "언제 어떤 구성으로 몇 점이었나"의 근거가 리포에 남지 않는다.
+    # (README가 인용하는 수치의 출처가 리포에 없던 게 실제 문제였다.)
+    is_partial = any(ran < golden for ran, golden in (coverage or {}).values())
+    save_run_record(chat_results, router_results, rag_results,
+                    use_judge, judge_model, coverage, is_partial, body)
+
+    # 부분 실행은 report.md를 건드리지 않는다. --rag-only 한 번이나 한도 중단 한 번에
+    # 직전 전체 실행 기록(챗봇·라우터 섹션)이 통째로 날아가던 문제.
+    if is_partial:
+        print(f"\n→ 부분 실행이라 report.md는 그대로 둡니다 (직전 전체 실행 기록 보존)")
+        print(f"   이번 실행 기록: {RUNS_DIR.name}/ 에 저장됨")
+        return
+    (EVAL_DIR / "report.md").write_text(body, encoding="utf-8")
     print(f"\n→ 리포트 저장: {EVAL_DIR / 'report.md'}")
 
 
@@ -637,6 +706,7 @@ def main():
     run_all = not (args.chat_only or args.router_only or args.rag_only)
 
     fp = fingerprint(resume)
+    globals()["_LAST_FINGERPRINT"] = fp   # write_report가 실행 기록에 남기도록
     ckpt = Checkpoint(fp, load_cache(fp, args.resume))
     if args.resume:
         done = sum(len(v) for v in ckpt.sections.values())

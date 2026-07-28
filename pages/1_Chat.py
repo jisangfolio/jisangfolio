@@ -101,6 +101,19 @@ with st.sidebar:
     caption_text = "이 챗봇은 제(박지상) 이력서로 답하는 AI라 가끔 헷갈릴 수 있습니다. 정확한 건 이력서 PDF나 메일로 확인 바랍니다 :)" if lang == "한국어" else "This chatbot answers from my (Jisang's) resume, so it can occasionally get things wrong. For anything important, check the resume PDF or just email me :)"
     st.caption(caption_text)
 
+    # 📋 수집 고지 — 대화가 비공개 시트에 기록되고 첫 질문이 메일로 알림되므로,
+    # 방문자가 무엇이 남는지 알고 쓰게 한다. 고지 없는 수집은 하지 않는다.
+    notice = (
+        "🔒 남기신 질문과 답변은 품질 개선을 위해 비공개로 기록됩니다. "
+        "개인정보(연락처·주민번호 등)는 입력하지 말아 주세요. "
+        "삭제를 원하시면 jjpark324434@gmail.com 로 알려주시면 지우겠습니다."
+        if lang == "한국어" else
+        "🔒 Your questions and my answers are logged privately to help me improve this. "
+        "Please don't enter personal data (phone numbers, IDs, etc.). "
+        "Want yours deleted? Email jjpark324434@gmail.com and I'll remove it."
+    )
+    st.caption(notice)
+
     if st.session_state.chat_history:
         st.divider()
         export_label = "💾 대화 내보내기" if lang == "한국어" else "💾 Export Chat"

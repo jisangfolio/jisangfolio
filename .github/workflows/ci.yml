@@ -16,3 +16,9 @@ jobs:
       # no Streamlit/torch install needed, so CI is fast and key-free.
       - run: pip install pytest
       - run: python -m pytest tests/ -q
+      # 코드그래프는 stdlib만 쓰므로 CI에서 재생성 가능. 커밋본과 다르면 실패시켜
+      # README의 "auto-derived from the codebase" 주장이 사실로 유지되게 강제한다.
+      - name: Code graph is not stale
+        run: |
+          python gen_codegraph.py
+          git diff --exit-code assets/codegraph.html

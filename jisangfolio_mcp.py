@@ -20,6 +20,11 @@ Connect (claude_desktop_config.json):
 from fastmcp import FastMCP
 from prompts import strip_foreign_cjk
 
+# ⚠️ 드리프트 주의: 아래 _PROFILE/_KETI/... 는 profile_graph.py(프로필 SSOT)에서 파생된 게 아니라
+# 손으로 관리하는 2차 사본이다. profile_graph 노드보다 서술이 상세해 자동 파생이 어렵기 때문인데,
+# 그래서 이력서 사실이 바뀌면 **여기도 같이 고쳐야 한다**. tests/test_mcp_drift.py 가
+# 두 소스가 공유하는 핵심 사실이 어긋나면 실패시켜 이 위험을 붙잡는다.
+
 mcp = FastMCP("JisangFolio — Jisang Park portfolio")
 
 # ── Portfolio data (single source for the MCP tools) ─────────────────
@@ -95,7 +100,11 @@ _PROJECTS = """
    - An AI interview chatbot built from my résumé + a data-analysis tool
    - Groq + Qwen3 27B, full résumé injected into the system prompt (no RAG needed)
    - LLM router → pandas codegen & sandbox exec, or FAISS RAG (with hybrid retrieval)
-   - GraphRAG over a profile knowledge graph, a programmatic guardrails layer, and a self-hosted-style LLM observability dashboard
+   - Graph retrieval over a profile knowledge graph (lexical seed + 1-hop traversal; not Microsoft GraphRAG),
+     a programmatic guardrails layer, and a self-hosted-style LLM observability dashboard
+   - MLOps Docs Assistant (Agentic RAG): self-correcting loop over cloud + on-prem MLOps docs —
+     retrieve → grade → rewrite & re-retrieve → cite → self-check groundedness; refuses out-of-corpus questions
+   - Hybrid retrieval (FAISS dense + BM25 sparse, fused with RRF)
    - Regression eval harness + GitHub Actions CI
    - This MCP server is itself part of JisangFolio
    - Stack: Streamlit, Groq, LangChain, FAISS, Plotly, fastmcp
@@ -103,7 +112,8 @@ _PROJECTS = """
 
 _SKILLS = """
 [AI / LLM]
-LangChain, RAG, GraphRAG, FAISS, Prompt Engineering, Hugging Face, PyTorch, ONNX
+LangChain, RAG, Agentic RAG (self-correcting retrieve-grade-rewrite loop), graph retrieval, FAISS
+Hybrid retrieval (BM25 + dense, RRF), Prompt Engineering, Hugging Face, PyTorch, ONNX
 Rule-based Agent, Ollama, Groq, MCP (fastmcp), LLM eval (LLM-as-judge), Guardrails
 
 [MLOps / LLMOps]

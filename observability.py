@@ -17,8 +17,13 @@ def _store():
 
 
 def log_trace(page: str, model: str, route: str, latency_ms: int,
-              guard: str = "ok", nodes=None, ok: bool = True, ts: float = None):
-    """한 턴을 트레이스로 기록한다."""
+              guard: str = None, nodes=None, ok: bool = True, ts: float = None):
+    """한 턴을 트레이스로 기록한다.
+
+    guard 기본값은 None이다 — "ok"를 기본으로 두면 **가드레일을 아예 돌지 않은 경로**까지
+    대시보드에 '통과'로 찍힌다. 측정 안 한 것은 측정 안 했다고 보여주는 게 이 모듈의 원칙
+    (docstring 첫 문단 참조)이라, 호출부가 실제 판정을 넘기지 않으면 미측정으로 남긴다.
+    """
     traces = _store()["traces"]
     traces.append({
         "ts": ts if ts is not None else time.time(),
@@ -26,7 +31,7 @@ def log_trace(page: str, model: str, route: str, latency_ms: int,
         "model": model,
         "route": route,
         "latency_ms": int(latency_ms),
-        "guard": guard,
+        "guard": guard,          # None = 미측정 (UI에서 "—"로 렌더)
         "nodes": nodes or [],
         "ok": ok,
     })

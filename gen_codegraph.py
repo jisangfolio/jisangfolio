@@ -2,7 +2,9 @@
 
 모듈 + 최상위 함수/클래스/메서드를 노드로, imports·contains·calls를 엣지로 만든다.
 역할별 색으로 클러스터를 구분(app/shared·pages·mcp·evals·tests·rag). graphify CLI가
-내는 403노드 헤어볼 대신, 모듈+심볼 단위로 큐레이션한 ~90노드 콜그래프.
+내는 403노드 헤어볼 대신, 모듈+심볼 단위로 큐레이션한 콜그래프.
+정확한 노드/엣지 수는 실행 시 출력된다 — 주석에 박아두면 코드가 자라며 바로 거짓이 된다
+(CI가 재생성 결과와 커밋본을 대조해 드리프트를 막는다).
 
 사용:  python gen_codegraph.py   →  assets/codegraph.html 갱신 + 노드/엣지 수 출력
 """
@@ -10,6 +12,13 @@ import ast
 import glob
 import json
 import os
+import sys
+
+# cp949 같은 비-UTF8 콘솔(Windows)에서 이모지 출력이 UnicodeEncodeError로 죽지 않게.
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except (AttributeError, OSError):
+    pass
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "assets", "codegraph.html")

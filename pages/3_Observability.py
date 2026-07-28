@@ -53,6 +53,8 @@ with col_b:
     st.line_chart(df.reset_index()[["latency_ms"]], height=260)
 
 st.subheader("Recent traces")
+# 가드를 안 돈 턴은 None → "—". 빈칸을 'ok'로 채우면 미측정이 통과로 읽힌다.
+df["guard"] = df["guard"].fillna("—").replace({"": "—"})
 show = df[["time", "page", "route", "model", "latency_ms", "guard", "nodes_str"]].iloc[::-1].head(50)
 show = show.rename(columns={"time": "time (KST)", "latency_ms": "latency(ms)", "nodes_str": "graph nodes"})
 st.dataframe(show, use_container_width=True, hide_index=True)
