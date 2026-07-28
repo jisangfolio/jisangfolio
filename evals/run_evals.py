@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from prompts import build_system_prompt, ROUTER_PROMPT_TEMPLATE, strip_think, clean_response  # noqa: E402
+from profile_graph import normalize_lang  # noqa: E402
 from ratelimit import estimate_tokens, is_daily_limit, pacer_for, parse_wait_seconds  # noqa: E402
 from groq import Groq  # noqa: E402
 
@@ -176,7 +177,7 @@ def check_format(text, lang):
     issues = []
     if "**" in text:
         issues.append("볼드(**) 사용")
-    if lang == "한국어":
+    if normalize_lang(lang) == "한국어":
         if HANJA.search(text):
             issues.append("한자 포함")
         if KANA.search(text):

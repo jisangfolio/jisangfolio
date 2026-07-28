@@ -248,9 +248,20 @@ __LEGEND__
 </body></html>"""
 
 
+def normalize_lang(lang):
+    """언어 토큰을 앱 내부 표기('한국어'/'English')로 통일한다.
+
+    앱은 '한국어'/'English' 를 쓰는데 evals/golden_*.jsonl 은 'ko'/'en' 을 쓴다.
+    두 표기가 `lang == "한국어"` 비교 하나로 만나면서, 평가 하니스가 한국어 케이스
+    15건을 **영어 프롬프트로 돌린 뒤 한국어 키워드로 채점**하고 있었다. 조용히
+    영어로 새는 종류의 버그라 호출자마다 고치는 대신 공유 모듈 입구에서 흡수한다.
+    """
+    return "한국어" if str(lang).strip().lower() in ("한국어", "ko", "kor", "korean") else "English"
+
+
 def to_vis_html(lang="한국어"):
     """홈에 임베드할 인터랙티브 프로필 그래프 HTML을 반환한다."""
-    ko = (lang == "한국어")
+    ko = (normalize_lang(lang) == "한국어")
     vis_nodes = []
     for n in NODES:
         node = {
@@ -276,7 +287,7 @@ def to_prompt_text(lang="한국어"):
     공유 노드(여러 부모)가 있어 DAG이므로, 이미 펼친 노드는 다시 펼치지 않도록
     seen 으로 스패닝 트리를 만든다(중복·순환 방지).
     """
-    ko = (lang == "한국어")
+    ko = (normalize_lang(lang) == "한국어")
     label = {n["id"]: _label(n, ko) for n in NODES}
     children = {}
     for a, b in EDGES:
@@ -299,12 +310,72 @@ def to_prompt_text(lang="한국어"):
 
 
 # ── GraphRAG: 프로필 그래프 위의 검색·탐색 ──────────────────────────
-_TOKEN = re.compile(r"[a-z0-9가-힣]+")
+# 한글과 영숫자를 **따로** 끊는다. 하나의 문자클래스로 묶으면 "KETI에서" 가 통째로
+# 한 토큰이 되어 "keti" 와 안 맞는다 — 조사가 어간에 붙어버려서, 홈에 걸린 한국어
+# 샘플 질문 5개 중 4개가 seed 0개였다(영어는 멀쩡해서 안 보였다).
+_TOKEN = re.compile(r"[a-z0-9]+|[가-힣]+")
+
+# 노드 1/4 이상에 나오는 토큰은 seed 를 가르지 못한다. 조사를 손으로 열거하는 대신
+# 그래프 자체에서 문서빈도를 뽑아 거른다 — 노드가 늘어도 따라 움직인다.
+# ("삼성SDI에서" 는 위 정규식에서 ['삼성','sdi','에서'] 로 끊기므로 '에서' 는 실제로
+#  많은 노드 설명에 등장한다. 그래서 df 만으로 걸러진다.)
+_STOP_DF_RATIO = 0.25
+_DF = None
 _ADJ = None
 
 
 def _tokens(s):
     return set(_TOKEN.findall(s.lower()))
+
+
+def _node_text(n, labels_only=False):
+    if labels_only:
+        return " ".join([n["ko"], n["en"]])
+    return " ".join([n["ko"], n["en"], n["desc_ko"], n["desc_en"]])
+
+
+def _doc_freq():
+    global _DF
+    if _DF is None:
+        df = {}
+        for n in NODES:
+            for t in _tokens(_node_text(n)):
+                df[t] = df.get(t, 0) + 1
+        _DF = df
+    return _DF
+
+
+def _query_tokens(query):
+    """질문에서 변별력 있는 토큰만 남긴다.
+
+    - 1글자 제거: '5' 가 'Qwen2.5' 의 '5' 와 붙고 '후' 가 아무 데나 붙었다.
+    - 흔한 토큰 제거: 위 df 컷.
+    """
+    df = _doc_freq()
+    cap = max(2, int(len(NODES) * _STOP_DF_RATIO))
+    return {t for t in _tokens(query or "")
+            if len(t) >= 2 and df.get(t, 0) < cap}
+
+
+def _is_hangul(t):
+    return "가" <= t[0] <= "힣"
+
+
+def _overlap(q_tokens, node_tokens):
+    """질문 토큰 ∩ 노드 토큰. 한글만 접두 일치까지 인정한다(조사가 붙으므로).
+
+    영숫자는 정규식이 이미 깔끔하게 끊으므로 정확일치로 충분하다. 한글은
+    '연구를' ↔ '연구', '송산그린시티의' ↔ '송산그린시티' 를 이어줘야 한다.
+    """
+    hits = 0
+    for q in q_tokens:
+        if q in node_tokens:
+            hits += 1
+        elif _is_hangul(q) and any(
+                _is_hangul(n) and len(n) >= 2 and (n.startswith(q) or q.startswith(n))
+                for n in node_tokens):
+            hits += 1
+    return hits
 
 
 def _adjacency():
@@ -324,13 +395,16 @@ def graph_retrieve(query, lang="English", max_seeds=3, hops=1):
     반환: {"seeds": [labels], "nodes": [labels], "context": str}
     전체 이력서가 이미 프롬프트에 있어도, 관련 서브그래프를 '집중 근거'로 함께 주입한다.
     """
-    ko = (lang == "한국어")
-    q = _tokens(query or "")
+    ko = (normalize_lang(lang) == "한국어")
+    q = _query_tokens(query)
     if not q:
         return {"seeds": [], "nodes": [], "context": ""}
 
     def score(n):
-        return len(q & _tokens(" ".join([n["ko"], n["en"], n["desc_ko"], n["desc_en"]])))
+        # 라벨 일치는 설명 일치보다 훨씬 강한 신호다. 가중치가 없으면 전부 1점이라
+        # 'KETI' 질문에서 KETI 노드와, 설명에 KETI 를 스치기만 한 노드가 동점이 됐다.
+        return (3 * _overlap(q, _tokens(_node_text(n, labels_only=True)))
+                + _overlap(q, _tokens(_node_text(n))))
 
     ranked = sorted(NODES, key=score, reverse=True)
     # person 노드(중심 허브)는 seed에서 제외 — 검색을 구체적 경험/기술에 집중
