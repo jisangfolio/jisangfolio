@@ -452,7 +452,7 @@ with tab4:
 st.markdown(t["profilegraph_head"])
 components.html(profile_graph.to_vis_html(lang), height=580, scrolling=False)
 
-# ── 코드 지식그래프 (Graphify) ────────────────────────────────────
+# ── 코드 지식그래프 (자체 AST 파서 gen_codegraph.py 생성 · graphify 아님) ──
 st.markdown(t["graph_head"])
 st.markdown(t["graph_bullets"])
 graph_path = os.path.join(os.path.dirname(__file__), "assets", "codegraph.html")

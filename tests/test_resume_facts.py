@@ -73,3 +73,27 @@ def test_banned_terms_absent_from_resume():
             if k.lower() in resume:
                 found.add(k)
     assert not found, f"이력서 원문에 금지어가 있음: {sorted(found)}"
+
+
+# ── 폐기된 주장이 라이브 봇 입으로 되살아나는 것 방지 (2026-07-29) ──
+# 이 검사는 원래 jisangfolio_mcp.py(2차 사본)에만 걸려 있었다. 정작 챗봇이 1인칭으로
+# 말하는 원본 두 개 — resume_text 와 profile_graph 노드 설명 — 은 아무도 안 봤고,
+# 그래서 "(Graphify)" 와 "10/16→15/16" 이 리포가 그것들을 폐기한 뒤에도 살아남았다.
+from retired_claims import find_retired  # noqa: E402
+
+
+def test_resume_text_has_no_retired_claims():
+    hits = find_retired(_resume())
+    assert not hits, "이력서 원문에 폐기된 주장이 있음:\n" + "\n".join(
+        f"  · {m!r} — {why}" for m, why in hits)
+
+
+def test_profile_graph_has_no_retired_claims():
+    """그래프 설명도 챗봇 프롬프트에 함께 주입된다 — resume_text 만 고치면 반쪽이다."""
+    import profile_graph
+
+    blob = " ".join(f"{n['ko']} {n['en']} {n['desc_ko']} {n['desc_en']}"
+                    for n in profile_graph.NODES)
+    hits = find_retired(blob)
+    assert not hits, "프로필 그래프에 폐기된 주장이 있음:\n" + "\n".join(
+        f"  · {m!r} — {why}" for m, why in hits)

@@ -47,8 +47,8 @@ NODES = [
      "desc_ko": "완전 차단망 특허검색 RAG 챗봇 1인 단독 개발 → 임원 PoC 호평.",
      "desc_en": "Solo-built patent-search RAG chatbot in a fully air-gapped env → executive PoC praised."},
     {"id": "jf", "group": "project", "ko": "JisangFolio", "en": "JisangFolio",
-     "desc_ko": "이 포트폴리오 · GraphRAG·가드레일·LLM 옵저버빌리티·하이브리드 RAG·CI 실장, 회귀 평가 하니스로 챗봇 골든셋 10/16→15/16 (n=16, 벤치마크 아님).",
-     "desc_en": "This portfolio · GraphRAG, guardrails, LLM observability, hybrid RAG & CI, with a regression eval harness (chatbot golden set 10/16 -> 15/16; n=16, a before/after signal, not a benchmark)."},
+     "desc_ko": "이 포트폴리오 · GraphRAG·가드레일·LLM 옵저버빌리티·하이브리드 RAG·Agentic RAG·CI 실장. 회귀 평가 하니스 최근 실행 17/20 (n=20, 벤치마크가 아니라 변경 전후 게이트).",
+     "desc_en": "This portfolio · GraphRAG, guardrails, LLM observability, hybrid & agentic RAG, CI. Latest regression eval run 17/20 (n=20 — a before/after gate, not a benchmark)."},
     {"id": "jd", "group": "project", "ko": "JisangData", "en": "JisangData",
      "desc_ko": "LLM 라우터가 집계 질문은 pandas 코드 생성·실행, 검색 질문은 FAISS RAG로 처리(실패 시 RAG 폴백).",
      "desc_en": "An LLM router runs pandas codegen for aggregates and FAISS RAG for search (RAG fallback on failure)."},
@@ -147,6 +147,15 @@ NODES = [
     {"id": "agenticrag", "group": "skill", "ko": "Agentic RAG", "en": "Agentic RAG",
      "desc_ko": "MLOps 문서 코퍼스(클라우드 4사+온프레 KETI)에 대한 자기교정 루프 — 검색→관련성 평가→쿼리 재작성·재검색→근거 인용→근거 자기점검. 코퍼스 밖 질문 거절, 골든셋 회귀 평가(통과율은 evals/report.md에 실행마다 기록).",
      "desc_en": "A self-correcting loop over an MLOps docs corpus (4 clouds + on-prem KETI) — retrieve→grade→rewrite & re-retrieve→cite→self-check groundedness. Refuses out-of-corpus questions; golden-set regression (pass rates recorded per run in evals/report.md)."},
+    {"id": "codeguard", "group": "skill", "ko": "코드 실행 가드", "en": "Code execution guard",
+     "desc_ko": "LLM이 생성한 pandas 코드를 축소 권한 네임스페이스에서 실행 — pandas 모듈 대신 facade(모듈 객체는 allowlist 우회 통로), AST로 import·dunder·속성쓰기·상한없는 range 차단, 쓰기계열은 denylist가 아니라 allowlist. 뚫렸던 우회 3건은 회귀 테스트로 고정. 샌드박스가 아님을 문서에 명시.",
+     "desc_en": "Runs LLM-generated pandas in a reduced-capability namespace — a facade instead of the pandas module (a module object is a way out of any allowlist), an AST pass rejecting imports, dunders, attribute writes and unbounded range(), and an allowlist (not a denylist) for writers. Three escapes that once worked are pinned as regression tests. Documented as not a sandbox."},
+    {"id": "ghci", "group": "skill", "ko": "CI 회귀 게이트", "en": "CI regression gates",
+     "desc_ko": "GitHub Actions + pytest 183건을 Python 3.11·3.12 매트릭스로 실행. 코드뿐 아니라 **문서의 진실성**까지 게이트 — 코드그래프 스테일 검사, 골든셋 개수 대 문서 대조, MCP 사본 드리프트, README 배지 대 실제 요구 버전. CI는 키 없이 도는 LLM-free 레이어만 검증한다는 범위도 명시.",
+     "desc_en": "GitHub Actions + a 183-test pytest suite on a Python 3.11/3.12 matrix. The gates cover documentation truthfulness, not just code — code-graph staleness, golden-set count vs docs, MCP copy drift, README badge vs the version the code actually needs. Scope is stated honestly: CI exercises the LLM-free layers only, so it runs fast and key-free."},
+    {"id": "probe", "group": "skill", "ko": "검색 자기진단", "en": "Retrieval self-diagnosis",
+     "desc_ko": "검색 품질을 주장하는 대신 결함을 측정. 인코더(all-MiniLM-L6-v2, 256 word-piece)가 긴 청크를 잘라내는 문제를 계량 — 한국어 절단률 65.6%, 영어 0%. 코퍼스 편중(한 문서 89%)을 바로잡자 교차언어 검색 점수가 4/5→2/5로 내려갔고, 그 2/5가 정직한 값이며 해법은 튜닝이 아니라 다국어 인코더라는 결론까지 기록.",
+     "desc_en": "Measures the retrieval layer's own defects instead of asserting quality. It quantified the encoder (all-MiniLM-L6-v2, 256 word-pieces) silently truncating long chunks — 65.6% of Korean chunks, 0% of English. After rebalancing a corpus one document had dominated (~89%), the cross-lingual score fell 4/5 → 2/5; 2/5 is the honest read, and the recorded conclusion is that a multilingual encoder is the fix, not more tuning."},
 ]
 
 EDGES = [
@@ -168,7 +177,13 @@ EDGES = [
     # 개인 프로젝트 → 기술 (공유 노드로 교차연결)
     ("jf", "eval"), ("jf", "groq"), ("jf", "streamlit"),
     ("jf", "graphrag"), ("jf", "guardrails"), ("jf", "observability"),
-    ("jf", "agenticrag"),
+    ("jf", "agenticrag"), ("jf", "codeguard"), ("jf", "ghci"), ("jf", "probe"),
+    # 자기진단은 검색 스택을 겨눈다 — 결함을 잰 대상이 곧 하이브리드 검색이다
+    ("probe", "hybrid"), ("probe", "faiss"), ("probe", "agenticrag"),
+    # 실행 가드는 데이터분석 경로(JisangData)의 코드 생성에 걸린다
+    ("codeguard", "jd"),
+    # CI 게이트는 평가 하니스와 짝을 이룬다(빠른 결정적 검증 ↔ 느린 LLM 평가)
+    ("ghci", "eval"),
     # Agentic RAG → 기술 (교차연결: 코퍼스에 온프레 MLOps 파이프라인 포함)
     ("agenticrag", "hybrid"), ("agenticrag", "faiss"), ("agenticrag", "langchain"),
     ("agenticrag", "groq"), ("agenticrag", "eval"), ("agenticrag", "mlops"),
@@ -179,6 +194,48 @@ EDGES = [
     ("hybrid", "faiss"), ("observability", "streamlit"),
     # 논문·코스워크 → 기술 (교차연결)
     ("tebo", "scipy"), ("cs307", "pytorch"), ("info330", "sql"),
+
+    # ── 망 형성 (2026-07-29) ─────────────────────────────────────────
+    # 여기까지의 그래프는 사실상 **스타/트리**였다: 기술 노드 15개가 차수 1이라
+    # 프로젝트 하나에만 매달려 있었고, person 노드를 빼면 UW 코스워크 덩어리가
+    # 통째로 떨어져 나갔다. GraphRAG 가 seed 에서 1-hop 을 도는 구조라 이건 보기
+    # 문제가 아니라 **검색 품질 문제**다 — 이웃이 부모 하나뿐이면 '집중 근거'가
+    # 사실상 부모 노드 하나로 수렴한다.
+    # 아래 엣지는 전부 이력서·리포에 근거가 있는 실제 관계만 넣는다(장식용 금지).
+
+    # MLOps 파이프라인 내부 — 도구들이 실제로 물려 있는 순서
+    ("pytorch", "onnx"),        # 부경대 제공 PyTorch → ONNX 변환 경로 확보
+    ("onnx", "triton"),         # 변환·검증된 ONNX를 Triton으로 서빙
+    ("mlflow", "triton"),       # Registry 모델을 Triton에 로드(운영 포털 워크플로우)
+    ("monitor", "triton"),      # Prometheus가 Triton 메트릭 수집 → Grafana 7패널
+    ("ci", "onnx"),             # 푸시·PR 시 ONNX 검증 → 배포 자동화
+    ("ci", "mlflow"),           # 배포 시 MLflow 거버넌스 태그 자동 갱신
+    ("docker", "monitor"),      # docker-compose로 모니터링 스택까지 단일 서버 통합
+    ("mlops", "streamlit"),     # Streamlit MLOps 운영 포털 6페이지
+
+    # 폐쇄망 RAG 내부, 그리고 그 아이디어의 다음 세대
+    ("ollama", "langchain"),    # LangChain + 온프레 sLLM(Qwen2.5-72B)
+    ("ruleagent", "jd"),        # "언제 LLM을 쓰지 말까" — SPA의 키워드 우회가
+                                # JisangData의 LLM 라우터로 이어지는 계보
+
+    # LLMOps 스택 내부 — 오늘 실제로 생긴 연결 포함
+    ("graphrag", "eval"),       # 하니스가 GraphRAG 주입 프롬프트까지 평가(조립 공유)
+    ("guardrails", "eval"),     # 골든셋에 인젝션 케이스가 들어 있다
+    ("guardrails", "codeguard"),# 입력 가드 + 실행 가드 = 2층 방어
+    ("guardrails", "observability"),  # 트레이스에 guard 판정을 남긴다
+    ("ghci", "codeguard"),      # 뚫렸던 우회 3건을 CI가 매 푸시 재현
+    ("ghci", "graphrag"),       # 검색 회귀 테스트도 CI 게이트
+    ("probe", "eval"),          # 둘 다 '주장 대신 측정' 계층
+    ("mcp", "jf"),              # MCP 서버가 같은 이력서를 도구로 노출
+
+    # UW 코스워크를 본체에 잇는다 — person 허브 없이도 연결되게
+    ("cse160", "cs307"),        # 라이브러리 없이 직접 구현(UW) → 프레임워크로 확장(UIUC)
+    ("cse160", "graphrag"),     # NetworkX 없이 짠 그래프 탐색 → 프로필 서브그래프 탐색
+    ("is477", "sql"),           # ETL 과제의 관계형 모델링 ↔ INFO330 DB
+    ("is327", "cs307"),         # 회귀(RF) ↔ 분류·CNN, 같은 ML 코스워크 계보
+    ("tebo", "is327"),          # 낙상 위험 '예측' 시뮬레이션 ↔ 회귀 모델링 코스워크
+                                # (둘 다 설명력/R² 로 성능을 말하는 같은 계열)
+    ("is467", "guardrails"),    # 채용 AI 편향·EU AI Act 연구 → 책임 있는 AI 가드레일
 ]
 
 GROUP_COLOR = {

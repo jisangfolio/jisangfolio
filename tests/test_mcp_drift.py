@@ -45,13 +45,14 @@ def test_pipeline_features_present_in_mcp():
 def test_no_retired_claims():
     """폐기한 표현이 MCP에 되살아나지 않았는지.
 
-    - 62%→94%: 재현 불가라 '골든셋 10/16→15/16'으로 정정한 수치
-    - Kubeflow: 사용 경험 없음
-    - 전화번호: 공개 산출물에서 제거한 개인정보
+    목록은 tests/retired_claims.py 가 소유한다 — 예전엔 이 함수가 자기 목록을 들고
+    있었고, 그래서 같은 검사가 resume_text·profile_graph 에는 걸리지 않았다.
     """
-    assert "62%" not in MCP_SRC and "94%" not in MCP_SRC, "정정한 62→94 수치가 MCP에 남아 있음"
-    assert "Kubeflow" not in MCP_SRC, "미사용 기술(Kubeflow)이 MCP에 있음"
-    assert not re.search(r"01[016][- ]?\d{3,4}[- ]?\d{4}", MCP_SRC), "MCP에 전화번호가 있음"
+    from retired_claims import find_retired
+
+    hits = find_retired(MCP_SRC)
+    assert not hits, "MCP 사본에 폐기된 주장이 있음:\n" + "\n".join(
+        f"  · {m!r} — {why}" for m, why in hits)
 
 
 def test_mcp_uses_the_shared_post_processing_helper():

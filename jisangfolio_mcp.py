@@ -99,7 +99,7 @@ _PROJECTS = """
 4. JisangFolio (jisangfolio.streamlit.app)
    - An AI interview chatbot built from my résumé + a data-analysis tool
    - Groq + Qwen3 27B, full résumé injected into the system prompt (no RAG needed)
-   - LLM router → pandas codegen & sandbox exec, or FAISS RAG (with hybrid retrieval)
+   - LLM router → pandas codegen executed in a reduced-capability namespace (not a sandbox), or FAISS RAG (with hybrid retrieval)
    - Graph retrieval over a profile knowledge graph (lexical seed + 1-hop traversal; not Microsoft GraphRAG),
      a programmatic guardrails layer, and a self-hosted-style LLM observability dashboard
    - MLOps Docs Assistant (Agentic RAG): self-correcting loop over cloud + on-prem MLOps docs —
