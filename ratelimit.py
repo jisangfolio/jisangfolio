@@ -12,9 +12,12 @@ Agentic RAG는 질문 하나당 판정→(재작성)→생성→근거점검으�
 
 모델별로 버킷이 따로이므로 페이서도 모델별로 둔다(pacer_for).
 """
+import json
+import os
 import re
 import time
 from collections import deque
+from datetime import datetime
 
 # 무료 티어 기본값. 실제 값은 응답 헤더 x-ratelimit-limit-tokens 로 갱신된다.
 DEFAULT_TPM = 8000
@@ -97,6 +100,9 @@ class TokenPacer:
 
     def record(self, tokens: int):
         self.events.append((time.time(), max(int(tokens), 0)))
+        # TPM 창(분 단위)과 별개로 일일 원장에도 누적한다 — TPD 는 헤더로 안 오므로
+        # 우리가 세지 않으면 아무도 모른다.
+        record_usage(max(int(tokens), 0))
 
 
 _PACERS = {}
@@ -113,6 +119,52 @@ def estimate_tokens(text: str) -> int:
         return 0
     hangul = sum(1 for c in text if "가" <= c <= "힣")
     return int(hangul * 0.9 + (len(text) - hangul) / 3.5) + 8
+
+
+# ── 일일 사용량 원장 ────────────────────────────────────────────────
+# Groq 은 TPM 은 헤더로 알려주는데(`x-ratelimit-limit-tokens: 8000`) **TPD 는 안 알려준다**.
+# 그래서 하니스는 "오늘 이미 얼마 썼는지"를 모른 채 매 실행을 0부터 시작했고, 이미 비어
+# 있는 예산에 뛰어들어 몇 케이스 만에 'per day' 에러로 죽었다(실제로 그렇게 한 번 죽었다).
+# 남은 예산을 알아야 실행 여부를 판단할 수 있으므로 직접 적어 둔다.
+#
+# ⚠️ 한계: 이 원장은 **로컬 실행분만** 본다. 배포된 앱이 같은 키로 쓰는 토큰은 안 보이므로
+#    실제 사용량의 하한이다. 그래서 SAFE_SHARE 로 여유를 남기는 게 여전히 필요하다.
+DAILY_TOKEN_BUDGET = 200_000
+_LEDGER_PATH = os.path.join(os.path.dirname(__file__), "evals", ".daily_usage.json")
+
+
+def _today():
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def _load_ledger():
+    try:
+        with open(_LEDGER_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def record_usage(tokens: int):
+    """이번 호출에 쓴(=예약한) 토큰을 오늘자에 누적한다."""
+    led = _load_ledger()
+    led[_today()] = int(led.get(_today(), 0)) + int(tokens)
+    for k in sorted(led)[:-7]:      # 날짜 키가 무한히 쌓이지 않게 최근 7일만
+        led.pop(k, None)
+    try:
+        os.makedirs(os.path.dirname(_LEDGER_PATH), exist_ok=True)
+        with open(_LEDGER_PATH, "w", encoding="utf-8") as f:
+            json.dump(led, f, indent=2, sort_keys=True)
+    except OSError:
+        pass          # 원장을 못 써도 실행 자체를 막지는 않는다
+
+
+def used_today() -> int:
+    return int(_load_ledger().get(_today(), 0))
+
+
+def remaining_today() -> int:
+    return max(0, DAILY_TOKEN_BUDGET - used_today())
 
 
 # ── 세션 단위 요청 상한 ─────────────────────────────────────────────

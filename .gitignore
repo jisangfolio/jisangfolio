@@ -18,3 +18,6 @@ graphify-out/
 .cache_results.json
 evals/.cache_results.json
 evals/.watch_log.txt
+
+# 일일 토큰 사용 원장 (로컬 실행분 집계 — 머신마다 다르다)
+evals/.daily_usage.json

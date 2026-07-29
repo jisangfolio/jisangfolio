@@ -1,11 +1,15 @@
 """평가 하니스의 예산 가드 테스트.
 
 배경: 배포된 Streamlit 앱과 평가 하니스가 **같은 Groq 키·같은 일일 예산**을 쓴다.
-전체 골든셋 1회 실행이 무료 일일한도를 넘기 때문에, 인자 없이 실행하는 것만으로
-그날 방문자(=채용담당자)가 429를 보게 된다. 실제로 한 번 그렇게 됐다.
+전체 골든셋 1회가 169k(84%)여서, 인자 없이 실행하는 것만으로 그날 방문자
+(=채용담당자)가 429를 보게 됐다. 실제로 한 번 그렇게 됐다.
 
-그래서 (1) 기본값은 예산 안에 드는 core 집합이고, (2) 한도를 넘는 실행은 프리플라이트가
-막는다. 이 둘이 되돌려지면 여기서 실패한다.
+처음엔 기본값을 작은 티어로 바꿔서 피했는데, 그러면 **나머지 케이스는 영원히 안 도는
+장식**이 된다. 그래서 골든셋 자체를 48 → 20건으로 줄였다(지운 건 `evals/archive/`).
+지금은 전체 실행이 약 71k(35%)라 기본값이 곧 전체 실행이다.
+
+여기서 고정하는 것: 전체 실행이 예산 안에 들 것, 방문자 몫이 남을 것, 카테고리·언어
+커버리지가 유지될 것.
 """
 import json
 import sys
@@ -40,59 +44,67 @@ def _resume():
     return tomllib.load(secrets.open("rb"))["resume_text"]
 
 
-def _core(cases):
-    return [c for c in cases if c.get("core")]
+def _full():
+    return (_load("golden_chat.jsonl"), _load("golden_router.jsonl"),
+            _load("golden_rag.jsonl"))
 
 
-def test_core_run_fits_the_safety_share():
-    """기본 실행이 하루 예산의 SAFE_SHARE 안에 들어야 한다."""
-    resume = _resume()
-    est = estimate_run_cost(_core(_load("golden_chat.jsonl")),
-                            _core(_load("golden_router.jsonl")),
-                            _core(_load("golden_rag.jsonl")), resume)
+def test_full_run_fits_the_safety_share():
+    """전체 실행이 하루 예산의 SAFE_SHARE 안에 들어야 한다.
+
+    케이스를 추가하다 이 선을 넘으면, 늘린 그 순간에 알아야 한다 — 나중에 실행이
+    중간에 죽고 나서가 아니라.
+    """
+    est = estimate_run_cost(*_full(), _resume())
     share = est["합계"] / DAILY_TOKEN_BUDGET
     assert share <= SAFE_SHARE, (
-        f"기본 실행이 하루 예산의 {share*100:.0f}% 를 쓴다 (상한 {SAFE_SHARE*100:.0f}%). "
-        f"core 태그를 늘렸다면 되돌리거나 SAFE_SHARE 를 의식적으로 올려야 한다."
+        f"전체 실행이 하루 예산의 {share*100:.0f}% 를 쓴다 (상한 {SAFE_SHARE*100:.0f}%). "
+        f"케이스를 늘렸다면 줄이거나, 예산 배분을 의식적으로 다시 정해야 한다."
     )
 
 
-def test_core_run_leaves_room_for_visitors():
-    """평가 후에도 방문자가 최소 15턴은 쓸 수 있어야 한다 (챗 1턴 ≈ 6k)."""
-    resume = _resume()
-    est = estimate_run_cost(_core(_load("golden_chat.jsonl")),
-                            _core(_load("golden_router.jsonl")),
-                            _core(_load("golden_rag.jsonl")), resume)
+def test_full_run_leaves_room_for_visitors():
+    """평가 후에도 방문자가 최소 15턴은 쓸 수 있어야 한다 (챗 1턴 ≈ 6k).
+
+    배포된 앱이 같은 키를 쓰므로, 평가가 다 먹으면 그날 사이트가 죽은 것과 같다.
+    """
+    est = estimate_run_cost(*_full(), _resume())
     remaining = DAILY_TOKEN_BUDGET - est["합계"]
     assert remaining // 6000 >= 15, f"방문자 몫이 {remaining // 6000}턴밖에 안 남는다"
 
 
-def test_full_run_would_exceed_budget():
-    """전체 실행이 예산을 넘는다는 사실 자체를 고정한다.
+def test_every_behavioural_category_survives_in_both_languages():
+    """줄이면서 커버리지가 조용히 빠지는 걸 막는다.
 
-    이게 통과하지 않게 되면(=전체가 예산에 들어오면) 기본값을 core 로 둘 이유가
-    사라진 것이므로, 그때는 이 테스트와 함께 기본값도 다시 판단해야 한다.
+    인젝션에 페르소나가 버티는지, 주제이탈을 거절하는지는 모델을 불러봐야만 안다
+    (문자열 검사로 대체 불가). 한국어만 남기면 영어 경로가 검증에서 사라진다.
     """
-    resume = _resume()
-    est = estimate_run_cost(_load("golden_chat.jsonl"), _load("golden_router.jsonl"),
-                            _load("golden_rag.jsonl"), resume)
-    assert est["합계"] > DAILY_TOKEN_BUDGET * SAFE_SHARE
+    chat = _load("golden_chat.jsonl")
+    for cat in ("offtopic", "injection"):
+        langs = {c.get("lang") for c in chat if c.get("category") == cat}
+        assert {"ko", "en"} <= langs, f"{cat} 가 {langs} 만 검증한다"
+    assert any(c.get("category") == "factual-guard" for c in chat), \
+        "사실 가드(안 쓴 도구를 썼다고 하지 않는가) 케이스가 사라졌다"
 
 
-def test_behavioural_cases_are_all_core():
-    """문자열 검사로 대체 불가능한 케이스는 전부 기본 실행에 있어야 한다.
-
-    인젝션에 페르소나가 버티는지, 주제이탈을 거절하는지는 모델을 불러봐야만 안다.
-    반면 factual 은 tests/test_resume_facts.py 가 토큰 0으로 드리프트를 잡으므로
-    표본만 남겨도 된다 — 그게 core 선정 기준이다.
-    """
-    behavioural = {"factual-guard", "offtopic", "injection"}
-    missing = [c["id"] for c in _load("golden_chat.jsonl")
-               if c.get("category") in behavioural and not c.get("core")]
-    assert not missing, f"모델 호출로만 검증되는 케이스가 기본 실행에서 빠졌다: {missing}"
+def test_router_covers_both_classes():
+    labels = {c["expected"] for c in _load("golden_router.jsonl")}
+    assert labels == {"PANDAS", "RAG"}, f"라우터가 한쪽 클래스만 본다: {labels}"
 
 
-def test_router_core_covers_both_classes():
-    core = _core(_load("golden_router.jsonl"))
-    labels = {c["expected"] for c in core}
-    assert labels == {"PANDAS", "RAG"}, f"라우터 core 가 한쪽 클래스만 본다: {labels}"
+def test_rag_covers_retrieval_and_refusal():
+    cats = {c["category"] for c in _load("golden_rag.jsonl")}
+    assert {"factual", "refuse"} <= cats, f"RAG 커버리지 부족: {cats}"
+
+
+def test_dropped_cases_are_archived_not_deleted():
+    """줄인 케이스는 사라진 게 아니라 archive 로 옮긴 것이어야 한다."""
+    archive = EVAL_DIR / "archive"
+    assert archive.is_dir(), "evals/archive/ 가 없다"
+    kept = {c["id"] for group in _full() for c in group}
+    for f in archive.glob("*.dropped.jsonl"):
+        for line in f.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                case = json.loads(line)
+                assert case["id"] not in kept, \
+                    f"{case['id']} 이 골든셋과 archive 양쪽에 있다"

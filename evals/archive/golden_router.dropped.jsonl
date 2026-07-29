@@ -1,0 +1,12 @@
+{"id": "r02", "q": "Condition별 데이터 수를 시각화해줘", "expected": "PANDAS", "core": true}
+{"id": "r04", "q": "전체 참가자의 평균 나이는?", "expected": "PANDAS", "core": true}
+{"id": "r05", "q": "Rambling과 Trembling 값의 상관관계를 보여줘", "expected": "PANDAS", "core": false}
+{"id": "r06", "q": "가장 Path_Length가 큰 행은?", "expected": "PANDAS", "core": false}
+{"id": "r07", "q": "그룹별 표준편차를 계산해줘", "expected": "PANDAS", "core": false}
+{"id": "r10", "q": "값이 100 이상인 행만 필터링해줘", "expected": "PANDAS", "core": false}
+{"id": "r13", "q": "이 실험의 목적을 요약해줘", "expected": "RAG", "core": true}
+{"id": "r14", "q": "첫 번째 참가자의 특징을 설명해줘", "expected": "RAG", "core": true}
+{"id": "r15", "q": "데이터에서 특이한 점이 있으면 알려줘", "expected": "RAG", "core": false}
+{"id": "r16", "q": "이 컬럼들이 각각 무엇을 측정한 거야?", "expected": "RAG", "core": false}
+{"id": "r17", "q": "고령자 균형 연구와 이 데이터가 어떻게 연결돼?", "expected": "RAG", "core": false}
+{"id": "r19", "q": "Trembling이 높은 사람은 어떤 상태라고 볼 수 있어?", "expected": "RAG", "core": false}
