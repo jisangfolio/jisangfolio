@@ -6,6 +6,9 @@
 """
 import re
 
+# profile_graph 는 stdlib 만 쓴다 — CI가 키·무거운 의존 없이 도는 전제를 깨지 않는다.
+from profile_graph import normalize_lang
+
 # 프롬프트 인젝션 / 탈옥 시도 패턴 (영어)
 _INJECTION_EN = re.compile(
     r"(ignore\s+(all|any|the|your|previous|above|prior)[\s\w]{0,24}(instruction|prompt|rule)"
@@ -156,12 +159,20 @@ def check_input(text: str) -> dict:
 
 
 def blocked_message(verdict: dict, lang: str = "English") -> str:
-    """차단 시 사용자에게 보여줄 박지상 톤의 안내."""
+    """차단 시 사용자에게 보여줄 박지상 톤의 안내.
+
+    lang 은 normalize_lang 으로 흡수한다. 이 함수는 `lang == "한국어"` 원시 비교를
+    쓰던 마지막 자리였다 — 앱은 '한국어'/'English' 를 넘기지만 골든셋과 평가 하니스는
+    'ko'/'en' 을 쓰므로, 'ko' 를 넘기면 **한국어 사용자에게 영어 안내가 조용히 나갔다.**
+    normalize_lang 은 정확히 이 종류(조용히 영어로 새는 것)를 없애려고 만든 함수인데,
+    정작 가드레일만 그 흡수 지점을 안 거치고 있었다.
+    """
+    ko = normalize_lang(lang) == "한국어"
     if verdict["category"] == "prompt_injection":
         return ("음, 그건 제 시스템 지시를 바꾸려는 시도로 보이네요 :) 저는 박지상의 경력·프로젝트에 대해서만 답합니다."
-                if lang == "한국어" else
+                if ko else
                 "Hmm, that looks like an attempt to override my instructions :) I only answer about Jisang's experience and projects.")
     if verdict["category"] == "too_long":
-        return ("질문이 너무 길어요. 조금 줄여서 다시 물어봐 주세요." if lang == "한국어"
+        return ("질문이 너무 길어요. 조금 줄여서 다시 물어봐 주세요." if ko
                 else "That's a bit long — please shorten it and ask again.")
-    return ("질문을 입력해 주세요." if lang == "한국어" else "Please type a question.")
+    return ("질문을 입력해 주세요." if ko else "Please type a question.")
