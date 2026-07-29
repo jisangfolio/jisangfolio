@@ -757,7 +757,7 @@ def preflight_budget(chat_cases, router_cases, rag_cases, resume, use_judge, for
 def main():
     ap = argparse.ArgumentParser(
         description="골든셋 회귀 평가. 기본값이 전체 실행이다 "
-                    "(약 71k · 무료 일일한도의 35%%). 프롬프트 만지는 중이면 --quick.")
+                    "(약 77k · 무료 일일한도의 39%%). 프롬프트 만지는 중이면 --quick.")
     ap.add_argument("--quick", action="store_true",
                     help="카테고리별 1건씩만 (반복 수정 중 쓰는 저비용 스모크)")
     ap.add_argument("--no-judge", action="store_true", help="LLM judge 생략")
@@ -785,7 +785,7 @@ def main():
 
     if args.quick:
         # 카테고리별 1건씩 — 프롬프트를 반복해서 만질 때 쓰는 스모크.
-        # 전체 실행이 이제 71k(35%)라 기본값으로 돌려도 되므로, 여기는 '더 싸게'가 목적이다.
+        # 전체 실행이 이제 77k(39%)라 기본값으로 돌려도 되므로, 여기는 '더 싸게'가 목적이다.
         def pick_core(cases, key="category"):
             seen, picked = set(), []
             for c in cases:

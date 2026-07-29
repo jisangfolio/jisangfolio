@@ -6,7 +6,7 @@ JisangFolio 챗봇과 데이터분석 라우터의 출력 품질을 **재현 가
 ## 실행
 
 ```bash
-python evals/run_evals.py            # 전체 실행 (20건 · 약 71k = 일일한도의 35%)
+python evals/run_evals.py            # 전체 실행 (20건 · 약 77k = 일일한도의 39%)
 python evals/run_evals.py --dry-run  # 비용 추정만 (API 호출 없음)
 python evals/run_evals.py --quick    # 카테고리별 1건씩 (반복 수정 중 스모크)
 python evals/run_evals.py --no-judge # 결정적 채점만
@@ -25,7 +25,7 @@ python evals/run_evals.py --resume   # 중단된 실행 이어하기 (끝난 케
 | | 케이스 | 추정 | 일일한도 대비 | 방문자 몫 |
 |---|---|---|---|---|
 | 전(48건) | 19 챗봇 · 20 라우터 · 9 RAG | ~169k | 84% | 챗 5턴 |
-| **지금(20건)** | 9 · 8 · 3 | **~71k** | **35%** | 챗 21턴 |
+| **지금(20건)** | 9 · 8 · 3 | **~77k** | **39%** | 챗 약 11턴 |
 
 **남긴 기준 = 깨지면 사실이 틀리는 것, 그리고 모델을 불러야만 알 수 있는 것.**
 
@@ -102,7 +102,7 @@ python evals/run_evals.py --resume   # 중단된 실행 이어하기 (끝난 케
 | 라우터 | **6/8** | PANDAS 4/4 · **RAG 2/4** |
 | Agentic RAG | **3/3** | factual 2/2 · refuse 1/1 (쿼리 재작성 1건 발동) |
 
-추정 71k → **실사용 56k**(추정이 보수적). 전체 리포트는 `report.md`, 원본 기록은 `runs/`.
+추정 77k → **실사용 62k**(추정이 보수적 · 2026-07-29 16:59 실행). 전체 리포트는 `report.md`, 원본 기록은 `runs/`.
 
 **미해결 2건** (둘 다 테스트 문제가 아니라 실제 결함):
 
