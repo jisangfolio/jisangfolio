@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timezone, timedelta
 from ui import apply_style
-from observability import get_traces, clear_traces
+from observability import get_traces, clear_traces, summarize_guard
 
 _KST = timezone(timedelta(hours=9))  # 표시용 한국 표준시(서버 UTC 무관하게 고정)
 
@@ -41,11 +41,19 @@ df["time"] = df["ts"].apply(lambda t: datetime.fromtimestamp(t, _KST).strftime("
 df["nodes_str"] = df["nodes"].apply(lambda n: ", ".join(n) if isinstance(n, list) else "")
 
 # --- Metrics ---
+# 집계 규칙은 observability.summarize_guard 가 소유한다(테스트도 그쪽에 있다).
+# 예전엔 여기서 `(df["guard"] != "ok").sum()` 을 직접 셌고, guard=None(미측정)과
+# 쿼터 거절까지 '가드레일 차단'에 합산돼 모듈의 원칙을 화면이 정반대로 어겼다.
+_blocked, _unmeasured = summarize_guard(traces)
+
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Turns", len(df))
 c2.metric("Avg latency", f"{int(df['latency_ms'].mean())} ms")
 c3.metric("P95 latency", f"{int(df['latency_ms'].quantile(0.95))} ms")
-c4.metric("Guardrail blocks", int((df["guard"] != "ok").sum()))
+# 미측정 건수를 delta 로 같이 노출한다 — 숨기면 '측정 안 함'이 다시 '통과'로 읽힌다.
+c4.metric("Guardrail blocks", _blocked,
+          delta=f"{_unmeasured} not measured" if _unmeasured else None,
+          delta_color="off")
 
 st.divider()
 

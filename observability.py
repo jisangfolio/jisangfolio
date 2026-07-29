@@ -7,13 +7,45 @@
 컨테이너 수명 동안 공유되는 스토어(@st.cache_resource)에 쌓고 Observability 페이지에서 시각화한다.
 """
 import time
-import streamlit as st
 
 
-@st.cache_resource
-def _store():
+def _new_store():
     # 컨테이너 수명 동안 세션·리런을 넘어 공유되는 트레이스 저장소
     return {"traces": []}
+
+
+_STORE = None
+
+
+def _store():
+    """트레이스 저장소를 지연 생성한다.
+
+    streamlit import 가 함수 안에 있는 이유: 이 모듈의 집계 규칙(summarize_guard)은
+    streamlit 이 없는 CI 에서 테스트돼야 한다. 최상단 import 하나가 테스트 수집을
+    통째로 죽여 CI 를 4런 동안 빨갛게 만든 전례가 있다(ui.apply_style 주석 참고).
+    """
+    global _STORE
+    if _STORE is None:
+        import streamlit as st
+        _STORE = st.cache_resource(_new_store)()
+    return _STORE
+
+
+# 차단 턴이 남기는 route 값. 대시보드는 **이 값**으로 차단을 센다 — 차단 카테고리
+# 목록을 화면 쪽에 복사해두면 guardrails 에 카테고리가 추가될 때 조용히 누락된다.
+BLOCK_ROUTE = "blocked"
+
+
+def summarize_guard(traces):
+    """(차단 건수, 미측정 건수) 를 센다.
+
+    guard 는 None 이 **"측정 안 함"** 이다(log_trace 독스트링 참고). 예전 대시보드는
+    `guard != "ok"` 로 세서 미측정과 쿼터 거절까지 '가드레일 차단'에 합산했다 —
+    이 모듈이 세운 원칙을 화면이 정반대로 어긴 셈이라, 규칙을 여기로 가져왔다.
+    """
+    blocked = sum(1 for t in traces if t.get("route") == BLOCK_ROUTE)
+    unmeasured = sum(1 for t in traces if not t.get("guard"))
+    return blocked, unmeasured
 
 
 def log_trace(page: str, model: str, route: str, latency_ms: int,

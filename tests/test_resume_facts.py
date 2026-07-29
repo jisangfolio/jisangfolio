@@ -11,9 +11,13 @@
 """
 import json
 import pathlib
-import tomllib
 
 import pytest
+
+# tomllib 은 3.11+ 다. 최상단에서 그냥 import 하면 3.10 에서 ModuleNotFoundError 가
+# collection 단계에 터져 **이 파일 하나 때문에 전체 스위트가 중단**된다(실제로 그랬다).
+# importorskip 은 진짜 skip 을 만든다 — 함수 안으로 내리기만 하면 red 로 바뀔 뿐이다.
+tomllib = pytest.importorskip("tomllib")
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GOLDEN = ROOT / "evals" / "golden_chat.jsonl"

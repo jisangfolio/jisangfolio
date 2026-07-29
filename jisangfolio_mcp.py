@@ -18,7 +18,7 @@ Connect (claude_desktop_config.json):
 """
 
 from fastmcp import FastMCP
-from prompts import strip_foreign_cjk
+from prompts import clean_response
 
 # ⚠️ 드리프트 주의: 아래 _PROFILE/_KETI/... 는 profile_graph.py(프로필 SSOT)에서 파생된 게 아니라
 # 손으로 관리하는 2차 사본이다. profile_graph 노드보다 서술이 상세해 자동 파생이 어렵기 때문인데,
@@ -234,9 +234,12 @@ Answer the question in the first person, based on the [Résumé] below.
         reasoning_effort="none",  # thinking off → faster
     )
     content = response.choices[0].message.content or ""
-    if "</think>" in content:
-        content = content.split("</think>", 1)[1].lstrip("\n")
-    return strip_foreign_cjk(content.replace("**", ""))
+    # 후처리는 prompts.clean_response 하나만 쓴다. 예전엔 여기서 </think> 를 직접 잘랐고,
+    # 그 사본이 두 경우에 앱과 다르게 굴었다:
+    #   · 닫히지 않은 <think> → 앱은 ""       / 여기선 **사고 과정을 원문 그대로 노출**
+    #   · 문장 중간 <think>   → 앱은 앞뒤 보존 / 여기선 앞 문장을 통째로 버림
+    # README 가 "MCP 서버는 후처리 헬퍼를 공유한다"고 적어둔 바로 그 지점이었다.
+    return clean_response(content)
 
 
 if __name__ == "__main__":

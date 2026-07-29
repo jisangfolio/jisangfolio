@@ -48,6 +48,80 @@ def apply_style():
     st.markdown(_STYLE, unsafe_allow_html=True)
 
 
+# 모델에 다시 보내도 되는 role. 가드가 막은 턴은 화면·내보내기에는 남기되
+# (가드가 작동하는 장면 자체가 이 사이트의 데모다) 재전송 대상에서는 뺀다.
+REPLAYABLE_ROLES = ("user", "assistant")
+
+# 재전송할 최근 메시지 수(user+assistant 합산). 상한이 없으면 대화가 길어질수록
+# 턴당 토큰이 단조 증가해, 세션 상한의 비용 근거가 뒤로 갈수록 어긋난다.
+REPLAY_MAX_MESSAGES = 12
+
+
+def replayable_history(history, max_messages=REPLAY_MAX_MESSAGES):
+    """대화 히스토리에서 **모델에 다시 보낼** 항목만, 최근 것부터 상한만큼 남긴다.
+
+    history: (role, content) 시퀀스.
+
+    이게 없던 시절엔 가드 판정과 무관하게 입력을 히스토리에 넣고 다음 턴에 통째로
+    재전송해서, 차단된 문자열이 role:"user" 로 모델에 그대로 도달했다 — guardrails 가
+    반환하는 "blocked before reaching the model" 이 한 턴 뒤엔 거짓이 됐다.
+    진짜 위험은 탈옥 자체보다 다단 스머글링이다: 1턴에 페이로드를 심고(차단되지만 보존됨)
+    2턴에 "위에서 시킨 대로 해"라고만 하면 단일 메시지 정규식으로는 잡을 수가 없다.
+    """
+    kept = [(role, content) for role, content in history if role in REPLAYABLE_ROLES]
+    return kept[-max_messages:] if max_messages else kept
+
+
+def _delta_text(chunk):
+    """스트림 청크에서 텍스트를 꺼낸다.
+
+    Groq SDK 는 chunk.choices[0].delta.content, LangChain 은 chunk.content 로 준다.
+    이 차이가 스트림 루프를 세 벌로 복사해 둔 이유 중 하나였다.
+    """
+    choices = getattr(chunk, "choices", None)
+    if choices:
+        return getattr(choices[0].delta, "content", None) or ""
+    return getattr(chunk, "content", None) or ""
+
+
+def stream_answer(chunks, render=None, lang="English"):
+    """<think> 블록을 걷어내며 부분 응답을 render 로 흘리고, 최종 확정 텍스트를 반환한다.
+
+    이 상태기계는 원래 세 곳(1_Chat 1개 · 2_Data_Analysis 2개)에 거의 동일하게 복사돼
+    있었고, 그래서 1_Chat 에서 고친 '짧은 응답이 빈 말풍선이 되는' 버그가 2_Data_Analysis
+    에는 그대로 남아 있었다. 회귀 테스트조차 이 루프를 **재구현한 사본**을 검사하고
+    있었어서, 실물이 바뀌어도 테스트는 초록일 수 있었다.
+
+    render: 부분 응답을 그릴 콜백(커서 장식 등 페이지별 차이는 여기서 흡수).
+    예외는 삼키지 않는다 — 호출부의 try/except 가 friendly_llm_error 로 처리해야 하고,
+    여기서 잡으면 그 오류 문구를 finalize 결과가 덮어쓴다.
+    """
+    full_response, buffer, in_think = "", "", None
+    for chunk in chunks:
+        delta = _delta_text(chunk)
+        if in_think is None:
+            buffer += delta
+            if "<think>" in buffer:
+                in_think = True
+            elif len(buffer) >= 50:
+                in_think = False
+                full_response = buffer
+                if render:
+                    render(full_response)
+        elif in_think:
+            buffer += delta
+            if "</think>" in buffer:
+                full_response = buffer.split("</think>", 1)[1].lstrip("\n")
+                in_think = False
+                if render:
+                    render(full_response)
+        else:
+            full_response += delta
+            if render:
+                render(full_response)
+    return finalize_stream(full_response, buffer, in_think, lang)
+
+
 def finalize_stream(full_response, buffer, in_think, lang="English"):
     """스트리밍 종료 후 최종 응답을 확정한다.
 
@@ -76,6 +150,14 @@ def friendly_llm_error(err, lang="English"):
     """
     name = type(err).__name__
     ko = (lang == "한국어")
+    if isinstance(err, TimeoutError):
+        # 턴 예산 초과(agent_rag.APP_TURN_BUDGET_S). 사용자 입장에선 rate limit 과 원인이
+        # 같으므로 같은 톤으로 안내하되, '멈춰 있는' 대신 '포기하고 돌아왔다'를 알린다.
+        return ("⚠️ 모델 사용 한도 때문에 대기가 길어져 이번 질문은 여기서 멈췄습니다. "
+                "이 데모는 무료 티어라 그럴 수 있어요. 잠시 후 다시 시도해 주세요."
+                if ko else
+                "⚠️ The model was rate-limited long enough that I stopped waiting for this "
+                "question — this demo runs on a free tier. Please try again in a moment.")
     if "RateLimit" in name or "429" in str(err):
         return ("⚠️ 지금은 모델 사용 한도에 걸려 답할 수 없습니다. 이 데모는 무료 티어를 "
                 "쓰기 때문에 한도에 닿을 수 있어요. 잠시 후 다시 시도해 주세요." if ko else

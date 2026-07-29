@@ -28,12 +28,20 @@ Streamlit 페이지는 import 시점에 `st.set_page_config()` 등을 실행해�
    → 문자열 리터럴에 `__`가 있으면 정적 거부 + `format`/`format_map`을 금지 속성으로.
    `df.query`도 `df.eval`과 같은 pandas 표현식 엔진이라 함께 막는다(원래 누락).
 
-여전히 샌드박스가 아니다: 메모리 상한도 프로세스 격리도 없다. `while`은 정적으로
-막지만(codegen 프롬프트는 벡터화 pandas만 요구하므로 정당한 용례가 없다) `for i in
-range(10**12)`이나 거대 comprehension은 여전히 워커를 멈출 수 있다 — 스레드에서 도는
-Streamlit 스크립트라 `signal.alarm`이 안 먹어서, 제대로 고치려면 별도 프로세스 +
-벽시계 타임아웃이 필요하다. 지금은 '축소된 권한의 네임스페이스'이고 README에도
-그렇게 적혀 있다.
+5. **속성 쓰기를 거부한다.** 정적 검사가 Load/Store를 구분하지 않던 시절엔
+   `pd.to_numeric = len` 이 통과했고, facade가 프로세스 전역 싱글턴이라 그 오염이
+   컨테이너 재시작 전까지 **이후 모든 방문자**에게 남았다. 권한 상승은 아니지만
+   지속성 있는 DoS다 → Store/Del 컨텍스트 거부 + facade를 호출마다 새로 생성.
+
+여전히 샌드박스가 아니다: 메모리 상한도 프로세스 격리도 없다. 정지 문제는 `while`
+금지에 더해 **상한 없는 `range()` 거부**로 구멍을 좁혔지만(벡터화 pandas만 요구하는
+codegen 프롬프트에 정당한 용례가 없다), `df.apply` 로 큰 프레임을 도는 식의 느린
+경로는 여전히 남는다 — 스레드에서 도는 Streamlit 스크립트라 `signal.alarm`이 안 먹고,
+제대로 고치려면 별도 프로세스 + 벽시계 타임아웃 + `setrlimit`이 필요하다. 다만 그
+비용이 만만치 않다(fork는 Streamlit의 멀티스레드 프로세스에서 교착 위험, spawn은
+매 질의마다 DataFrame 피클링 + 인터프리터 기동). 지금은 입력 크기 쪽에서
+`maxUploadSize`(10MB)와 인덱싱 행 상한으로 bound를 걸어두고, 이 모듈은
+'축소된 권한의 네임스페이스'로 남긴다 — README에도 그렇게 적혀 있다.
 """
 import ast
 
@@ -55,7 +63,8 @@ class PandasFacade:
             setattr(self, name, getattr(pd, name))
 
 
-PD_FACADE = PandasFacade()
+# range() 인자로 허용할 리터럴 상한. `range(10**12)` 하나로 워커가 그대로 멈춘다.
+_MAX_RANGE = 100_000
 
 # pandas 자체 표현식 평가기(eval·query)와 Styler(style → to_html/to_excel/to_latex 재노출),
 # 그리고 실행 시점에 문자열을 읽어 속성 탐색을 대신해 주는 str.format 계열을 막는다(§4).
@@ -98,7 +107,22 @@ def check_generated_code(code: str):
         # 벡터화 pandas 를 요구하는 codegen 프롬프트에 while 의 정당한 용례가 없다.
         if isinstance(node, ast.While):
             return "while loops are not allowed"
+        # while 만 막으면 `for i in range(10**12)` 로 같은 정지가 그대로 재현된다.
+        # 상한 없는 range 를 거부해 while 금지와 구멍을 맞춘다 — 벡터화 pandas 를
+        # 요구하는 codegen 프롬프트엔 큰 range 의 정당한 용례가 없고, 거부되면
+        # 페이지가 RAG 로 폴백하므로 실패 모드도 안전하다.
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "range":
+            for arg in node.args:
+                if not (isinstance(arg, ast.Constant) and isinstance(arg.value, int)
+                        and abs(arg.value) <= _MAX_RANGE):
+                    return "range() needs small literal bounds here (use vectorized pandas)"
         if isinstance(node, ast.Attribute):
+            # 속성 **쓰기** 금지. 정적 검사는 Load/Store 를 구분하지 않아서
+            # `pd.to_numeric = len` 이 통과했고, PD_FACADE 가 프로세스 전역 싱글턴이라
+            # 그 오염이 컨테이너 재시작 전까지 **이후 모든 방문자**에게 남았다.
+            # (권한 상승은 아니지만 지속성 있는 DoS다.)
+            if not isinstance(node.ctx, ast.Load):
+                return f"attribute assignment is not allowed ({node.attr})"
             if node.attr.startswith("__"):
                 return f"dunder attribute access is not allowed ({node.attr})"
             if node.attr in BANNED_ATTRS:
@@ -115,7 +139,10 @@ def run_generated_code(code: str, df):
     reason = check_generated_code(code)
     if reason:
         return None, None, f"blocked before execution: {reason}"
-    local_vars = {"df": df.copy(), "pd": PD_FACADE}
+    # facade 도 호출마다 새로 만든다. 예전엔 모듈 전역 싱글턴을 그대로 넘겨서,
+    # 정적 검사를 통과한 속성 재바인딩 한 줄이 이후 모든 실행에 남았다.
+    # (정적 Store 금지와 2중 방어 — 어느 한쪽이 뚫려도 오염이 이 호출 안에서 끝난다.)
+    local_vars = {"df": df.copy(), "pd": PandasFacade()}
     try:
         exec(code, {"__builtins__": SAFE_BUILTINS}, local_vars)
     except Exception as e:  # noqa: BLE001

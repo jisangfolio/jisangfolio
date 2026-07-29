@@ -37,7 +37,9 @@ def _load(name):
 
 
 def _resume():
-    import tomllib
+    # 함수 안 import 는 skip 이 아니라 red 를 만든다 — 3.10 에서는 아래 secrets 스킵보다
+    # 먼저 터진다. 진짜로 건너뛰려면 importorskip 이어야 한다.
+    tomllib = pytest.importorskip("tomllib")
     secrets = ROOT / ".streamlit" / "secrets.toml"
     if not secrets.exists():
         pytest.skip("secrets.toml 없음 (CI 는 키 없이 돈다)")

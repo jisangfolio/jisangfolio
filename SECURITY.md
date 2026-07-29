@@ -58,12 +58,28 @@ execution escape was found that could read the process environment; the escape i
 and pinned by a canary test that asserts no secret appears in a result *or* an error
 string.
 
-Anonymous visitors share one free-tier token budget, so chat is capped per session. That
-cap is a courtesy limit — sessions reset when cookies are cleared — and is meant to stop
-one visitor from exhausting the day's quota, not to stop an attacker.
+Anonymous visitors share one free-tier token budget, so chat is capped per session (12
+turns). That cap is a courtesy limit — sessions reset when cookies are cleared — and is
+meant to stop one visitor from exhausting the day's quota, not to stop an attacker. It was
+25 until the arithmetic was actually done: at ~7.6k tokens per turn, 25 turns let a single
+session take 91% of the 200k daily budget, which is not a cap so much as a formality.
+Guardrail-blocked turns no longer consume the quota — they cost no model tokens.
+
+Uploaded files are bounded on two axes, because the embedding work runs in the one
+container every visitor shares: `maxUploadSize = 10` (MB) in `.streamlit/config.toml`, and
+a 2,000-row cap on the **search index only**. Numeric answers still run over every row —
+truncating the DataFrame itself would return quietly wrong aggregates, which is worse than
+a slow site.
 
 ### Sample data
 
 `assets/tebo_sample.xlsx` contains human-subject posture measurements (numeric subject IDs
 only, no direct identifiers). See `LICENSE` — it is included to make the demo runnable and
 is not cleared for independent redistribution.
+
+⚠️ Open item, tracked honestly: this is an unresolved state, not a resolved one. The file
+is committed to a public MIT repo, so anyone cloning it can redistribute it — the LICENSE
+note asks them not to, but nothing enforces that. It is the only item in this document with
+a third party's interest at stake (the study's co-authors), and the only one that cannot be
+fixed by editing code. Resolution is either written permission for public demo use, or
+replacing it with synthetic data of matching structure.

@@ -5,7 +5,7 @@
 프롬프트를 그대로 검증한다"를 성립시키기 위한 모듈.
 """
 import re
-from profile_graph import normalize_lang, to_prompt_text
+from profile_graph import graph_retrieve, normalize_lang, to_prompt_text
 
 # ── 챗봇 시스템 프롬프트 (pages/1_Chat.py에서 추출) ────────────────
 # 헤더는 "[통합 마스터 이력서 내용]\n" / "[MASTER RESUME]\n" 직후에 이력서 전문을
@@ -79,6 +79,55 @@ def build_system_prompt(lang: str, resume_text: str) -> str:
     else:
         graph = "\n\n[PROFILE GRAPH — a structural map summarizing the resume above]\n" + to_prompt_text(lang) + "\n"
     return header + resume_text + graph
+
+
+def build_chat_system_prompt(lang: str, resume_text: str, question: str = None):
+    """앱과 평가 하니스가 **함께 쓰는** 최종 챗봇 시스템 프롬프트.
+
+    return: (system_prompt, graph_result)  graph_result = graph_retrieve() 반환값
+
+    왜 조립까지 여기로 올렸나: 이력서+관계도(build_system_prompt)는 공유하면서
+    **질문별 GraphRAG 서브그래프 주입은 페이지에만 있었다**. 즉 하니스는 앱이 실제로
+    모델에 보내는 프롬프트를 평가한 적이 없고(evals/ 전체에 graph_retrieve 호출 0건),
+    README 의 "같은 모듈이 페이지·하니스·테스트를 함께 먹인다"가 조립 경로에서는
+    참이 아니었다. 모듈을 공유해도 **조립을 공유하지 않으면** 같은 드리프트가 난다.
+
+    question 이 없으면 서브그래프 없이 기본 프롬프트만 돌려준다(비대화 용도).
+    """
+    system = build_system_prompt(lang, resume_text)
+    if not question:
+        return system, {"seeds": [], "nodes": [], "context": ""}
+
+    gr = graph_retrieve(question, lang=lang)
+    if gr["context"]:
+        label = ("이 질문에 관련된 프로필 서브그래프"
+                 if normalize_lang(lang) == "한국어"
+                 else "Profile subgraph relevant to this question")
+        system = system + f"\n\n[GraphRAG — {label}]\n" + gr["context"] + "\n"
+    return system, gr
+
+
+def get_df_info(df) -> str:
+    """라우터·코드생성 프롬프트에 넣을 DataFrame 요약.
+
+    앱과 하니스에 사본이 따로 있었고, 하니스 쪽 독스트링은 '동일한 요약 포맷'이라고
+    적어놨는데 라벨이 한/영으로 갈려 있었다(나머지 본문은 바이트 동일). 실측 차이는
+    2817자 중 헤더 4줄이라 라우팅 판단을 뒤집을 정도는 아니었지만, '측정이 앱을
+    대변한다'는 이 리포의 핵심 주장이 걸린 자리라 사본 자체를 없앤다.
+
+    한국어 라벨을 택한 이유: ROUTER_PROMPT_TEMPLATE 이 전부 한국어이고, 기록된
+    라우팅 정확도도 하니스(한국어) 쪽에서 측정됐다 — 앱을 측정에 맞추는 방향이
+    측정값을 계속 유효하게 둔다.
+
+    pandas 를 import 하지 않는다(df 를 덕타이핑으로만 쓴다) — 이 모듈은 프롬프트
+    SSOT 라서 무거운 의존을 들이지 않는 편이 CI·테스트에 유리하다.
+    """
+    return "\n".join([
+        f"컬럼: {list(df.columns)}",
+        f"행 수: {len(df)}",
+        f"데이터 타입:\n{df.dtypes.to_string()}",
+        f"처음 3행:\n{df.head(3).to_string()}",
+    ])
 
 
 # ── 데이터분석 라우터 프롬프트 (pages/2_Data_Analysis.py classify_question에서 추출) ──

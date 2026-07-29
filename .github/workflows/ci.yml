@@ -7,15 +7,28 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # README 배지가 3.11+ 를 주장하므로 3.11 도 **실제로 돌려서** 확인한다.
+        # tests/test_python_version.py 는 문서·CI·코드의 주장끼리를 대조할 뿐,
+        # 3.11 에서 진짜로 도는지는 증명하지 못한다.
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
       # 대부분의 테스트 대상(guardrails·prompts·profile_graph)은 stdlib만 쓴다.
       # pandas는 codeguard.py 때문에 필요하다 — LLM 생성 코드의 실행 경계라
       # 리포에서 가장 위험한 코드이고, CI 밖에 두면 안 된다.
       # Streamlit/torch는 여전히 불필요 → CI는 빠르고 키가 없어도 돈다.
+      #
+      # ⚠️ 이 목록을 늘리기 전에: streamlit 을 **최상단에서** import 하는 모듈을
+      # 테스트가 건드리면 collection 이 통째로 죽어 전체 스위트가 0건 실행된다.
+      # 실제로 그렇게 CI가 4런 동안 빨간 채 아무 테스트도 안 돌았다. 해법은 여기에
+      # streamlit 을 추가하는 게 아니라, 그 모듈의 streamlit import 를 함수 안으로
+      # 내리는 것이다(ui.apply_style · observability._store 참고).
       - run: pip install pytest pandas
       - run: python -m pytest tests/ -q
       # 코드그래프는 stdlib만 쓰므로 CI에서 재생성 가능. 커밋본과 다르면 실패시켜

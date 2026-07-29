@@ -1,5 +1,6 @@
-import time
 import os
+import re
+import time
 import streamlit as st
 import pandas as pd
 from langchain_core.messages import ChatMessage
@@ -7,9 +8,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_groq import ChatGroq
-from prompts import ROUTER_PROMPT_TEMPLATE, strip_think
+from prompts import ROUTER_PROMPT_TEMPLATE, get_df_info, strip_think
 from guardrails import check_input, blocked_message
-from ui import apply_style, finalize_stream, friendly_llm_error
+from ui import apply_style, friendly_llm_error, stream_answer, REPLAYABLE_ROLES
 from observability import log_trace
 from codeguard import run_generated_code
 # Heavy torch/faiss deps (FAISS · HuggingFaceEmbeddings) are imported lazily,
@@ -53,8 +54,6 @@ with st.sidebar:
     st.divider()
     st.caption("This analysis runs on AI-generated code. If the numbers matter, double-check against the source data :)")
 
-import re
-
 
 def _tok(s):
     return re.findall(r"[a-z0-9가-힣]+", (s or "").lower())
@@ -89,6 +88,11 @@ class HybridRetriever:
 
 
 # --- File processing ---
+# 임베딩할 최대 행 수. 상한이 없던 시절엔 행 수에 비례해 임베딩이 돌았고, 그 작업이
+# @st.cache_resource 아래(=모든 방문자가 공유하는 프로세스)에서 실행됐다. 즉 방문자
+# 한 명이 큰 CSV 를 올리면 무료 티어 컨테이너가 몇 분간 멈추거나 OOM 으로 죽어
+# **전원**이 사이트를 못 쓴다. 채용담당자가 링크를 열면 뜨는 게 이 사이트의 존재 이유다.
+MAX_INDEX_ROWS = 2000
 # max_entries/ttl 이 없으면 업로드된 파일마다 FAISS 인덱스가 컨테이너 수명 내내 상주한다
 # (방문자가 각자 파일을 올릴수록 단조 증가 → 무료 티어 메모리에서 결국 죽는다).
 # 캐시 미스는 재임베딩 비용일 뿐 정확성 문제가 아니므로 짧게 잡는다.
@@ -113,16 +117,23 @@ def build_vectorstore(file_bytes: bytes, file_name: str):
         st.error("❌ The file has no data.")
         return None, None
 
+    # 검색 코퍼스만 자른다 — 반환하는 df 는 자르지 않는다.
+    # df 를 자르면 pandas 경로(generate_and_run_code)가 **틀린 집계**를 조용히 내놓는다.
+    # ("Study별 평균 Path_Length" 가 앞 2000행만의 평균이 되는데 화면엔 그런 티가 없다.)
+    # 임베딩만 상한을 두면 최악의 경우가 '검색 recall 저하'로 끝나고, 숫자는 계속 정확하다.
+    indexed = df.head(MAX_INDEX_ROWS)
+    truncated = len(df) > MAX_INDEX_ROWS
+
     documents = []
-    for idx, row in df.iterrows():
+    for idx, row in indexed.iterrows():
         content_parts = [
             f"{col}: {row[col]}"
-            for col in df.columns
+            for col in indexed.columns
             if pd.notna(row[col]) and str(row[col]).strip() != ""
         ]
         documents.append(Document(
             page_content="\n".join(content_parts),
-            metadata={"row": idx, "source": file_name, "summary_title": str(row[df.columns[0]])[:50]},
+            metadata={"row": idx, "source": file_name, "summary_title": str(row[indexed.columns[0]])[:50]},
         ))
 
     splits = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100).split_documents(documents)
@@ -155,21 +166,18 @@ def build_vectorstore(file_bytes: bytes, file_name: str):
 
     progress_bar.empty()
     st.sidebar.success(f"✅ Indexed records: {vectorstore.index.ntotal}")
+    if truncated:
+        st.info(
+            f"🔎 Search index covers the first {MAX_INDEX_ROWS:,} of {len(df):,} rows. "
+            "Numeric answers (averages, counts, group-bys) still use **all** rows — "
+            "only keyword/semantic search is capped, to keep this shared free-tier demo responsive."
+        )
 
     from rank_bm25 import BM25Okapi
     bm25 = BM25Okapi([_tok(d.page_content) for d in splits])
     k = max(1, min(10, vectorstore.index.ntotal // 5))
     # Hybrid: dense (FAISS) + sparse (BM25) fused with RRF
     return df, HybridRetriever(vectorstore, splits, bm25, k=k)
-
-
-def get_df_info(df: pd.DataFrame) -> str:
-    """Build a DataFrame summary to pass to the LLM."""
-    info_parts = [f"Columns: {list(df.columns)}"]
-    info_parts.append(f"Rows: {len(df)}")
-    info_parts.append(f"Dtypes:\n{df.dtypes.to_string()}")
-    info_parts.append(f"First 3 rows:\n{df.head(3).to_string()}")
-    return "\n".join(info_parts)
 
 
 def classify_question(llm, question: str, df_info: str) -> str:
@@ -283,7 +291,7 @@ else:
     df, retriever = None, None
 
 for msg in st.session_state["data_messages"]:
-    st.chat_message(msg.role).write(msg.content)
+    st.chat_message("user" if msg.role.startswith("user") else "assistant").write(msg.content)
 
 llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0)
 # 라우팅 전용 핸들 — 한 단어만 내면 되므로 추론을 끈다(사고 텍스트가 파싱을 오염시키던
@@ -297,7 +305,6 @@ if not user_input and st.session_state["data_pending"]:
 
 if user_input and retriever:
     st.chat_message("user").write(user_input)
-    st.session_state["data_messages"].append(ChatMessage(role="user", content=user_input))
 
     # 🛡 Guardrail — this page feeds free text straight into a codegen prompt,
     # so the input guard has to run here too, not just on the chat pages.
@@ -307,10 +314,18 @@ if user_input and retriever:
         with st.chat_message("assistant"):
             st.markdown(guard_msg)
             st.caption(f"🛡 Guardrail blocked · {verdict['category']}")
-        st.session_state["data_messages"].append(ChatMessage(role="assistant", content=guard_msg))
+        # 화면에는 남기되 모델에는 재생하지 않는 role — 1_Chat.py 의 _REPLAYABLE_ROLES 와 같은 이유.
+        # 예전엔 위에서 무조건 append 해서, 차단된 문자열이 다음 턴 [Prior conversation] 블록에
+        # 그대로 실려 모델에 도달했다. 여기가 페이지1보다 위험한 건 그 블록이 **구조 없는 텍스트**라
+        # 공격자가 'AI:' 줄이나 가짜 '[Data context]:' 헤더를 위조해 넣을 수 있기 때문이다.
+        st.session_state["data_messages"].append(ChatMessage(role="user_blocked", content=user_input))
+        st.session_state["data_messages"].append(ChatMessage(role="assistant_guard", content=guard_msg))
         log_trace(page="data", model=GROQ_MODEL, route="blocked",
                   latency_ms=0, guard=verdict["category"], ok=False)
         st.stop()
+
+    # 통과한 뒤에 넣는다 — 아래 history_msgs 의 [:-1] 은 '현재 입력이 마지막'이라는 전제에 의존한다.
+    st.session_state["data_messages"].append(ChatMessage(role="user", content=user_input))
 
     df_info = get_df_info(df)
     _t0 = time.time()
@@ -368,33 +383,14 @@ Answer:"""
                 )
                 full_response = ""
                 response_container = st.empty()
-                in_think = None
-                buffer = ""
                 try:
-                    for chunk in (fallback_prompt | llm).stream({"question": user_input, "context": context_text}):
-                        delta = chunk.content
-                        if in_think is None:
-                            buffer += delta
-                            if "<think>" in buffer:
-                                in_think = True
-                            elif len(buffer) >= 50:
-                                in_think = False
-                                full_response = buffer
-                                response_container.markdown(full_response)
-                        elif in_think:
-                            buffer += delta
-                            if "</think>" in buffer:
-                                full_response = buffer.split("</think>", 1)[1].lstrip("\n")
-                                in_think = False
-                                response_container.markdown(full_response)
-                        else:
-                            full_response += delta
-                            response_container.markdown(full_response)
+                    full_response = stream_answer(
+                        (fallback_prompt | llm).stream({"question": user_input, "context": context_text}),
+                        render=response_container.markdown)
+                # except/else 구조는 그대로 둔다 — else 가 없으면 finalize 결과가
+                # friendly_llm_error 문구를 덮어쓴다(이 분기가 load-bearing).
                 except Exception as e:                      # noqa: BLE001
                     full_response = friendly_llm_error(e)
-                else:
-                    # 50자 미만 응답이 buffer 에만 남아 사라지던 버그(1_Chat.py 와 동일)
-                    full_response = finalize_stream(full_response, buffer, in_think)
                 response_container.markdown(full_response)
                 st.session_state["data_messages"].append(ChatMessage(role="assistant", content=full_response))
             else:
@@ -428,7 +424,9 @@ Answer:"""
         context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
 
         history_msgs = [m for m in st.session_state["data_messages"][:-1]
-                        if "Analyzed" not in m.content and "loaded" not in m.content and "Upload a CSV" not in m.content]
+                        if m.role in REPLAYABLE_ROLES
+                        and "Analyzed" not in m.content and "loaded" not in m.content
+                        and "Upload a CSV" not in m.content]
         history_text = "\n".join(
             f"{'User' if m.role == 'user' else 'AI'}: {m.content}"
             for m in history_msgs[-6:]
@@ -458,39 +456,15 @@ Answer:"""
         with st.chat_message("assistant"):
             response_container = st.empty()
             full_response = ""
-            buffer = ""
-            in_think = None
             with st.spinner("Analyzing..."):
                 try:
-                    for chunk in (prompt | llm).stream({
+                    full_response = stream_answer((prompt | llm).stream({
                         "question": user_input,
                         "context": context_text,
                         "history": history_text,
-                    }):
-                        delta = chunk.content
-                        if in_think is None:
-                            buffer += delta
-                            if "<think>" in buffer:
-                                in_think = True
-                            elif len(buffer) >= 50:
-                                in_think = False
-                                full_response = buffer
-                                response_container.markdown(full_response)
-                        elif in_think:
-                            buffer += delta
-                            if "</think>" in buffer:
-                                after = buffer.split("</think>", 1)[1].lstrip("\n")
-                                full_response = after
-                                in_think = False
-                                response_container.markdown(full_response)
-                        else:
-                            full_response += delta
-                            response_container.markdown(full_response)
+                    }), render=response_container.markdown)
                 except Exception as e:                      # noqa: BLE001
                     full_response = friendly_llm_error(e)
-                else:
-                    # 50자 미만 응답이 buffer 에만 남아 사라지던 버그(1_Chat.py 와 동일)
-                    full_response = finalize_stream(full_response, buffer, in_think)
             response_container.markdown(full_response)
             st.session_state["data_messages"].append(ChatMessage(role="assistant", content=full_response))
 

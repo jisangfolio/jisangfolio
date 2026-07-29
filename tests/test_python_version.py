@@ -46,9 +46,38 @@ def test_readme_badge_matches_actual_requirement():
     )
 
 
+def _ci_versions(text):
+    """워크플로에서 실제로 돌리는 파이썬 버전 전부.
+
+    스칼라(`python-version: "3.12"`)와 매트릭스 리스트(`["3.11", "3.12"]`)를 모두 읽는다.
+    스칼라만 보던 시절, 매트릭스로 바꾸면 이 검사가 **0건 매치로 조용히 통과**했다 —
+    버전 게이트가 사라진 걸 아무도 모르는 상태가 정확히 이 파일이 막으려는 실패다.
+    (`${{ matrix.python-version }}` 참조는 값이 아니므로 버전 추출 대상이 아니다.)
+    """
+    versions = []
+    for m in re.finditer(r'python-version:\s*(\[[^\]]*\]|"?\d+\.\d+"?)', text):
+        versions += [(int(a), int(b)) for a, b in re.findall(r"(\d+)\.(\d+)", m.group(1))]
+    return versions
+
+
 def test_ci_python_is_not_below_requirement():
     major, minor = _required_version()
+    found = []
     for wf in (ROOT / ".github" / "workflows").glob("*.yml"):
-        for m in re.finditer(r'python-version:\s*"?(\d)\.(\d+)"?', wf.read_text(encoding="utf-8")):
-            ci = (int(m.group(1)), int(m.group(2)))
+        versions = _ci_versions(wf.read_text(encoding="utf-8"))
+        found += versions
+        for ci in versions:
             assert ci >= (major, minor), f"{wf.name}: CI {ci} < 요구 {(major, minor)}"
+    assert found, "워크플로에서 파이썬 버전을 하나도 못 찾았다 — 검사가 공허하게 통과 중"
+
+
+def test_ci_actually_runs_the_claimed_minimum():
+    """README 가 3.11+ 라고 주장하면 CI 가 3.11 을 **실제로** 돌려야 한다.
+
+    문서·CI·코드의 주장끼리 대조하는 것만으로는 '3.11 에서 돈다'가 증명되지 않는다.
+    """
+    required = _required_version()
+    found = []
+    for wf in (ROOT / ".github" / "workflows").glob("*.yml"):
+        found += _ci_versions(wf.read_text(encoding="utf-8"))
+    assert required in found, f"CI 가 최소 버전 {required[0]}.{required[1]} 을 안 돌린다 (돌리는 버전: {sorted(set(found))})"

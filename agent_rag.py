@@ -20,6 +20,7 @@
   · ② 관련성 평가는 청크 세트 단위 1회 YES/NO이며, 나쁜 청크를 버리는 필터가 아니다.
   · 재검색 결과는 기존 검색 결과를 덮어쓴다(비교·병합 없음).
 """
+import logging
 import re
 import time
 
@@ -52,9 +53,22 @@ _RATE_LIMITED = re.compile(r"rate.?limit|429", re.IGNORECASE)
 # 창보다 짧은 대기는 사실상 재시도를 포기하는 것과 같다(실측으로 확인).
 _FALLBACK_WAITS = (10, 30, 60, 60)
 
+# 앱(pages/4)에서 한 질문에 허용할 벽시계 예산.
+# 왜 **호출당 상한이 아니라 턴 예산**인가: 피해는 한 호출 안이 아니라 3~4콜에 걸쳐
+# 누적된다. 호출당 90초를 20초로 줄여도 4콜 × 4재시도 × 20초 = 320초가 그대로 가능하다.
+# 반대로 무인 실행(평가 하니스)에서는 끈기 있는 백오프가 **옳다** — 이미 일일 예산을
+# 예약해 두고 도는 배치라, 10초 만에 포기하면 그 예약을 버리는 셈이다.
+# 그래서 이 값은 앱 호출부만 넘기고, 하니스는 None(무제한)으로 남는다.
+APP_TURN_BUDGET_S = 25
 
-def _invoke_with_retry(chain, variables, attempts: int = 5):
-    """429면 서버가 알려준 대기시간만큼 쉬고 재시도. 일일 한도면 즉시 중단."""
+_log = logging.getLogger(__name__)
+
+
+def _invoke_with_retry(chain, variables, attempts: int = 5, deadline: float = None):
+    """429면 서버가 알려준 대기시간만큼 쉬고 재시도. 일일 한도면 즉시 중단.
+
+    deadline(time.monotonic 절대시각)이 있으면 그 안에 못 끝날 대기는 자지 않는다.
+    """
     for i in range(attempts):
         try:
             return chain.invoke(variables)
@@ -62,11 +76,16 @@ def _invoke_with_retry(chain, variables, attempts: int = 5):
             if not _RATE_LIMITED.search(str(e)) or i == attempts - 1:
                 raise
             if is_daily_limit(e):
-                print("    · 일일 한도(TPD/RPD) 소진 — 기다려도 안 풀리므로 중단합니다")
+                _log.warning("일일 한도(TPD/RPD) 소진 — 기다려도 안 풀리므로 중단합니다")
                 raise
             wait = parse_wait_seconds(e) or _FALLBACK_WAITS[min(i, len(_FALLBACK_WAITS) - 1)]
             wait = min(wait + 0.5, 90)
-            print(f"    · rate limit — {wait:.1f}s 대기 후 재시도 ({i + 1}/{attempts - 1})")
+            if deadline is not None and time.monotonic() + wait > deadline:
+                _log.warning("rate limit — 남은 턴 예산(%.1fs)보다 대기(%.1fs)가 길어 포기합니다",
+                             max(0.0, deadline - time.monotonic()), wait)
+                raise
+            # print 였다: 앱에서는 서버 로그로만 나가고 방문자는 아무것도 못 봤다.
+            _log.warning("rate limit — %.1fs 대기 후 재시도 (%d/%d)", wait, i + 1, attempts - 1)
             time.sleep(wait)
 
 
@@ -77,7 +96,7 @@ def _usage_tokens(resp, fallback: int) -> int:
     return int(total) if total else fallback
 
 
-def _ask(llm, template, _max_tokens=None, **variables) -> str:
+def _ask(llm, template, _max_tokens=None, _deadline=None, **variables) -> str:
     """프롬프트 1회 호출 → 후처리된 텍스트. _max_tokens로 출력 예산을 좁힐 수 있다.
 
     호출 전 페이서에 예산을 신청하고(선제 대기), 호출 후 실제 사용량을 되먹인다.
@@ -88,33 +107,39 @@ def _ask(llm, template, _max_tokens=None, **variables) -> str:
     rendered = prompt.format(**variables)
     need = estimate_tokens(rendered) + (_max_tokens or ANSWER_MAX_TOKENS)
     pacer = pacer_for(getattr(llm, "model_name", None) or str(getattr(llm, "model", "unknown")))
-    pacer.wait_for(need)
+    pacer.wait_for(need, deadline=_deadline)
 
-    resp = _invoke_with_retry(prompt | model, variables)
+    resp = _invoke_with_retry(prompt | model, variables, deadline=_deadline)
     pacer.record(_usage_tokens(resp, need))
     return clean_response(resp.content)
 
 
-def _yesno(llm, template, **variables) -> str:
+def _yesno(llm, template, _deadline=None, **variables) -> str:
     """YES/NO 판정을 결정적으로 파싱."""
-    out = _ask(llm, template, _max_tokens=_YESNO_TOKENS, **variables).upper()
+    out = _ask(llm, template, _max_tokens=_YESNO_TOKENS, _deadline=_deadline, **variables).upper()
     return "YES" if "YES" in out else "NO"
 
 
-def _rewrite(llm, question: str) -> str:
+def _rewrite(llm, question: str, _deadline=None) -> str:
     """검색용 쿼리 재작성 — 첫 비어있지 않은 줄만."""
-    out = _ask(llm, RAG_REWRITE_PROMPT_TEMPLATE, _max_tokens=_REWRITE_TOKENS, question=question)
+    out = _ask(llm, RAG_REWRITE_PROMPT_TEMPLATE, _max_tokens=_REWRITE_TOKENS,
+               _deadline=_deadline, question=question)
     for line in out.splitlines():
         if line.strip():
             return line.strip()
     return question
 
 
-def agentic_answer(llm, retriever, question: str, max_retries: int = 1) -> dict:
+def agentic_answer(llm, retriever, question: str, max_retries: int = 1,
+                   turn_budget_s: float = None) -> dict:
     """자기교정 RAG 루프 실행. return {answer, chunks, trace, grounded, rewrote}.
 
     trace: [{"step","detail"}] — UI가 에이전트의 단계를 그대로 렌더한다.
+
+    turn_budget_s: 이 턴 전체(3~4콜)에 허용할 벽시계 예산. 앱은 APP_TURN_BUDGET_S 를
+    넘기고, 평가 하니스는 None 으로 둬 끈기 있는 백오프를 유지한다(APP_TURN_BUDGET_S 주석).
     """
+    deadline = time.monotonic() + turn_budget_s if turn_budget_s else None
     trace = []
     query = question
     chunks = retriever.invoke(query)
@@ -125,12 +150,13 @@ def agentic_answer(llm, retriever, question: str, max_retries: int = 1) -> dict:
     # 판정 결과가 제어를 바꿀 수 없으므로 호출하지 않는다 — 예전에는 마지막 회차에도
     # 판정을 불러 결과를 버렸고, 그건 답변에 영향 없이 LLM 호출만 한 번 더 쓰는 낭비였다.
     for attempt in range(max_retries):
-        grade = _yesno(llm, RAG_GRADE_PROMPT_TEMPLATE, question=question, context=format_context(chunks))
+        grade = _yesno(llm, RAG_GRADE_PROMPT_TEMPLATE, _deadline=deadline,
+                       question=question, context=format_context(chunks))
         trace.append({"step": "grade", "detail": f"relevant = {grade}"})
         if grade == "YES":
             break
         # 부실 → 쿼리 재작성 후 재검색 (자기교정)
-        query = _rewrite(llm, question)
+        query = _rewrite(llm, question, _deadline=deadline)
         rewrote = True
         trace.append({"step": "rewrite", "detail": query})
         chunks = retriever.invoke(query)
@@ -138,12 +164,14 @@ def agentic_answer(llm, retriever, question: str, max_retries: int = 1) -> dict:
 
     # 생성
     ctx = format_context(chunks)
-    answer = _ask(llm, RAG_ANSWER_PROMPT_TEMPLATE, _max_tokens=ANSWER_MAX_TOKENS, context=ctx, question=question)
+    answer = _ask(llm, RAG_ANSWER_PROMPT_TEMPLATE, _max_tokens=ANSWER_MAX_TOKENS,
+                  _deadline=deadline, context=ctx, question=question)
     trace.append({"step": "generate", "detail": f"{len(answer)} chars"})
 
     # 근거 자기점검 — LLM에 YES/NO 이진 판정 1회. RAGAS faithfulness(claim 단위 분해·
     # 연속값)와는 다르며, 게이트가 아니라 라벨로만 쓴다(답변은 이미 생성됨).
-    grounded = _yesno(llm, RAG_GROUNDEDNESS_PROMPT_TEMPLATE, answer=answer, context=ctx)
+    grounded = _yesno(llm, RAG_GROUNDEDNESS_PROMPT_TEMPLATE, _deadline=deadline,
+                      answer=answer, context=ctx)
     trace.append({"step": "self_check", "detail": f"grounded = {grounded}"})
 
     return {"answer": answer, "chunks": chunks, "trace": trace, "grounded": grounded, "rewrote": rewrote}

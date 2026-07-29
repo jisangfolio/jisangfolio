@@ -43,7 +43,13 @@ def _worksheet():
             dict(st.secrets["gcp_service_account"]),
             scopes=["https://www.googleapis.com/auth/spreadsheets"],
         )
-        ws = gspread.authorize(creds).open_by_url(st.secrets["log_sheet_url"]).sheet1
+        client = gspread.authorize(creds)
+        # 기본값은 무제한 대기다. 로깅은 턴 끝에 동기로 도는데, Sheets 가 느리면
+        # 답변은 이미 렌더됐어도 **스크립트가 안 끝나서** Streamlit 의 running 표시가
+        # 계속 돌고 다음 입력이 늦게 받아진다. 실패해도 조용히 넘어가는 설계라
+        # (아래 except) 짧은 타임아웃이 잃는 게 없다.
+        client.set_timeout(5)
+        ws = client.open_by_url(st.secrets["log_sheet_url"]).sheet1
         if not ws.acell("A1").value:  # 빈 시트면 헤더 1회 기록
             ws.append_row(_HEADER, value_input_option="RAW")
         return ws

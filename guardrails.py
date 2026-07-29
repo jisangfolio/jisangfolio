@@ -13,24 +13,39 @@ _INJECTION_EN = re.compile(
     r"|you\s+are\s+now\b"
     # 한국어 '이제부터 너는 ~야'의 영어 대응. you are now 만으로는
     # "From now on you are a pirate captain"이 안 잡힌다(are 뒤가 now가 아니라 a).
-    r"|from\s+now\s+on\b[^.?!\n]{0,30}\byou\s+(are|will|must|shall)\b"
     r"|pretend\s+to\s+be"
     # "act as a pirate"는 잡되 "act as if you were interviewing me"는 통과시킨다.
     # (as if 절은 인젝션보다 정상 요청에서 훨씬 자주 나온다)
     r"|act\s+as\s+(a|an)\s+(?!interviewer\b|recruiter\b|hiring\b)"
     r"|jailbreak|DAN\s+mode"
-    r"|forget\s+(your|the|all|everything|previous)"
+    # 'forget'은 **명령형일 때만** 인젝션이다. 행동면접의 단골인
+    # "Tell me about a time you had to forget your previous approach"는
+    # to/had to 뒤에 오는 부정사라 문두·접속사 뒤로 앵커를 걸어 구분한다.
+    r"|(?:^|[.!?;\n]\s*|\band\s+|\bthen\s+|\bnow\s+)forget\s+(your|the|all|everything|previous)"
     r"|reveal\s+(your|the)\s+(prompt|instruction|system))",
+    re.IGNORECASE,
+)
+
+# 'from now on'은 그 자체로는 인젝션이 아니다 — "From now on you will be working with a
+# new team, how would you onboard?"는 정상적인 상황 질문이다. 한국어 분기가 **역할 부여
+# 어미**를 요구하는 것과 같은 원리로, 여기서도 관사/부정어가 따라오는 역할 지정형만 잡는다.
+_INJECTION_EN_ROLE = re.compile(
+    r"from\s+now\s+on\b[^.?!\n]{0,30}\byou\s+"
+    r"(?:are|will\s+be|must\s+be|shall\s+be|are\s+going\s+to\s+be)\s+"
+    r"(?:a|an|the|no\s+longer|not)\b",
     re.IGNORECASE,
 )
 
 # 한국어 패턴. 챗봇이 한/영 토글을 제공하므로 방어도 대칭이어야 한다 — 영어 정규식만
 # 두면 한국어 인젝션이 프로그램적 가드를 그대로 통과해 페르소나 프롬프트에만 의존하게 된다.
 # 한국어는 어미 변형이 많아 '지시/명령/프롬프트 + 무시/잊어' 같은 근접 조합으로 잡는다.
-_INJECTION_KO = re.compile(
-    r"((지시|명령|규칙|프롬프트|설정)(사항|어|을|를|는|은|들)?\s*(전부|모두|다)?\s*(무시|잊어|잊고|해제|초기화)"
-    r"|(무시|망각)하고\s*(내|다음|아래)"
-    r"|이제부터\s*(너|당신|넌|년)"
+#
+# 분기를 HARD / SOFT 로 나눈 이유:
+# 아래 SOFT 패턴들은 정상 면접 질문과 **글자를 공유한다**. 예전엔 면제(_BENIGN_EXPERIENCE)가
+# 규칙-무시 분기 하나에만 연결돼 있어서, 나머지 분기들은 완화 장치 없이 정상 질문을 고발했다.
+# HARD 는 역할 탈취처럼 오인 여지가 거의 없어 면제 없이 차단한다.
+_INJECTION_KO_HARD = re.compile(
+    r"(이제부터\s*(너|당신|넌|년)"
     # 단순히 '너/당신 + 이제'만 보면 "당신은 이제 어떤 분야로…", "넌 이제 몇 년차야?" 같은
     # 정상 질문이 전부 막힌다. 뒤에 **역할 부여**가 따라올 때만 인젝션으로 본다.
     r"|(너|당신|넌)\s*(는|은)?\s*이제\s*(부터)?[^.?!\n]{0,24}"
@@ -38,8 +53,20 @@ _INJECTION_KO = re.compile(
     r"|(인|한)\s*척\s*(해|하고|해줘|하라)"
     r"|(처럼|같이)\s*(행동|말)해"
     r"|탈옥"
-    r"|제한\s*(없는|없이|해제)"
-    r"|(개발자|관리자|디버그)\s*(모드|권한))",
+    # '제한 없는'은 뒤에 **모델/응답**이 올 때만 탈옥이다. "제한 없는 예산이 있다면
+    # 어떤 프로젝트를?"은 정상적인 가정 질문이라 무조건 차단하면 안 된다.
+    r"|제한\s*(없는|없이)\s*[^.?!\n]{0,10}(ai|assistant|어시스턴트|모델|봇|챗봇|버전|답해|대답|말해|응답|출력)"
+    r"|제한\s*(을|를)?\s*해제)",
+    re.IGNORECASE,
+)
+
+_INJECTION_KO_SOFT = re.compile(
+    r"((지시|명령|규칙|프롬프트|설정)(사항|어|을|를|는|은|들)?\s*(전부|모두|다)?\s*(무시|잊어|잊고|해제|초기화)"
+    r"|(무시|망각)하고\s*(내|다음|아래)"
+    # '관리자 권한 설계', '디버그 모드에서 겪은 문제'는 MLOps 면접의 정상 주제다.
+    # 모드·권한을 **전환/활성화하라는 명령**일 때만 인젝션으로 본다.
+    r"|(개발자|관리자|디버그)\s*(모드|권한)[^.?!\n]{0,12}"
+    r"(전환|진입|활성화|해제해|들어가|들어와|켜|바꿔|바꾸))",
 )
 
 
@@ -93,13 +120,14 @@ _BENIGN_EXPERIENCE = re.compile(
 
 def _injection_hit(text: str):
     """인젝션 패턴 매칭 — 매치된 유형을 함께 반환(차단 사유 로깅·디버깅용)."""
-    if _INJECTION_EN.search(text):
+    if _INJECTION_EN.search(text) or _INJECTION_EN_ROLE.search(text):
         return "en"
-    ko = _INJECTION_KO.search(text)
-    if ko:
-        rule_ignore = bool(re.match(r"(지시|명령|규칙|프롬프트|설정)", ko.group(0)))
-        if not (rule_ignore and _BENIGN_EXPERIENCE.search(text)):
-            return "ko"
+    if _INJECTION_KO_HARD.search(text):
+        return "ko"
+    # SOFT 분기는 전부 경험-질문 면제를 받는다. 예전엔 이 면제가 규칙-무시 분기
+    # 하나에만 걸려 있어서 나머지 분기의 과차단을 아무도 막아주지 못했다.
+    if _INJECTION_KO_SOFT.search(text) and not _BENIGN_EXPERIENCE.search(text):
+        return "ko"
     if _prompt_extraction(text):
         return "prompt-extraction"
     return None

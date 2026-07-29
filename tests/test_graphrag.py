@@ -9,7 +9,7 @@ seed 0개였고, 홈에 걸린 한국어 샘플 5개 중 4개가 그랬다.
 """
 import pytest
 
-from profile_graph import _tokens, graph_retrieve
+from profile_graph import _tokens, graph_retrieve, to_vis_html
 
 
 def test_tokenizer_splits_hangul_from_alnum():
@@ -82,6 +82,53 @@ def test_single_char_tokens_do_not_seed():
     r = graph_retrieve("5년 후 목표는 무엇인가요?", lang="한국어")
     assert "Ollama" not in " ".join(r["seeds"])
     assert "FAISS" not in r["seeds"]
+
+
+# ── 간판 주제가 df 컷에 먹히던 회귀 (2026-07-29) ──────────────────
+# 문서빈도 컷은 조사를 걸러주지만, **중심 주제일수록 df 가 높아진다**는 역설이 있다.
+# `rag` 의 df 는 정확히 cap(=노드수 38 × 0.25 = 9)이라 탈락했고, 이 리포의 간판인
+# RAG 질문들이 seed 0개거나(한/영 모두) 남은 조사성 토큰 때문에 엉뚱한 노드를 물었다.
+#   "RAG 파이프라인은?" → seeds ['TEBO 논문', 'IS477 · ETL']  ← 틀린 근거를 주입
+# 기존 테스트가 초록이었던 이유: 'RAG chatbot Samsung SDI' 처럼 다른 토큰으로 통과.
+RAG_QUERIES_KO = [
+    "RAG 경험을 말해주세요",
+    "당신의 RAG 시스템을 설명해주세요",
+    "RAG 파이프라인은 어떻게 만들었나요?",
+]
+RAG_QUERIES_EN = [
+    "Tell me about your RAG experience",
+    "What is your RAG work?",
+]
+
+
+@pytest.mark.parametrize("q", RAG_QUERIES_KO)
+def test_rag_questions_retrieve_rag_nodes_ko(q):
+    r = graph_retrieve(q, lang="한국어")
+    assert r["seeds"], f"seed 0개 — 간판 주제가 df 컷에 먹혔다: {q}"
+    assert any("RAG" in s for s in r["seeds"]), f"RAG 노드가 아닌 seed: {r['seeds']}"
+
+
+@pytest.mark.parametrize("q", RAG_QUERIES_EN)
+def test_rag_questions_retrieve_rag_nodes_en(q):
+    r = graph_retrieve(q)
+    assert r["seeds"], q
+    assert any("RAG" in s for s in r["seeds"]), f"RAG 노드가 아닌 seed: {r['seeds']}"
+
+
+def test_filler_only_query_returns_no_subgraph():
+    """변별 토큰이 하나도 없으면 **틀린 근거보다 근거 없음**이 낫다.
+
+    설명에 한 번 스친 1점짜리 매치는 seed 가 되면 안 된다 — 그게 '파이프라인은' →
+    TEBO 논문 같은 오답 서브그래프를 '집중 근거' 라벨로 주입하던 경로였다.
+    """
+    r = graph_retrieve("그건 어떻게 되나요?", lang="한국어")
+    assert r["seeds"] == [], r["seeds"]
+
+
+def test_to_vis_html_accepts_the_same_lang_tokens_as_retrieval():
+    """graph_retrieve 는 'ko' 를 받는데 to_vis_html 은 KeyError 로 죽었다."""
+    for lang in ("ko", "한국어", "en", "English"):
+        assert "__LEGEND__" not in to_vis_html(lang)
 
 
 def test_lang_token_variants_are_accepted():

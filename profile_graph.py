@@ -275,7 +275,10 @@ def to_vis_html(lang="한국어"):
         }
         vis_nodes.append(node)
     vis_edges = [{"from": a, "to": b} for (a, b) in EDGES]
-    html = _HTML_TEMPLATE.replace("__LEGEND__", _legend_html(lang))
+    # 정규화한 값을 넘긴다. 노드 쪽만 normalize_lang 을 거치고 범례에 raw 를 넘기던 탓에
+    # to_vis_html("ko") 가 LEGEND_LABELS 조회에서 KeyError 로 죽었다 — 형제 함수
+    # graph_retrieve 는 'ko' 를 받도록 테스트까지 있는데 이쪽만 안 받았다.
+    html = _HTML_TEMPLATE.replace("__LEGEND__", _legend_html("한국어" if ko else "English"))
     html = html.replace("__NODES__", json.dumps(vis_nodes, ensure_ascii=False))
     html = html.replace("__EDGES__", json.dumps(vis_edges, ensure_ascii=False))
     return html
@@ -322,6 +325,13 @@ _TOKEN = re.compile(r"[a-z0-9]+|[가-힣]+")
 _STOP_DF_RATIO = 0.25
 _DF = None
 _ADJ = None
+_LABEL_TOKENS = None
+
+# seed 로 인정할 최소 점수. 1점은 **설명에 한 번 스친** 것뿐이라 변별력이 없다.
+# 이게 없으면 "RAG 파이프라인은?" 처럼 변별 토큰이 df 컷에 걸린 질문에서 남은
+# 조사성 토큰('파이프라인은')이 엉뚱한 노드를 seed 로 올려, 틀린 서브그래프가
+# '집중 근거'라는 라벨을 달고 시스템 프롬프트에 들어갔다. 근거 없음(무해) 쪽이 낫다.
+_MIN_SEED_SCORE = 2
 
 
 def _tokens(s):
@@ -345,16 +355,35 @@ def _doc_freq():
     return _DF
 
 
+def _label_tokens():
+    """어느 노드든 **라벨**에 등장하는 토큰의 합집합.
+
+    df 컷의 사각지대를 메운다. 포트폴리오의 중심 주제일수록 여러 노드 설명에
+    등장해 df 가 높아지고, 그래서 '가장 중요한 단어가 먼저 버려지는' 역설이 생긴다.
+    실제로 `rag` 는 df 가 정확히 cap(9)이라 탈락했고, "RAG 경험을 말해주세요" 가
+    seed 0개였다 — 이 리포의 간판 주제인데. 라벨에 있는 토큰은 조사·불용어가 아니라
+    고유명사·기술명이므로, df 가 높아도 변별 토큰으로 살려둔다.
+    """
+    global _LABEL_TOKENS
+    if _LABEL_TOKENS is None:
+        toks = set()
+        for n in NODES:
+            toks |= _tokens(_node_text(n, labels_only=True))
+        _LABEL_TOKENS = toks
+    return _LABEL_TOKENS
+
+
 def _query_tokens(query):
     """질문에서 변별력 있는 토큰만 남긴다.
 
     - 1글자 제거: '5' 가 'Qwen2.5' 의 '5' 와 붙고 '후' 가 아무 데나 붙었다.
-    - 흔한 토큰 제거: 위 df 컷.
+    - 흔한 토큰 제거: 위 df 컷. 단 **노드 라벨에 있는 토큰은 예외**(_label_tokens 참고).
     """
     df = _doc_freq()
+    labels = _label_tokens()
     cap = max(2, int(len(NODES) * _STOP_DF_RATIO))
     return {t for t in _tokens(query or "")
-            if len(t) >= 2 and df.get(t, 0) < cap}
+            if len(t) >= 2 and (df.get(t, 0) < cap or t in labels)}
 
 
 def _is_hangul(t):
@@ -408,7 +437,8 @@ def graph_retrieve(query, lang="English", max_seeds=3, hops=1):
 
     ranked = sorted(NODES, key=score, reverse=True)
     # person 노드(중심 허브)는 seed에서 제외 — 검색을 구체적 경험/기술에 집중
-    seeds = [n for n in ranked if score(n) > 0 and n["group"] != "person"][:max_seeds]
+    seeds = [n for n in ranked
+             if score(n) >= _MIN_SEED_SCORE and n["group"] != "person"][:max_seeds]
     if not seeds:
         return {"seeds": [], "nodes": [], "context": ""}
 

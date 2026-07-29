@@ -31,7 +31,7 @@ ROLE_COLOR = {
     "mcp":  "#B07AA1",   # MCP 서버
     "eval": "#76B7B2",   # 평가 하니스
     "test": "#59A14F",   # 테스트
-    "rag":  "#E15759",   # Agentic RAG (오늘 작업 — 눈에 띄게)
+    "rag":  "#E15759",   # Agentic RAG
 }
 ROLE_LABEL = {"core": "app / shared", "page": "pages", "mcp": "MCP",
               "eval": "evals", "test": "tests", "rag": "Agentic RAG"}
@@ -176,7 +176,7 @@ HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>graphify - codebase call graph</title>
+<title>JisangFolio · codebase call graph</title>
 <script src="https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js"></script>
 <style>
   html, body {{ margin: 0; height: 100%; background: #0f0f1a; }}
@@ -225,7 +225,11 @@ def main():
     for m in collect_files():
         roles[role_of(m)] += 1
     print("   모듈:", dict(roles))
-    print("   새 파일 포함:", all(any(k in n["id"] for n in nodes) for k in ("rag_corpus", "agent_rag", "4_MLOps_Docs")))
+    # 예전엔 특정 시점의 새 파일 3개를 하드코딩해 확인했다 — 기능이 늘면 무의미해진다.
+    # 일반 검사로 바꾼다: 수집된 모든 모듈이 그래프에 노드로 들어갔는가.
+    node_ids = {n["id"] for n in nodes}
+    missing = [module_id(f) for f in collect_files() if module_id(f) not in node_ids]
+    print("   모든 모듈 포함:", not missing, f"(누락: {missing})" if missing else "")
 
 
 if __name__ == "__main__":

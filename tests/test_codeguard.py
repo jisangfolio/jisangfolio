@@ -134,3 +134,46 @@ def test_allowed_to_list_has_no_writers():
 
 def test_syntax_error_reported_not_raised():
     assert "syntax error" in (check_generated_code("result = (") or "")
+
+
+# ── 속성 쓰기로 facade 를 영구 오염시키던 회귀 (2026-07-29) ──────────
+# 정적 검사가 Load/Store 를 구분하지 않아 `pd.to_numeric = len` 이 통과했고,
+# PD_FACADE 가 모듈 전역 싱글턴이라 그 오염이 **이후 모든 실행**에 남았다.
+# 권한 상승은 아니지만 컨테이너 재시작 전까지 지속되는 DoS다.
+ATTRIBUTE_WRITES = [
+    "pd.to_numeric = len\nresult = 1",
+    "pd.DataFrame = None\nresult = 1",
+    "df.attrs = {}\nresult = 1",
+    "del pd.to_numeric\nresult = 1",
+]
+
+
+@pytest.mark.parametrize("code", ATTRIBUTE_WRITES)
+def test_attribute_writes_are_blocked(code):
+    assert check_generated_code(code) is not None, code
+
+
+def test_facade_is_not_shared_between_runs():
+    """정적 검사가 뚫려도 오염이 이 호출 안에서 끝나야 한다(2중 방어)."""
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    run_generated_code("result = pd.to_numeric(df['a']).sum()", df)
+    _, _, err = run_generated_code("result = pd.to_numeric(df['a']).sum()", df)
+    assert err is None, f"두 번째 실행이 오염됐다: {err}"
+
+
+# ── 정지 문제: while 만 막으면 range 로 그대로 재현된다 ──────────────
+UNBOUNDED_LOOPS = [
+    "for i in range(10**12):\n    pass\nresult = 1",
+    "result = sum(1 for _ in range(10**12))",
+    "result = [i for i in range(999999999)]",
+]
+
+
+@pytest.mark.parametrize("code", UNBOUNDED_LOOPS)
+def test_unbounded_range_is_blocked(code):
+    assert check_generated_code(code) is not None, code
+
+
+def test_small_range_still_works():
+    """상한 자체가 목적이 아니다 — 작은 리터럴 range 는 통과해야 한다."""
+    assert check_generated_code("result = list(range(5))") is None

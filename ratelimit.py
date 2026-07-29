@@ -15,6 +15,7 @@ Agentic RAG는 질문 하나당 판정→(재작성)→생성→근거점검으�
 import json
 import os
 import re
+import threading
 import time
 from collections import deque
 from datetime import datetime
@@ -85,15 +86,24 @@ class TokenPacer:
             self.events.popleft()
         return sum(t for _, t in self.events)
 
-    def wait_for(self, need: int):
-        """다음 호출이 need 토큰을 쓸 예정 — 창이 빌 때까지 잔다."""
+    def wait_for(self, need: int, deadline: float = None):
+        """다음 호출이 need 토큰을 쓸 예정 — 창이 빌 때까지 잔다.
+
+        deadline(time.monotonic 절대시각)을 주면 그 안에 못 끝날 대기는 자지 않고
+        TimeoutError 로 즉시 포기한다. 무인 실행(평가 하니스)에서는 끈기 있게 기다리는
+        게 옳지만, 사람이 화면을 보고 있는 앱에서는 몇 분짜리 sleep 이 곧 '멈춘 사이트'다.
+        """
         while True:
+            if deadline is not None and time.monotonic() >= deadline:
+                raise TimeoutError("pacing budget exhausted for this turn")
             now = time.time()
             used = self._used(now)
             if used + need <= self.budget or not self.events:
                 return
             # 가장 오래된 기록이 창 밖으로 나갈 때까지
             sleep_for = 60 - (now - self.events[0][0]) + 0.3
+            if deadline is not None and time.monotonic() + sleep_for > deadline:
+                raise TimeoutError("pacing wait would exceed this turn's deadline")
             if self.verbose and sleep_for > 1:
                 print(f"    · TPM 페이싱 — {sleep_for:.0f}s 대기 (최근 1분 {used:.0f}/{self.budget:.0f} 토큰)")
             time.sleep(max(sleep_for, 0.3))
@@ -137,26 +147,49 @@ def _today():
     return datetime.now().strftime("%Y-%m-%d")
 
 
+# 원장 갱신은 read-modify-write 라서 동시 기록이 서로를 덮어쓴다(40스레드 × 100토큰을
+# 넣었더니 4,000 이 아니라 200 만 남았다). 읽는 쪽(하니스)은 순차라 지금 당장 오답을
+# 보지는 않지만, 배포 앱은 세션마다 스레드로 기록하므로 원인은 실재한다.
+_LEDGER_LOCK = threading.Lock()
+
+
 def _load_ledger():
     try:
         with open(_LEDGER_PATH, encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except FileNotFoundError:
+        return {}
     except (OSError, ValueError):
+        # 깨진 원장을 조용히 {} 로 돌리면 **오늘 쓴 양이 0으로 리셋**되어, 예산을 다
+        # 쓴 날에도 하니스가 새 20만 토큰을 승인한다 — 이 모듈이 막으려던 바로 그 사고다.
+        # 그래서 깨진 파일은 치워두고 티가 나게 남긴다.
+        try:
+            os.replace(_LEDGER_PATH, _LEDGER_PATH + ".corrupt")
+            print(f"⚠️  사용량 원장이 손상돼 {_LEDGER_PATH}.corrupt 로 옮겼습니다 "
+                  "— 오늘 집계가 0부터 다시 시작합니다.")
+        except OSError:
+            pass
         return {}
 
 
 def record_usage(tokens: int):
     """이번 호출에 쓴(=예약한) 토큰을 오늘자에 누적한다."""
-    led = _load_ledger()
-    led[_today()] = int(led.get(_today(), 0)) + int(tokens)
-    for k in sorted(led)[:-7]:      # 날짜 키가 무한히 쌓이지 않게 최근 7일만
-        led.pop(k, None)
-    try:
-        os.makedirs(os.path.dirname(_LEDGER_PATH), exist_ok=True)
-        with open(_LEDGER_PATH, "w", encoding="utf-8") as f:
-            json.dump(led, f, indent=2, sort_keys=True)
-    except OSError:
-        pass          # 원장을 못 써도 실행 자체를 막지는 않는다
+    with _LEDGER_LOCK:
+        led = _load_ledger()
+        led[_today()] = int(led.get(_today(), 0)) + int(tokens)
+        for k in sorted(led)[:-7]:      # 날짜 키가 무한히 쌓이지 않게 최근 7일만
+            led.pop(k, None)
+        try:
+            os.makedirs(os.path.dirname(_LEDGER_PATH), exist_ok=True)
+            # 임시 파일 → os.replace 로 원자적 교체. 곧바로 open(..,"w") 하면
+            # 쓰다가 죽었을 때 잘린 JSON 이 남고, 그게 위 손상 경로로 이어진다.
+            tmp = f"{_LEDGER_PATH}.{os.getpid()}.tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(led, f, indent=2, sort_keys=True)
+            os.replace(tmp, _LEDGER_PATH)
+        except OSError:
+            pass          # 원장을 못 써도 실행 자체를 막지는 않는다
 
 
 def used_today() -> int:
@@ -169,13 +202,26 @@ def remaining_today() -> int:
 
 # ── 세션 단위 요청 상한 ─────────────────────────────────────────────
 # 위 페이서는 **재우기만** 한다 — 거절하지 않는다. 그래서 요청 수 자체에는 상한이
-# 없었고, 익명 방문자 한 명이 무료 티어 하루치(20만 토큰 ≈ 챗 33턴)를 혼자 태울 수
-# 있었다. 그러면 그날 다른 방문자는 전부 429를 본다.
+# 없었고, 익명 방문자 한 명이 무료 티어 하루치를 혼자 태울 수 있었다.
+# 그러면 그날 다른 방문자는 전부 429를 본다.
+#
+# 숫자 근거(2026-07-29 실측, 한국어 기준):
+#   시스템 프롬프트(이력서+관계도+질문별 GraphRAG) ≈ 4.4k  ← 매 턴 상수
+#   재전송 히스토리(ui.REPLAY_MAX_MESSAGES=12 로 상한)  ≲ 2.6k
+#   답변 예산                                            = 0.6k
+#   → 턴당 최악 ≈ 7.6k
+# 예전 상한 25는 한 세션에 최대 ~182k, 즉 하루 예산(200k)의 **91%** 를 한 사람에게
+# 내주는 값이었다. 그건 "한 사람이 우연히 예산을 다 쓰는 걸 막는다"는 이 상한의
+# 목적을 사실상 달성하지 못한다(구 주석의 '33턴'은 GraphRAG 주입 이전 추정치다).
+# 12로 낮추면 세션당 ≈91k ≈ 46% 라, 최소 두 명은 온전한 세션을 쓸 수 있다.
 #
 # 로그인이 없으므로 세션 단위가 실효 경계다(쿠키를 지우면 리셋된다 = 우회 가능).
-# 목적이 악의적 공격 차단이 아니라 **한 사람이 우연히 예산을 다 쓰는 것**을 막는
-# 것이라, 이 정도가 비용 대비 맞는 선이다. 진짜 차단이 필요하면 인증이 필요하다.
-SESSION_TURN_LIMIT = 25
+# 목적이 악의적 공격 차단이 아니라 우발적 소진 방지라 이 정도가 비용 대비 맞는 선이다.
+# 대부분의 방문자는 3~5턴에서 끝나고, 상한에 닿으면 이력서 PDF·메일로 안내한다.
+SESSION_TURN_LIMIT = 12
+
+# 턴당 토큰 추정치(위 근거). 상한을 만질 때 비용 계산이 같이 따라오게 코드에 둔다.
+EST_TOKENS_PER_CHAT_TURN = 7_600
 
 
 def session_quota_exceeded(turns: int, limit: int = SESSION_TURN_LIMIT) -> bool:

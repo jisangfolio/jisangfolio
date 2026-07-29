@@ -1,3 +1,11 @@
+[server]
+# 업로드 상한. 기본값 200MB 는 이 데모의 실제 처리 능력과 두 자릿수쯤 어긋난다 —
+# 업로드된 파일은 **행마다** Document 로 임베딩되고, 그 작업이 모든 방문자가 공유하는
+# 단일 Community Cloud 컨테이너 안에서 돈다. 즉 한 명의 큰 파일이 전원의 사이트를
+# 멈춘다. 인덱싱 행 상한(2_Data_Analysis.MAX_INDEX_ROWS)과 2중으로 막되, 이쪽이
+# 먼저 걸려서 파싱·codegen 실행 경로까지 한꺼번에 bound 된다.
+maxUploadSize = 10
+
 [theme]
 # 의도된 다크 테마 + 차분한 브랜드 accent(periwinkle) — 순정 빨강 대신
 base = "dark"

@@ -17,6 +17,7 @@
 """
 import argparse
 import hashlib
+import inspect
 import json
 import re
 import sys
@@ -30,7 +31,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from prompts import build_system_prompt, ROUTER_PROMPT_TEMPLATE, strip_think, clean_response  # noqa: E402
+from prompts import (build_system_prompt, build_chat_system_prompt, get_df_info,  # noqa: E402
+                     ROUTER_PROMPT_TEMPLATE, strip_think, clean_response)
 from profile_graph import normalize_lang  # noqa: E402
 from ratelimit import (  # noqa: E402
     DAILY_TOKEN_BUDGET, estimate_tokens, is_daily_limit, pacer_for,
@@ -117,6 +119,13 @@ CACHE_PATH = EVAL_DIR / ".cache_results.json"
 _LAST_FINGERPRINT = ""
 
 
+def _graph_fingerprint() -> str:
+    """프로필 그래프의 노드·엣지 상태를 한 문자열로. (GraphRAG 주입분의 캐시 키)"""
+    import profile_graph
+    return json.dumps([profile_graph.NODES, profile_graph.EDGES],
+                      ensure_ascii=False, sort_keys=True)
+
+
 def fingerprint(resume: str) -> str:
     """캐시 무효화 키 — 모델·프롬프트·이력서 중 하나라도 바뀌면 값이 달라진다."""
     from prompts import (RAG_ANSWER_PROMPT_TEMPLATE, RAG_GRADE_PROMPT_TEMPLATE,
@@ -125,8 +134,14 @@ def fingerprint(resume: str) -> str:
     blob = "|".join([
         CHAT_MODEL, JUDGE_MODEL, str(CHAT_TEMPERATURE), str(RAG_TEMPERATURE), str(ANSWER_MAX_TOKENS),
         build_system_prompt("한국어", resume), ROUTER_PROMPT_TEMPLATE,
+        # 챗 프롬프트에 질문별 GraphRAG 서브그래프가 들어가므로 **그래프 자체**도
+        # 캐시 키다. 이게 빠지면 노드/엣지를 고쳐도 --resume 가 옛 PASS 를 재활용해
+        # 회귀 게이트가 거짓 안심을 준다(이 블록이 존재하는 바로 그 이유).
+        _graph_fingerprint(),
         RAG_ANSWER_PROMPT_TEMPLATE, RAG_GRADE_PROMPT_TEMPLATE,
         RAG_GROUNDEDNESS_PROMPT_TEMPLATE, RAG_REWRITE_PROMPT_TEMPLATE,
+        # 라우터 입력의 절반은 df 요약이다 — 포맷이 바뀌면 라우팅 결과도 바뀔 수 있다.
+        inspect.getsource(get_df_info),
     ])
     return hashlib.sha1(blob.encode("utf-8")).hexdigest()[:12]
 
@@ -172,17 +187,6 @@ class Checkpoint:
 def load_secrets():
     with open(ROOT / ".streamlit" / "secrets.toml", "rb") as f:
         return tomllib.load(f)
-
-
-def get_df_info(df):
-    """pages/2_Data_Analysis.py 의 get_df_info 와 동일한 요약 포맷."""
-    parts = [
-        f"컬럼: {list(df.columns)}",
-        f"행 수: {len(df)}",
-        f"데이터 타입:\n{df.dtypes.to_string()}",
-        f"처음 3행:\n{df.head(3).to_string()}",
-    ]
-    return "\n".join(parts)
 
 
 # ── 결정적 채점 ─────────────────────────────────────────────────────
@@ -259,7 +263,10 @@ def judge(client, case, answer, judge_model):
 
 # ── 챗봇 평가 ───────────────────────────────────────────────────────
 def ask_bot(client, resume, case):
-    sys_prompt = build_system_prompt(case["lang"], resume)
+    # 앱(pages/1_Chat.py)과 **같은 조립 함수**를 쓴다. 예전엔 여기서
+    # build_system_prompt 만 불러 질문별 GraphRAG 서브그래프가 빠졌고, 그래서
+    # 이 리포가 가장 앞세우는 기능이 회귀 게이트 밖에 있었다(evals/ 전체 호출 0건).
+    sys_prompt, _gr = build_chat_system_prompt(case["lang"], resume, case["q"])
     r = call_groq(
         client,
         model=CHAT_MODEL,
@@ -687,7 +694,10 @@ def estimate_run_cost(chat_cases, router_cases, rag_cases, resume, use_judge=Tru
     """
     from agent_rag import ANSWER_MAX_TOKENS, _YESNO_TOKENS
 
-    chat = sum(estimate_tokens(build_system_prompt(c.get("lang", "en"), resume) + c["q"]) + 600
+    # 실제 조립 함수로 추정한다 — build_system_prompt 만 재던 시절엔 질문별 GraphRAG
+    # 서브그래프(케이스당 최대 ~2.6KB)가 추정에서 통째로 빠져, 예산 게이트가 실제보다
+    # 적게 잡았다. 이 게이트의 목적이 방문자 몫 예산 보호라 과소추정이 제일 위험하다.
+    chat = sum(estimate_tokens(build_chat_system_prompt(c.get("lang", "en"), resume, c["q"])[0] + c["q"]) + 600
                for c in chat_cases)
     gate = {"factual-guard", "offtopic", "injection"}
     judge = (sum(1 for c in chat_cases if c.get("category") in gate)
@@ -737,7 +747,7 @@ def preflight_budget(chat_cases, router_cases, rag_cases, resume, use_judge, for
             print(f"  ⛔ 이 실행이 하루 예산의 {share*100:.0f}% 를 씁니다 "
                   f"(상한 {SAFE_SHARE*100:.0f}%).")
             print("     배포된 앱이 같은 키를 쓰므로 그대로 돌리면 오늘 방문자가 429를 봅니다.")
-            print("     · 기본 실행(core 집합)으로 돌리려면 --full 을 빼세요")
+            print("     · 더 작게 돌리려면 --quick (또는 --no-judge / --chat-only / --router-only / --rag-only)")
             print("     · 그래도 강행하려면 --force")
             sys.exit(2)
     return est

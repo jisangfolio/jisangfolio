@@ -1,13 +1,12 @@
 import streamlit as st
 from groq import Groq
 from datetime import datetime, timezone, timedelta
-from prompts import build_system_prompt
-from ui import apply_style, finalize_stream, friendly_llm_error
+from prompts import build_chat_system_prompt
+from ui import apply_style, friendly_llm_error, replayable_history, stream_answer
 import time
 from guardrails import check_input, blocked_message
 from ratelimit import quota_message, session_quota_exceeded
 from observability import log_trace
-from profile_graph import graph_retrieve
 from sheetlog import log_conversation
 from notify import notify_new_session
 import uuid
@@ -27,8 +26,6 @@ except KeyError:
 client = Groq(api_key=groq_api_key)
 
 # 시스템 프롬프트는 prompts.py(SSOT)에서 조립 — 평가 하니스(evals/)와 동일 소스 공유
-SYSTEM_KO = build_system_prompt("한국어", resume_text)
-SYSTEM_EN = build_system_prompt("English", resume_text)
 
 SUGGESTED_KO = [
     "삼성SDI에서 어떤 프로젝트를 했나요?",
@@ -53,13 +50,23 @@ if "_sid" not in st.session_state:
     st.session_state["_sid"] = uuid.uuid4().hex[:8]  # 익명 방문 세션 식별자
 
 
+# 대화 히스토리 role 값.
+#   user / assistant                 — 모델에 다시 보내는 정상 턴 (ui.REPLAYABLE_ROLES)
+#   user_blocked / assistant_guard   — 화면·내보내기에는 남기되 **모델에는 안 보내는** 턴
+# 왜 이렇게 나누는지는 ui.replayable_history 의 독스트링 참고.
+
+
+def _is_user_role(role):
+    return role.startswith("user")
+
+
 def format_chat_for_export(history, lang):
     label_user = "면접관" if lang == "한국어" else "Interviewer"
     label_ai = "박지상" if lang == "한국어" else "Jisang"
     header = "JisangFolio 대화 기록" if lang == "한국어" else "JisangFolio Chat Log"
     lines = [f"{header} ({datetime.now(_KST).strftime('%Y-%m-%d %H:%M')})", "=" * 40, ""]
     for role, msg in history:
-        label = label_user if role == "user" else label_ai
+        label = label_user if _is_user_role(role) else label_ai
         lines.append(f"[{label}]")
         lines.append(msg)
         lines.append("")
@@ -131,8 +138,8 @@ title = "💬 박지상과 대화하기" if lang == "한국어" else "💬 Chat 
 st.title(title)
 
 for role, message in st.session_state.chat_history:
-    avatar = "🧐" if role == "user" else "🧑‍💻"
-    with st.chat_message(role, avatar=avatar):
+    is_user = _is_user_role(role)
+    with st.chat_message("user" if is_user else "assistant", avatar="🧐" if is_user else "🧑‍💻"):
         st.markdown(message)
 
 placeholder_text = "질문을 입력하거나 왼쪽 예시를 클릭하세요." if lang == "한국어" else "Type a question or click a sample on the left."
@@ -141,53 +148,57 @@ if not user_input and st.session_state.pending_question:
     user_input = st.session_state.pending_question
     st.session_state.pending_question = None
 
-SYSTEM_INSTRUCTION = SYSTEM_KO if lang == "한국어" else SYSTEM_EN
-
 if user_input:
     # 🛡 Guardrail — 인젝션/과길이/빈입력을 모델 도달 전에 차단
     verdict = check_input(user_input)
 
-    st.session_state.chat_history.append(("user", user_input))
     with st.chat_message("user", avatar="🧐"):
         st.markdown(user_input)
 
     # 💸 세션 요청 상한 — 페이서는 재우기만 하고 거절하지 않아서, 방문자 한 명이
     # 무료 티어 하루치를 혼자 태울 수 있었다(그러면 그날 다른 방문자는 429).
+    # 카운터는 **모델을 실제로 부른 턴만** 센다(증가 확정은 else 분기에서). 예전엔
+    # 판정보다 먼저 올려서, 모델 토큰을 한 톨도 안 쓴 차단 턴이 25턴 예산을 깎았다.
     _turns = st.session_state.get("_turns", 0) + 1
-    st.session_state["_turns"] = _turns
 
     with st.chat_message("assistant", avatar="🧑‍💻"):
         if session_quota_exceeded(_turns):
             quota_msg = quota_message(lang)
             st.warning(quota_msg)
-            st.session_state.chat_history.append(("assistant", quota_msg))
+            st.session_state.chat_history.append(("user_blocked", user_input))
+            st.session_state.chat_history.append(("assistant_guard", quota_msg))
             log_trace(page="chat", model="qwen/qwen3.6-27b", route="quota",
                       latency_ms=0, guard="quota", ok=False)
         elif not verdict["allowed"]:
             guard_msg = blocked_message(verdict, lang)
             st.markdown(guard_msg)
             st.caption(f"🛡 Guardrail blocked · {verdict['category']}")
-            st.session_state.chat_history.append(("assistant", guard_msg))
+            st.session_state.chat_history.append(("user_blocked", user_input))
+            st.session_state.chat_history.append(("assistant_guard", guard_msg))
             log_trace(page="chat", model="qwen/qwen3.6-27b", route="blocked",
                       latency_ms=0, guard=verdict["category"], ok=False)
             log_conversation(st.session_state["_sid"], "chat", user_input, guard_msg,
                              guard=verdict["category"], model="qwen/qwen3.6-27b")
         else:
-            # 🕸 GraphRAG — 질문 관련 서브그래프를 탐색해 '집중 근거'로 주입
-            gr = graph_retrieve(user_input, lang=lang)
-            system_content = SYSTEM_INSTRUCTION
-            if gr["context"]:
-                _lab = "이 질문에 관련된 프로필 서브그래프" if lang == "한국어" else "Profile subgraph relevant to this question"
-                system_content = system_content + f"\n\n[GraphRAG — {_lab}]\n" + gr["context"] + "\n"
+            st.session_state["_turns"] = _turns
+            # 여기서 넣어야 아래 [:-1] 이 성립한다 — 이 append 를 위로 되돌리면
+            # 차단 입력이 다시 새고, 아래로 더 내리면 [:-1] 이 직전 assistant 답변을
+            # 매 요청에서 조용히 떨어뜨린다(에러 없이 대화 연속성만 깨진다).
+            st.session_state.chat_history.append(("user", user_input))
+            # 🕸 GraphRAG — 질문 관련 서브그래프를 탐색해 '집중 근거'로 주입.
+            # 조립은 prompts.build_chat_system_prompt 가 소유한다(평가 하니스와 공유).
+            # 예전엔 이 조립이 페이지에만 있어서, 하니스는 앱이 실제로 모델에 보내는
+            # 프롬프트를 평가한 적이 없었다 — 간판 기능이 회귀 게이트 밖에 있었다.
+            system_content, gr = build_chat_system_prompt(lang, resume_text, user_input)
 
             message_placeholder = st.empty()
             message_placeholder.markdown("💭")
             full_response = ""
 
             messages = [{"role": "system", "content": system_content}]
-            for role, msg in st.session_state.chat_history[:-1]:
-                groq_role = "user" if role == "user" else "assistant"
-                messages.append({"role": groq_role, "content": msg})
+            # 차단 턴(user_blocked/assistant_guard)은 재생하지 않고, 최근 N개로 자른다.
+            for role, msg in replayable_history(st.session_state.chat_history[:-1]):
+                messages.append({"role": role, "content": msg})
             messages.append({"role": "user", "content": user_input})
 
             try:
@@ -198,33 +209,11 @@ if user_input:
                     stream=True,
                     reasoning_effort="none",  # thinking 끔 → 응답 속도 개선
                 )
-                full_response = ""
-                buffer = ""
-                in_think = None  # None=미결정, True=thinking 블록 내, False=일반 응답
-                for chunk in stream:
-                    delta = chunk.choices[0].delta.content or ""
-                    if in_think is None:
-                        buffer += delta
-                        if "<think>" in buffer:
-                            in_think = True
-                        elif len(buffer) >= 50:
-                            in_think = False
-                            full_response = buffer
-                            message_placeholder.markdown(full_response + "▌")
-                    elif in_think:
-                        buffer += delta
-                        if "</think>" in buffer:
-                            after = buffer.split("</think>", 1)[1].lstrip("\n")
-                            full_response = after
-                            in_think = False
-                            message_placeholder.markdown(full_response + "▌")
-                    else:
-                        full_response += delta
-                        message_placeholder.markdown(full_response + "▌")
-                # 스트림 종료 후 확정: 50자 미만 짧은 응답이 버퍼에만 남아 빈 화면이 되던
-                # 버그 수정. ui.finalize_stream 으로 옮겼다 — 여기서만 고쳐두는 바람에
-                # 2_Data_Analysis.py 에는 같은 버그가 그대로 남아 있었다.
-                full_response = finalize_stream(full_response, buffer, in_think, lang)
+                # 스트림 루프는 ui.stream_answer 가 소유한다(세 페이지 공용).
+                # 여기서만 고치는 바람에 2_Data_Analysis.py 에 같은 버그가 남았던 게
+                # 이 함수가 생긴 이유다 — 커서 장식만 페이지별 차이로 남긴다.
+                full_response = stream_answer(
+                    stream, render=lambda t: message_placeholder.markdown(t + "▌"), lang=lang)
                 message_placeholder.markdown(full_response)
                 st.session_state.chat_history.append(("assistant", full_response))
                 # 📈 Observability — 이 턴을 트레이스로 기록

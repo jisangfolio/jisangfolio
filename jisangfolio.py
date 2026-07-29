@@ -1,3 +1,4 @@
+import base64 as _b64m
 import streamlit as st
 import plotly.express as px
 import pandas as pd
@@ -13,16 +14,17 @@ st.set_page_config(
 )
 apply_style()
 
-# SNS 공유용 OG 메타태그
-st.markdown("""
-<meta property="og:title" content="JisangFolio - 읽지 말고 대화하는 이력서">
-<meta property="og:description" content="박지상의 AI 인터랙티브 포트폴리오. AI와 대화하며 경험과 역량을 확인하세요.">
-<meta property="og:url" content="https://jisangfolio.streamlit.app">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="JisangFolio - 읽지 말고 대화하는 이력서">
-<meta name="twitter:description" content="박지상의 AI 인터랙티브 포트폴리오. AI와 대화하며 경험과 역량을 확인하세요.">
-""", unsafe_allow_html=True)
+# OG 메타태그를 st.markdown 으로 주입하던 코드가 여기 있었다 — 제거했다.
+#
+# 왜 죽은 코드였나: st.markdown 은 브라우저에서 JS 로 <body> 안에 렌더된다. 링크
+# 미리보기는 <head> 를 읽으므로 그 태그들은 순위에 낄 수조차 없었다.
+# 왜 그래도 미리보기가 뜨나: Streamlit Community Cloud 가 크롤러 UA 에 프리렌더된
+# HTML 을 주고, 그 <head> 에 자기 OG 태그(제목·설명·스크린샷 og:image)를 이미 넣는다.
+# 즉 링크는 지금도 카드로 펼쳐지며, 그 값은 st.set_page_config 와 Cloud 설정에서 온다.
+#
+# 여기서 태그를 다시 넣어봐야 body 에 두 번째로 앉을 뿐 아무것도 바뀌지 않는다.
+# 제목·설명을 정말 바꾸려면 Cloud 앱 설정이나 커스텀 도메인 앞단(리버스 프록시)이
+# 필요하다 — 코드 한 줄로 되는 일이 아니라서, 착각을 남기지 않으려고 지운다.
 
 # --- 사이드바: 언어 선택 + 링크 ---
 with st.sidebar:
@@ -272,35 +274,34 @@ COLOR_MAP = {
 
 if lang == "한국어":
     timeline_rows = [
-        {"구분": "학력",  "항목": "University of Washington",      "시작": "2019-09-01", "종료": "2020-06-30", "상세": "Pre-Science (INFO · CSE · STAT)"},
-        {"구분": "학력",  "항목": "University of Washington",      "시작": "2022-12-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · 복학"},
-        {"구분": "군복무", "항목": "어학병 (제3함대 · 한미연합사)", "시작": "2021-02-15", "종료": "2022-10-14", "상세": "영어 통역 병과"},
-        {"구분": "학력",  "항목": "UIUC · BSIS+DS",               "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
-        {"구분": "경력",  "항목": "삼성SDI · 데이터 엔지니어 인턴", "시작": "2025-06-01", "종료": "2025-08-31", "상세": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
-        {"구분": "논문",  "항목": "TEBO · SCIE 논문 게재",          "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP 분석 설명력 85%+"},
-        {"구분": "활동",  "항목": "KSA 웹팀 (UIUC)",               "시작": "2024-08-01", "종료": "2025-06-30", "상세": "한인 학생회 웹사이트 사용성 및 성능 개선"},
-        {"구분": "경력",  "항목": "KETI · AI 에이전트 연구원",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "폐쇄망 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 디지털 트윈 연동 · 현재 재직 중"},
+        {"kind": "학력",  "item": "University of Washington",      "start": "2019-09-01", "end": "2020-06-30", "detail": "Pre-Science (INFO · CSE · STAT)"},
+        {"kind": "학력",  "item": "University of Washington",      "start": "2022-12-01", "end": "2024-06-30", "detail": "Pre-Science (INFO · CSE · STAT) · 복학"},
+        {"kind": "군복무", "item": "어학병 (제3함대 · 한미연합사)", "start": "2021-02-15", "end": "2022-10-14", "detail": "영어 통역 병과"},
+        {"kind": "학력",  "item": "UIUC · BSIS+DS",               "start": "2024-06-01", "end": "2025-12-20", "detail": "Information Science + Data Science, GPA 3.89/4.0"},
+        {"kind": "경력",  "item": "삼성SDI · 데이터 엔지니어 인턴", "start": "2025-06-01", "end": "2025-08-31", "detail": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
+        {"kind": "논문",  "item": "TEBO · SCIE 논문 게재",          "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences, CoP 분석 설명력 85%+"},
+        {"kind": "활동",  "item": "KSA 웹팀 (UIUC)",               "start": "2024-08-01", "end": "2025-06-30", "detail": "한인 학생회 웹사이트 사용성 및 성능 개선"},
+        {"kind": "경력",  "item": "KETI · AI 에이전트 연구원",      "start": "2026-02-01", "end": "2026-12-31", "detail": "폐쇄망 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 디지털 트윈 연동 · 현재 재직 중"},
     ]
-    col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
+    col_구분, col_항목, col_시작, col_종료, col_상세 = "kind", "item", "start", "end", "detail"
 else:
     timeline_rows = [
-        {"구분": "Education", "항목": "University of Washington",        "시작": "2019-09-01", "종료": "2020-06-30", "상세": "Pre-Science (INFO · CSE · STAT)"},
-        {"구분": "Education", "항목": "University of Washington",        "시작": "2022-12-01", "종료": "2024-06-30", "상세": "Pre-Science (INFO · CSE · STAT) · Return"},
-        {"구분": "Military",  "항목": "Military Service (ROKN)",         "시작": "2021-02-15", "종료": "2022-10-14", "상세": "English Interpreter · 3rd Fleet & USFK"},
-        {"구분": "Education", "항목": "UIUC · BSIS+DS",                  "시작": "2024-06-01", "종료": "2025-12-20", "상세": "Information Science + Data Science, GPA 3.89/4.0"},
-        {"구분": "Work",      "항목": "Samsung SDI · Data Eng. Intern",  "시작": "2025-06-01", "종료": "2025-08-31", "상세": "Solo-built air-gapped RAG chatbot → praised by executives"},
-        {"구분": "Research",  "항목": "TEBO · SCIE Publication",         "시작": "2025-01-01", "종료": "2025-07-31", "상세": "Applied Sciences, CoP analysis 85%+ explanatory power"},
-        {"구분": "Activity",  "항목": "KSA Web Team (UIUC)",              "시작": "2024-08-01", "종료": "2025-06-30", "상세": "Improved usability and performance of Korean Student Association website"},
-        {"구분": "Work",      "항목": "KETI · AI Agent Researcher",      "시작": "2026-02-01", "종료": "2026-12-31", "상세": "Air-gapped MLOps platform · Triton model serving · digital twin integration · Present"},
+        {"kind": "Education", "item": "University of Washington",        "start": "2019-09-01", "end": "2020-06-30", "detail": "Pre-Science (INFO · CSE · STAT)"},
+        {"kind": "Education", "item": "University of Washington",        "start": "2022-12-01", "end": "2024-06-30", "detail": "Pre-Science (INFO · CSE · STAT) · Return"},
+        {"kind": "Military",  "item": "Military Service (ROKN)",         "start": "2021-02-15", "end": "2022-10-14", "detail": "English Interpreter · 3rd Fleet & USFK"},
+        {"kind": "Education", "item": "UIUC · BSIS+DS",                  "start": "2024-06-01", "end": "2025-12-20", "detail": "Information Science + Data Science, GPA 3.89/4.0"},
+        {"kind": "Work",      "item": "Samsung SDI · Data Eng. Intern",  "start": "2025-06-01", "end": "2025-08-31", "detail": "Solo-built air-gapped RAG chatbot → praised by executives"},
+        {"kind": "Research",  "item": "TEBO · SCIE Publication",         "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences, CoP analysis 85%+ explanatory power"},
+        {"kind": "Activity",  "item": "KSA Web Team (UIUC)",              "start": "2024-08-01", "end": "2025-06-30", "detail": "Improved usability and performance of Korean Student Association website"},
+        {"kind": "Work",      "item": "KETI · AI Agent Researcher",      "start": "2026-02-01", "end": "2026-12-31", "detail": "Air-gapped MLOps platform · Triton model serving · digital twin integration · Present"},
     ]
-    col_구분, col_항목, col_시작, col_종료, col_상세 = "구분", "항목", "시작", "종료", "상세"
+    col_구분, col_항목, col_시작, col_종료, col_상세 = "kind", "item", "start", "end", "detail"
 
 df = pd.DataFrame(timeline_rows)
 df[col_시작] = pd.to_datetime(df[col_시작])
 df[col_종료] = pd.to_datetime(df[col_종료])
 
 # ── 히어로 (사진 + 소개 + CTA) ────────────────────────────────────
-import base64 as _b64m
 _hero_txt, _hero_photo = st.columns([2, 1])
 with _hero_txt:
     st.caption(t["subtitle"])
@@ -342,7 +343,16 @@ fig = px.timeline(
     color_discrete_map=COLOR_MAP,
     hover_name=col_항목,
     hover_data={col_상세: True, col_시작: "|%Y.%m", col_종료: "|%Y.%m", col_구분: False, col_항목: False},
-    labels={col_항목: "", col_구분: ""},
+    # 다섯 키를 전부 매핑한다. 예전엔 두 개만 처리해서, 영어 UI 의 Plotly 호버 툴팁에
+    # "상세=Solo-built air-gapped RAG chatbot…" 처럼 한글 필드명이 그대로 떴다
+    # (영어권 채용담당자가 보는 화면이다). 데이터 키는 내부용 영문으로 두고
+    # 보이는 라벨만 여기서 언어별로 붙인다.
+    labels={
+        col_항목: "", col_구분: "",
+        col_상세: "상세" if lang == "한국어" else "Detail",
+        col_시작: "시작" if lang == "한국어" else "Start",
+        col_종료: "종료" if lang == "한국어" else "End",
+    },
 )
 fig.update_yaxes(categoryorder="array", categoryarray=_y_order, autorange="reversed")
 fig.update_layout(

@@ -18,6 +18,7 @@ def notify_new_session(session, first_question, page="chat"):
         if "email_alert" not in st.secrets:
             return
         conf = st.secrets["email_alert"]
+        import re
         import smtplib, ssl
         from email.mime.text import MIMEText
         from email.utils import formataddr
@@ -36,7 +37,12 @@ def notify_new_session(session, first_question, page="chat"):
             body += f"\n전체 대화 로그: {sheet}\n"
 
         to_addr = conf.get("to", conf["smtp_user"])
-        q = (first_question or "").strip().replace("\n", " ")
+        # 방문자가 제어하는 문자열이 메일 헤더에 들어간다. 실측상 지금은 주입이
+        # 불가능하다 — Subject 접두어가 항상 비-ASCII 라 값 전체가 RFC2047 로
+        # 인코딩되고, 순수 ASCII 였더라도 Python 이 HeaderParseError 로 거부한다.
+        # 그래도 접두어를 영어로 바꾸는 사소한 편집 하나가 그 전제를 무너뜨리므로,
+        # 헤더 접기 문자(\r·\n·\t)를 한 번에 정규화해 전제 자체를 없앤다.
+        q = re.sub(r"\s+", " ", first_question or "").strip()
         msg = MIMEText(body, _charset="utf-8")
         msg["Subject"] = f"[JisangFolio] 새 방문자 · {q[:40]}"
         msg["From"] = formataddr(("JisangFolio", conf["smtp_user"]))

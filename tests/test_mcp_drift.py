@@ -54,6 +54,25 @@ def test_no_retired_claims():
     assert not re.search(r"01[016][- ]?\d{3,4}[- ]?\d{4}", MCP_SRC), "MCP에 전화번호가 있음"
 
 
+def test_mcp_uses_the_shared_post_processing_helper():
+    """후처리 사본이 앱과 다르게 굴던 회귀 (2026-07-29).
+
+    MCP 는 </think> 를 직접 잘랐고, 그 사본이 두 경우에 앱과 갈라졌다:
+      · 닫히지 않은 <think> → 앱은 "" / MCP 는 **사고 과정을 원문 그대로 노출**
+      · 문장 중간 <think>   → 앱은 앞뒤 보존 / MCP 는 앞 문장을 통째로 삭제
+    README 가 "MCP 서버는 후처리 헬퍼를 공유한다"고 적어둔 바로 그 지점이라
+    소스 텍스트 수준에서 사본이 되살아나지 않게 고정한다.
+    """
+    from prompts import clean_response
+
+    assert "clean_response(" in MCP_SRC, "MCP 가 공유 후처리 헬퍼를 안 쓴다"
+    assert 'split("</think>"' not in MCP_SRC, "MCP 에 think 제거 사본이 되살아났다"
+
+    # 사본이 틀렸던 바로 그 두 입력에서 공유 헬퍼가 어떻게 동작하는지도 못박는다.
+    assert clean_response("<think>unclosed reasoning leaks") == ""
+    assert "Intro sentence." in clean_response("Intro sentence. <think>secret</think> Rest.")
+
+
 def test_graphrag_naming_is_qualified():
     """'GraphRAG'를 쓰더라도 Microsoft GraphRAG가 아님을 밝혀야 한다."""
     if "GraphRAG" in MCP_SRC:
