@@ -7,8 +7,6 @@ config.toml 이 색/테마를 담당하고, 이 모듈은 폰트와 미세 라�
 둘 다 원래 페이지마다 인라인으로 복사돼 있었고, 그래서 1_Chat.py 에서 고친
 버그가 2_Data_Analysis.py 에는 안 넘어간 채로 남아 있었다.
 """
-import streamlit as st
-
 from prompts import clean_response
 
 _STYLE = """
@@ -37,7 +35,16 @@ a:hover { text-decoration: underline; }
 
 
 def apply_style():
-    """폰트·라운딩 CSS를 주입한다. set_page_config 이후에 호출."""
+    """폰트·라운딩 CSS를 주입한다. set_page_config 이후에 호출.
+
+    streamlit 은 여기서만 필요하므로 모듈 최상단이 아니라 함수 안에서 임포트한다.
+    최상단에 두면 finalize_stream 회귀 테스트가 streamlit 없는 CI 에서 수집조차
+    안 돼(ModuleNotFoundError) 전체 런이 중단된다. CI 는 키 없이 빠르게 도는 게
+    설계 의도라 streamlit 을 설치하지 않는다 — 임포트를 여기로 내려서 그 의도를
+    지키면서 회귀 테스트가 CI 에서 실제로 돌게 한다.
+    """
+    import streamlit as st
+
     st.markdown(_STYLE, unsafe_allow_html=True)
 
 
