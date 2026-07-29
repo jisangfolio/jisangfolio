@@ -159,9 +159,12 @@ jisangfolio/
 ├── evals/                      # Regression eval harness — chat · router · agentic RAG (deterministic + LLM judge)
 ├── tests/                      # pytest unit tests (guardrails · GraphRAG · post-processing · graph)
 ├── .github/workflows/ci.yml    # CI — runs the test suite on every push
+├── SECURITY.md                 # Reporting · why codeguard is not a sandbox · known exposures
 ├── assets/                     # Static assets (grouped to keep the root clean)
 │   ├── profile.jpg             #   Hero photo
 │   ├── resume.pdf              #   Downloadable résumé — PUBLIC variant: e-mail only, no phone number
+│                               #   (applies to the current file; earlier versions in git
+│                               #    history are not clean — see SECURITY.md)
 │   ├── codegraph.html          #   Code knowledge graph (interactive AST call graph)
 │   ├── mlops_grafana.png       #   KETI MLOps dashboard screenshot (GPU UUID cropped)
 │   └── tebo_sample.xlsx        #   TEBO paper sample data (745 records)
