@@ -233,9 +233,11 @@ Using the DataFrame info below, write Python pandas code that answers the user's
         lines = [l for l in lines if not l.strip().startswith("```")]
         code = "\n".join(lines)
 
-    # Strip <think> block
-    if "<think>" in code:
-        code = code.split("</think>")[-1].strip()
+    # 사고 블록 제거는 공용 헬퍼로. 여기 있던 사본은 `code.split("</think>")[-1]` 이라
+    # **닫는 태그가 없으면**(사고가 max_tokens 에 잘린 경우) split 이 원문을 그대로 돌려주고
+    # [-1] 이 사고 텍스트 전체를 '코드'로 통과시켰다 → codeguard 가 SyntaxError 로 거절.
+    # strip_think 는 이 파일 안에서 이미 import 돼 라우터 경로(classify_question)가 쓰고 있었다.
+    code = strip_think(code).strip()
 
     # 정적 검사 + 축소 네임스페이스 실행 (codeguard.py)
     result, chart_df, error = run_generated_code(code, df)
@@ -293,7 +295,10 @@ else:
 for msg in st.session_state["data_messages"]:
     st.chat_message("user" if msg.role.startswith("user") else "assistant").write(msg.content)
 
-llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0)
+# reasoning_effort="none": 아래 router_llm 이 같은 이유로 이미 끄고 있었는데 이쪽만 빠져 있었다.
+# 코드 생성 경로에서 사고가 켜져 있으면 <think> 가 응답을 채우고, 길면 닫히지도 못한 채 잘린다.
+llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0,
+               reasoning_effort="none")
 # 라우팅 전용 핸들 — 한 단어만 내면 되므로 추론을 끈다(사고 텍스트가 파싱을 오염시키던
 # 문제 제거 + 지연 감소). 평가 하니스 classify()와 동일 설정이라 측정값이 앱을 대변한다.
 router_llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_api_key, temperature=0,
