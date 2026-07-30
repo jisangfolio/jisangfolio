@@ -177,3 +177,48 @@ def test_unbounded_range_is_blocked(code):
 def test_small_range_still_works():
     """상한 자체가 목적이 아니다 — 작은 리터럴 range 는 통과해야 한다."""
     assert check_generated_code("result = list(range(5))") is None
+
+
+# --- 속성 쓰기: 과차단 교정 (2026-07-30) --------------------------------------
+#
+# 전면 금지였다가, 데모 리허설에서 `chart_df.columns = [...]` 이 실행 전에 막혔다.
+# 그건 LLM 이 표를 만들 때 늘 쓰는 정상 코드다. 더 나쁜 건 실패 모드였다 —
+# 페이지가 RAG 로 폴백했고, 폴백은 집계 질문에 검색된 일부 행만 보고
+# **조용히 틀린 평균**을 냈다. 막는 쪽이 안전하다는 가정이 여기선 틀렸다.
+#
+# 원래 위협(`pd.to_numeric = len` 이 프로세스 전역 파사드를 오염)은 이미 런타임에서
+# 닫혀 있다 — 파사드를 호출마다 새로 만들고 df 는 copy 를 넘긴다. 정적 금지는
+# 그 위의 2중 방어이므로, 방어가 실제로 필요한 지점만 남긴다.
+
+ATTR_WRITES_ALLOWED = [
+    "chart_df.columns = ['Study', 'Mean']",
+    "df.index = [1, 2, 3]",
+    "s.name = 'x'",
+]
+
+ATTR_WRITES_BLOCKED = [
+    "pd.to_numeric = len",      # 원래 위협. to_numeric 은 ALLOWED_TO 라 to_* 검사로는 안 걸린다
+    "pd.read_csv = 1",          # 주입된 이름의 다른 속성
+    "chart_df.evil = 1",        # 허용 목록 밖
+    "a.b.c = 1",                # 중첩 베이스 — 무엇에 쓰는지 정적으로 모른다
+    "del df.columns",           # Store 만 허용, Del 은 계속 거부
+    "x.__class__ = 1",          # dunder 는 쓰기 규칙 이전에 걸린다
+]
+
+
+@pytest.mark.parametrize("code", ATTR_WRITES_ALLOWED)
+def test_local_attribute_writes_are_allowed(code):
+    assert check_generated_code(code) is None, code
+
+
+@pytest.mark.parametrize("code", ATTR_WRITES_BLOCKED)
+def test_protected_and_unlisted_attribute_writes_stay_blocked(code):
+    assert check_generated_code(code) is not None, code
+
+
+def test_facade_rebinding_cannot_leak_between_runs(df):
+    """정적 검사가 뚫려도 오염이 다음 실행으로 안 넘어가는지 — 2중 방어의 아래층."""
+    from codeguard import PandasFacade
+    a, b = PandasFacade(), PandasFacade()
+    a.to_numeric = len
+    assert b.to_numeric is not len, "파사드가 호출 간에 공유되고 있다"

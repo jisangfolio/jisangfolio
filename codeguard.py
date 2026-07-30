@@ -70,6 +70,19 @@ _MAX_RANGE = 100_000
 # 그리고 실행 시점에 문자열을 읽어 속성 탐색을 대신해 주는 str.format 계열을 막는다(§4).
 BANNED_ATTRS = frozenset({"eval", "query", "style", "format", "format_map"})
 
+# 네임스페이스에 주입되는 이름. 여기 속성을 **다시 묶는** 건 계속 금지한다 —
+# `pd.to_numeric = len` 이 원래 이 검사가 막으려던 것이고, to_numeric 은 ALLOWED_TO 라
+# to_* 검사로는 안 걸린다.
+PROTECTED_NAMES = frozenset({"pd"})
+
+# 속성 쓰기를 허용할 이름. 전면 금지는 과차단이었다 — `chart_df.columns = [...]` 은
+# LLM 이 표를 만들 때 늘 쓰는 정상 코드인데 실행 전에 막혀 RAG 로 폴백했고,
+# 폴백은 집계 질문에 **부분 데이터로 답**해서 조용히 틀린 숫자를 냈다.
+# 전역 오염이라는 원래 위협은 이미 런타임에서 닫혀 있다(파사드를 호출마다 새로 만들고
+# df 는 copy 를 넘긴다) — 정적 금지는 그 위의 2중 방어이므로, 방어가 실제로 필요한
+# 지점(주입된 이름)만 남기고 사용자 지역 변수는 통과시킨다.
+ASSIGNABLE_ATTRS = frozenset({"columns", "index", "name"})
+
 # to_* 중 **읽기/변환만** 허용. 나머지 to_* 는 전부 거부된다(§3 원칙).
 ALLOWED_TO = frozenset({
     "to_numeric", "to_datetime", "to_timedelta", "to_period", "to_timestamp",
@@ -117,18 +130,26 @@ def check_generated_code(code: str):
                         and abs(arg.value) <= _MAX_RANGE):
                     return "range() needs small literal bounds here (use vectorized pandas)"
         if isinstance(node, ast.Attribute):
-            # 속성 **쓰기** 금지. 정적 검사는 Load/Store 를 구분하지 않아서
-            # `pd.to_numeric = len` 이 통과했고, PD_FACADE 가 프로세스 전역 싱글턴이라
-            # 그 오염이 컨테이너 재시작 전까지 **이후 모든 방문자**에게 남았다.
-            # (권한 상승은 아니지만 지속성 있는 DoS다.)
-            if not isinstance(node.ctx, ast.Load):
-                return f"attribute assignment is not allowed ({node.attr})"
             if node.attr.startswith("__"):
                 return f"dunder attribute access is not allowed ({node.attr})"
             if node.attr in BANNED_ATTRS:
                 return f"attribute is not allowed ({node.attr})"
             if node.attr.startswith("to_") and node.attr not in ALLOWED_TO:
                 return f"writer-style attribute is not allowed ({node.attr})"
+            # 속성 **쓰기**. 막으려던 건 `pd.to_numeric = len` 처럼 주입된 파사드를
+            # 다시 묶는 것이었다(전역 싱글턴 시절엔 오염이 이후 방문자에게 남았다).
+            # 전면 금지는 과차단이라 정상 pandas 까지 막혔으므로, 대상을 좁힌다:
+            # 베이스가 **평범한 지역 이름**이고 속성이 허용 목록일 때만 통과.
+            # `pd.x = …`(주입된 이름) · `a.b.c = …`(중첩) · del 은 계속 거부.
+            if not isinstance(node.ctx, ast.Load):
+                writable = (
+                    isinstance(node.ctx, ast.Store)
+                    and isinstance(node.value, ast.Name)
+                    and node.value.id not in PROTECTED_NAMES
+                    and node.attr in ASSIGNABLE_ATTRS
+                )
+                if not writable:
+                    return f"attribute assignment is not allowed ({node.attr})"
         if isinstance(node, ast.Name) and node.id.startswith("__"):
             return f"dunder name is not allowed ({node.id})"
     return None
