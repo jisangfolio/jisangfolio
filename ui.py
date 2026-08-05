@@ -13,23 +13,80 @@ _STYLE = """
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 
+/* 디자인 시스템 토큰 — 어두운 표면(이 앱)용.
+   밝은 표면(이력서·포트폴리오 PDF)은 같은 계열의 다른 명도를 쓴다. */
+:root {
+  --jf-accent:     #4BBFAE;   /* 어두운 표면용 액센트 (밝은 표면은 #0E6E62) */
+  --jf-surface:    #1E2128;   /* 결과 블록 배경 */
+  --jf-rule:       #2B2F36;   /* 괘선 — 장식 전용 */
+  --jf-ink:        #ECEEF0;   /* 블록 내부 본문 */
+  --jf-ink-sub:    #B7BCC4;   /* 블록 내부 보조 */
+  --jf-ink-cap:    #9AA0A8;   /* 블록 내부 캡션 */
+}
+
 html, body, [class*="css"], .stMarkdown, button, input, textarea, .stTextInput, .stChatInput {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
 }
 
-/* 버튼: 살짝 둥글게 + 미세 hover */
-.stButton > button {
-  border-radius: 10px;
-  transition: transform .06s ease, border-color .15s ease;
-}
+/* 본문 행간 — 디자인 시스템 1.55 */
+.stMarkdown p, .stMarkdown li { line-height: 1.55; }
+
+/* 버튼 미세 hover. 라운딩은 config.toml 의 buttonRadius 가 담당한다
+   (테마 키로 넘기면 버전마다 바뀌는 내부 셀렉터에 의존하지 않는다). */
+.stButton > button { transition: transform .06s ease, border-color .15s ease; }
 .stButton > button:hover { transform: translateY(-1px); }
 
-/* 카드(bordered container): 부드러운 라운딩 */
-[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; }
-
-/* 링크: 밑줄은 hover에서만 */
+/* 링크: 밑줄은 hover에서만 (색은 config.toml linkColor) */
 a, a:visited { text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+/* ── 디자인 시스템 컴포넌트 ──────────────────────────────────
+   전부 자체 클래스(.jf-*)라 Streamlit 내부 DOM 에 의존하지 않는다.
+   색은 배경과 전경을 **함께** 지정한다 — 방문자가 Settings 에서 테마를
+   바꿔도 블록 내부 대비가 유지되게 하기 위해서다. */
+
+.jf-section {
+  font-size: 1.05rem; font-weight: 800; letter-spacing: -0.2px;
+  border-bottom: 1px solid var(--jf-rule);
+  padding-bottom: .35rem; margin: 1.6rem 0 .7rem;
+  display: flex; align-items: baseline; gap: .7rem;
+}
+.jf-section .jf-num { color: var(--jf-accent); font-size: .8rem; letter-spacing: 1px; flex: none; }
+.jf-section .jf-t { flex: 1; }
+.jf-section .jf-meta { font-size: .78rem; font-weight: 400; color: var(--jf-ink-cap); flex: none; }
+
+.jf-label {
+  font-size: .72rem; font-weight: 700; color: var(--jf-accent);
+  letter-spacing: .6px; margin-bottom: .25rem;
+}
+
+.jf-metrics { display: flex; gap: .6rem; flex-wrap: wrap; margin: .2rem 0 .6rem; }
+.jf-metric {
+  flex: 1 1 150px; border: 1px solid var(--jf-rule);
+  border-top: 2.5px solid var(--jf-accent);
+  padding: .6rem .8rem; background: var(--jf-surface);
+}
+.jf-metric .jf-val {
+  font-size: 1.35rem; font-weight: 800; color: var(--jf-accent);
+  letter-spacing: -.5px; line-height: 1.15;
+}
+.jf-metric .jf-cap { font-size: .74rem; color: var(--jf-ink-cap); margin-top: .2rem; line-height: 1.35; }
+
+.jf-result {
+  background: var(--jf-surface); border-left: 2.4px solid var(--jf-accent);
+  padding: .6rem .85rem; margin: .3rem 0 .5rem;
+}
+.jf-result p { margin: 0; color: var(--jf-ink); line-height: 1.55; }
+
+.jf-caveat { font-size: .78rem; color: var(--jf-ink-cap); line-height: 1.5; }
+
+.jf-stack {
+  font-size: .76rem; color: var(--jf-ink-cap);
+  padding-top: .35rem; border-top: 1px solid var(--jf-rule); margin-top: .5rem;
+}
+.jf-stack b { color: var(--jf-ink-sub); font-weight: 700; letter-spacing: .5px; margin-right: .5rem; }
+
+.jf-arrow { font-size: 2rem; text-align: center; padding-top: .6rem; color: var(--jf-ink-cap); }
 </style>
 """
 
@@ -46,6 +103,56 @@ def apply_style():
     import streamlit as st
 
     st.markdown(_STYLE, unsafe_allow_html=True)
+
+
+# ── 디자인 시스템 마크업 헬퍼 ────────────────────────────────────
+# 각 헬퍼는 **한 번의 st.markdown 호출로 완결된 HTML** 을 뱉는다. 열린 태그를
+# 따로 내보내고 나중에 닫는 방식(st.markdown("<div>") … st.markdown("</div>"))은
+# 구조적으로 불가능하다 — Streamlit 이 요소마다 별도 컨테이너로 렌더하고
+# sanitizer 가 열린 태그를 그 자리에서 닫아버린다. 네이티브 위젯을 블록 안에
+# 넣어야 하면 st.container(key=...) 의 .st-key-<key> 훅을 쓸 것.
+#
+# _esc 로 이스케이프하는 이유: 인자에 사용자/데이터 유래 문자열이 섞일 수 있는데
+# unsafe_allow_html=True 경로라 그대로 두면 마크업이 깨지거나 주입된다.
+
+def _esc(s):
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
+
+def section_header(title, num=None, meta=None):
+    """번호·제목·메타로 된 섹션 헤더 HTML 을 반환한다(하단 1px 실선)."""
+    parts = []
+    if num:
+        parts.append(f'<span class="jf-num">{_esc(num)}</span>')
+    parts.append(f'<span class="jf-t">{_esc(title)}</span>')
+    if meta:
+        parts.append(f'<span class="jf-meta">{_esc(meta)}</span>')
+    return f'<div class="jf-section">{"".join(parts)}</div>'
+
+
+def metric_tiles(items):
+    """지표 타일 묶음. items = [(값, 캡션), ...]
+
+    캡션에는 반드시 측정조건을 담는다 — 조건 없는 수치는 이 컴포넌트에 넣지 않는다.
+    한 줄에 4개를 넘기면 각각의 무게가 사라지므로 호출부에서 3개 안팎으로 유지할 것.
+    """
+    tiles = "".join(
+        f'<div class="jf-metric"><div class="jf-val">{_esc(v)}</div>'
+        f'<div class="jf-cap">{_esc(c)}</div></div>'
+        for v, c in items
+    )
+    return f'<div class="jf-metrics">{tiles}</div>'
+
+
+def result_block(text, label="결과"):
+    """좌측 액센트 바 + 배경을 가진 결과 블록. 한 섹션에 하나만 쓴다."""
+    return (f'<div class="jf-result"><div class="jf-label">{_esc(label)}</div>'
+            f'<p>{_esc(text)}</p></div>')
+
+
+def stack_list(items, label="STACK"):
+    """프로젝트 하단에 붙는 기술 스택 한 줄."""
+    return f'<div class="jf-stack"><b>{_esc(label)}</b>{_esc(" · ".join(items))}</div>'
 
 
 # 모델에 다시 보내도 되는 role. 가드가 막은 턴은 화면·내보내기에는 남기되

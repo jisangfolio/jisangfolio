@@ -322,7 +322,7 @@ with _hero_photo:
         st.markdown(
             "<div style='text-align:center;padding-top:6px'><img src='data:image/jpeg;base64,"
             + _enc
-            + "' style='width:180px;height:180px;object-fit:cover;border-radius:50%;border:1px solid #2a2f3a'/></div>",
+            + "' style='width:180px;height:180px;object-fit:cover;border-radius:50%;border:1px solid var(--jf-rule)'/></div>",
             unsafe_allow_html=True,
         )
 
@@ -422,11 +422,11 @@ with tab1:
     with col1:
         st.info(t["arch"][0])
     with col2:
-        st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+        st.markdown("<div class='jf-arrow'>→</div>", unsafe_allow_html=True)
     with col3:
         st.info(t["arch"][1])
     with col4:
-        st.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+        st.markdown("<div class='jf-arrow'>→</div>", unsafe_allow_html=True)
     with col5:
         st.info(t["arch"][2])
 with tab2:
@@ -434,19 +434,19 @@ with tab2:
     for box, content in zip([d1, d3, d5, d7], t["arch_data"]):
         box.info(content)
     for arrow in [d2, d4, d6]:
-        arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+        arrow.markdown("<div class='jf-arrow'>→</div>", unsafe_allow_html=True)
 with tab3:
     m1, m2, m3, m4, m5 = st.columns([3, 1, 3, 1, 3])
     for box, content in zip([m1, m3, m5], t["arch_mcp"]):
         box.info(content)
     for arrow in [m2, m4]:
-        arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+        arrow.markdown("<div class='jf-arrow'>→</div>", unsafe_allow_html=True)
 with tab4:
     a1, a2, a3, a4, a5, a6, a7 = st.columns([3, 1, 3, 1, 3, 1, 3])
     for box, content in zip([a1, a3, a5, a7], t["arch_agentic"]):
         box.info(content)
     for arrow in [a2, a4, a6]:
-        arrow.markdown("<div style='font-size:2rem; text-align:center; padding-top:0.6rem;'>→</div>", unsafe_allow_html=True)
+        arrow.markdown("<div class='jf-arrow'>→</div>", unsafe_allow_html=True)
 
 # ── 프로필 구조 그래프 (프로필 SSOT — 챗봇과 데이터 공유) ──────────
 st.markdown(t["profilegraph_head"])

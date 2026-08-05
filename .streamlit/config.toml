@@ -7,7 +7,34 @@
 maxUploadSize = 10
 
 [theme]
-# 의도된 다크 테마 + 차분한 브랜드 accent(periwinkle) — 순정 빨강 대신
+# 의도된 다크 테마. 액센트는 구직 산출물(이력서·포트폴리오 PDF)과 공유하는
+# 디자인 시스템의 teal 계열 — 단 **표면별로 명도가 다르다**.
+#   밝은 표면(문서/인쇄) = #0E6E62  ·  어두운 표면(이 앱) = #4BBFAE
+# 한 hex 로 양쪽을 못 덮기 때문이다: #0E6E62 는 이 배경에서 2.72:1 로 WCAG 실패하고
+# #4BBFAE 는 흰 배경에서 2.24:1 로 실패한다. 같은 계열이라 두 매체는 한 몸으로 읽힌다.
+# 토큰 SSOT = ../../design-system/README.md  (TOML 이라 파이썬 토큰을 import 할 수 없어
+# 이 값은 불가피하게 중복 선언된다 — 바꿀 때 양쪽을 같이 고칠 것)
 base = "dark"
-primaryColor = "#7AA2F7"
+primaryColor = "#4BBFAE"
+linkColor = "#4BBFAE"
 secondaryBackgroundColor = "#1A1E29"
+
+# 요소 테두리. 결과 블록(.jf-result)의 배경과 구분되도록 2차면보다 살짝 밝게.
+borderColor = "#2B2F36"
+
+# 각진 에디토리얼 톤 — 문서 쪽 디자인과 맞춘다. 기존엔 ui.py 가 버튼 10px /
+# 카드 14px 를 CSS 로 줬는데, 카드 쪽 셀렉터는 streamlit 1.47 에서 이미 죽어 있었다
+# (stVerticalBlockBorderWrapper 번들 내 0건). 라운딩은 테마 키로 넘겨 버전 취약성을 없앤다.
+baseRadius = "small"
+buttonRadius = "small"
+
+# 헤딩 굵기: 디자인 시스템은 크기가 아니라 굵기로 위계를 만든다(h1/h2 = 800).
+headingFontWeights = [800, 800, 700, 700, 700, 700]
+
+# 네이티브 차트(st.bar_chart / st.line_chart) 기본 팔레트.
+# dataviz 검증기 통과: 다크 밴드 OKLCH L 0.48-0.67 · 채도 하한 · CVD 인접쌍 ΔE 12.1(deutan)
+# · 정상시각 ΔE 16.1 · 표면 대비 전 슬롯 3:1 이상. 고정 순서로 배정하며 순환시키지 않는다.
+# ※ UI 액센트(#4BBFAE)와 데이터색은 의도적으로 분리한다 — 액센트가 데이터색에 섞이면
+#    '액션 색' 지위를 잃는다. Plotly 타임라인·지식그래프의 범주 팔레트는 파이썬 쪽에
+#    별도로 있으며 이 키의 영향을 받지 않는다.
+chartCategoricalColors = ["#2E9E8E", "#5A82D8", "#B98C1E", "#C25F79", "#8E79E0", "#55A845"]
