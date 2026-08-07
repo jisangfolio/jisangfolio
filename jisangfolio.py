@@ -103,8 +103,14 @@ T = {
             {
                 "title": "KETI AX연구본부 AI 에이전트 연구",
                 "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "폐쇄망 MLOps 플랫폼을 주도적으로 설계·구축했습니다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙(CFD 수십 분 대비 추론 약 200ms)하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합해 모델 무관 재사용성을 입증했습니다. MLflow(실험·레지스트리·거버넌스)·Gitea Actions CI(체크아웃 14분→4초)·Prometheus+Grafana(7패널)·Streamlit 운영 포털(6페이지)·Evidently 드리프트(PoC)를 docker-compose로 운영합니다. 제공된 분할 데이터 통합(45-291건)으로 MAE 0.53→0.26°C·R² 0.82→0.95를 MLflow 비교 체계에서 측정했습니다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
+                "desc": "폐쇄망 MLOps 플랫폼을 주도적으로 설계·구축했습니다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙(CFD 수십 분 대비 추론 약 200ms)하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합해 모델 무관 재사용성을 입증했습니다. MLflow(실험·레지스트리·거버넌스)·Gitea Actions CI(체크아웃 14분→4초)·Prometheus+Grafana(7패널)·Streamlit 운영 포털(5뷰)·Evidently 드리프트(PoC)를 docker-compose로 운영합니다. 제공된 분할 데이터 통합(45-291건)으로 MAE 0.53→0.26°C·R² 0.82→0.95를 MLflow 비교 체계에서 측정했습니다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
                 "tags": "`Triton` `ONNX` `MLflow` `Gitea Actions` `Prometheus` `Grafana` `Docker` `PyTorch`",
+            },
+            {
+                "title": "이미지 분류 MLOps 레일 + CCTV PoC",
+                "period": "2026.07 · KETI 자발 과제",
+                "desc": "계속 남이 만든 모델을 받아 서빙했던 터라, 이번엔 카탈로그부터 학습·품질 게이트·ONNX 내보내기까지 직접 짰습니다. 레일과 태스크 설정을 분리해 같은 코드로 CIFAR-10 → EuroSAT → 실 CCTV 3종을 클래스 수가 10에서 2로 바뀌어도 코드 수정 없이 통과시켰습니다. 게이트는 test 지표가 임계치에 못 미치면 레지스트리 승격을 건너뜁니다. 지표를 판정보다 먼저 기록해두니 차단된 런도 사유가 남습니다. 실데이터는 공개 교통 CCTV OpenAPI 키를 직접 신청해 확보하고 카메라 이름으로 자동 라벨링했습니다. (한계) 전 구간 PoC입니다. 승격 차단만 구현했고 CI 연동은 미완, 실제 차단 사례는 0건이며, CCTV는 56장(test n=9)이라 정확도를 성능 주장으로 쓸 표본이 아닙니다.",
+                "tags": "`PyTorch` `MLflow` `ONNX` `scikit-learn` `FastAPI` `Qwen2.5-VL`",
             },
             {
                 "title": "삼성SDI 폐쇄망 RAG",
@@ -206,8 +212,14 @@ T = {
             {
                 "title": "KETI AX Research Division · AI Agent Research",
                 "period": "Feb 2026 ~ Present · AI Researcher",
-                "desc": "Led the design and build of an air-gapped MLOps platform. Converted a PKNU-provided PyTorch 3D U-Net to ONNX and served it on Triton GPU (~200ms inference vs. tens of minutes for CFD), then unified three external PINN models with different I/O onto the same Triton — proving model-agnostic reuse. Runs MLflow (experiments·registry·governance), Gitea Actions CI (checkout 14min→4s), Prometheus+Grafana (7 panels), a Streamlit ops portal (6 pages), and an Evidently drift dashboard (PoC) via docker-compose. Integrating the provided data splits (45-291 samples) improved MAE 0.53→0.26°C and R² 0.82→0.95, measured through the MLflow comparison setup. (Separately) Songsan Green City digital twin — integration & validation of 3 parts.",
+                "desc": "Led the design and build of an air-gapped MLOps platform. Converted a PKNU-provided PyTorch 3D U-Net to ONNX and served it on Triton GPU (~200ms inference vs. tens of minutes for CFD), then unified three external PINN models with different I/O onto the same Triton — proving model-agnostic reuse. Runs MLflow (experiments·registry·governance), Gitea Actions CI (checkout 14min→4s), Prometheus+Grafana (7 panels), a Streamlit ops portal (5 views), and an Evidently drift dashboard (PoC) via docker-compose. Integrating the provided data splits (45-291 samples) improved MAE 0.53→0.26°C and R² 0.82→0.95, measured through the MLflow comparison setup. (Separately) Songsan Green City digital twin — integration & validation of 3 parts.",
                 "tags": "`Triton` `ONNX` `MLflow` `Gitea Actions` `Prometheus` `Grafana` `Docker` `PyTorch`",
+            },
+            {
+                "title": "Image-Classification MLOps Rail + CCTV PoC",
+                "period": "Jul 2026 · self-initiated at KETI",
+                "desc": "I had only ever served models handed to me, so this time I wrote the pipeline myself — catalog, training, quality gate, ONNX export. Separating the rail from task config let the same code carry CIFAR-10 → EuroSAT → live traffic CCTV with no code edits, even as the class count went from 10 to 2. The gate skips registry promotion when the test metric falls below a configured threshold, and because metrics are logged *before* the decision, a blocked run still records why. For real data I applied for a public traffic-CCTV OpenAPI key myself and auto-labelled by camera name. (Limits) All of it is proof-of-concept: promotion blocking only, not wired into CI, no blocked run has actually occurred, and the CCTV set is 56 images (test n=9) — too small to claim accuracy as performance.",
+                "tags": "`PyTorch` `MLflow` `ONNX` `scikit-learn` `FastAPI` `Qwen2.5-VL`",
             },
             {
                 "title": "Samsung SDI Air-Gapped RAG",
@@ -388,7 +400,9 @@ with st.container(border=True):
             use_container_width=True,
         )
 # Row 2: Samsung SDI + TEBO (side by side)
-row2 = st.columns(2)
+# 컬럼 수를 프로젝트 수에 맞춘다. 2로 고정하면 zip 이 짧은 쪽에서 끊겨
+# 세 번째 카드부터 화면에서 조용히 사라진다.
+row2 = st.columns(len(t["projects"]) - 1)
 for col, proj in zip(row2, t["projects"][1:]):
     with col:
         with st.container(border=True):

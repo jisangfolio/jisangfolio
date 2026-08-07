@@ -43,6 +43,9 @@ NODES = [
     {"id": "mlops", "group": "project", "ko": "온프레 MLOps 플랫폼", "en": "On-prem MLOps platform",
      "desc_ko": "폐쇄망 자체호스팅 MLOps 플랫폼을 docker-compose로 주도적으로 설계·구축.",
      "desc_en": "Led design & build of an air-gapped self-hosted MLOps platform (docker-compose)."},
+    {"id": "imgclf", "group": "project", "ko": "이미지 분류 레일 + CCTV", "en": "Image-clf rail + CCTV",
+     "desc_ko": "받은 모델을 서빙하던 것과 달리 파이프라인을 처음부터 설계. 품질 게이트가 임계치 미달 시 레지스트리 승격을 건너뛰고, 지표를 판정보다 먼저 기록해 차단 사유가 런에 남는다. 같은 코드로 CIFAR-10→EuroSAT→실 CCTV 3종 통과(PoC · CI 연동 미완 · 차단 실사례 0건).",
+     "desc_en": "Unlike serving models handed to me, this pipeline was designed from scratch. A quality gate skips registry promotion below threshold, and metrics are logged before the decision so blocked runs still record why. Same code carried CIFAR-10→EuroSAT→live CCTV (PoC · not wired to CI · no blocked run yet)."},
     {"id": "rag", "group": "project", "ko": "폐쇄망 RAG (SPA)", "en": "Air-gapped RAG (SPA)",
      "desc_ko": "완전 차단망 특허검색 RAG 챗봇 1인 단독 개발 → 임원 PoC 호평.",
      "desc_en": "Solo-built patent-search RAG chatbot in a fully air-gapped env → executive PoC praised."},
@@ -168,6 +171,11 @@ EDGES = [
     ("uw", "cse160"), ("uw", "info330"),
     # 경력 → 프로젝트
     ("keti", "mlops"), ("sdi", "rag"),
+    ("keti", "imgclf"),         # 도시냉각 과제와 별개인 자발 트랙
+    ("imgclf", "mlflow"),       # 게이트 통과분만 레지스트리로 승격
+    ("imgclf", "onnx"),         # 학습 끝 → ONNX 내보내기 + Triton config 스텁
+    ("imgclf", "pytorch"),      # resnet18 파인튜닝
+    ("imgclf", "eval"),         # "지표로 승격을 막는다" — 평가가 게이트라는 같은 발상
     # MLOps 플랫폼 → 기술
     ("mlops", "triton"), ("mlops", "onnx"), ("mlops", "mlflow"), ("mlops", "ci"),
     ("mlops", "monitor"), ("mlops", "docker"), ("mlops", "pytorch"),
