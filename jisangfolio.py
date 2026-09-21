@@ -101,21 +101,21 @@ T = {
         "proj_head": "## 주요 프로젝트",
         "projects": [
             {
-                "title": "KETI AX연구본부 AI 에이전트 연구",
-                "period": "2026.02 ~ 현재 · AI 연구원",
-                "desc": "폐쇄망 MLOps 플랫폼을 주도적으로 설계·구축했습니다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙(CFD 수십 분 대비 추론 약 200ms)하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합해 모델 무관 재사용성을 입증했습니다. MLflow(실험·레지스트리·거버넌스)·Gitea Actions CI(체크아웃 14분→4초)·Prometheus+Grafana(7패널)·Streamlit 운영 포털(5뷰)·Evidently 드리프트(PoC)를 docker-compose로 운영합니다. 제공된 분할 데이터 통합(45-291건)으로 MAE 0.53→0.26°C·R² 0.82→0.95를 MLflow 비교 체계에서 측정했습니다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
+                "title": "KETI AX연구본부 — 온프레미스 MLOps 플랫폼",
+                "period": "2026.02 ~ 현재 · 위촉연구원",
+                "desc": "온프레미스 자체호스팅(폐쇄망 대응 설계) MLOps 플랫폼을 주도적으로 설계·구축했습니다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합했습니다(좌표 100개 지점 단일 요청 22–32ms, L40S). MLflow(실험·레지스트리·거버넌스)·Gitea Actions·Prometheus+Grafana(7패널)를 docker-compose로 묶고, 8~9월엔 주간 학습 → 매니페스트 기준 판정 → ONNX 변환 → 체크섬 대조 배포를 워크플로 8개로 이어 사람 개입 없이 한 바퀴 도는 것을 확인했습니다(2026-09-12, Google MLOps Level 1). 판정이 미달 버전 2건을 실제로 막았고, 판정 호출·서빙 자동 복구·정합성 대조는 25개 화면의 운영 콘솔이 맡습니다. 제공된 분할 데이터 통합(45-291건)으로 MAE 0.53→0.26°C·R² 0.82→0.95를 MLflow 비교 체계에서 측정했습니다. (한계) 학습 데이터 갱신 경로가 없어 재학습이 모델을 개선하진 않고, CI 동작시험·롤백은 미착수, 추론 트래픽은 아직 스모크 수준입니다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
                 "tags": "`Triton` `ONNX` `MLflow` `Gitea Actions` `Prometheus` `Grafana` `Docker` `PyTorch`",
             },
             {
                 "title": "이미지 분류 MLOps 레일 + CCTV PoC",
                 "period": "2026.07 · KETI 자발 과제",
-                "desc": "계속 남이 만든 모델을 받아 서빙했던 터라, 이번엔 카탈로그부터 학습·품질 게이트·ONNX 내보내기까지 직접 짰습니다. 레일과 태스크 설정을 분리해 같은 코드로 CIFAR-10 → EuroSAT → 실 CCTV 3종을 클래스 수가 10에서 2로 바뀌어도 코드 수정 없이 통과시켰습니다. 게이트는 test 지표가 임계치에 못 미치면 레지스트리 승격을 건너뜁니다. 지표를 판정보다 먼저 기록해두니 차단된 런도 사유가 남습니다. 실데이터는 공개 교통 CCTV OpenAPI 키를 직접 신청해 확보하고 카메라 이름으로 자동 라벨링했습니다. (한계) 전 구간 PoC입니다. 승격 차단만 구현했고 CI 연동은 미완, 실제 차단 사례는 0건이며, CCTV는 56장(test n=9)이라 정확도를 성능 주장으로 쓸 표본이 아닙니다.",
+                "desc": "계속 남이 만든 모델을 받아 서빙했던 터라, 이번엔 카탈로그부터 학습·품질 게이트·ONNX 내보내기까지 직접 짰습니다. 레일과 태스크 설정을 분리해 같은 코드로 CIFAR-10 → EuroSAT → 실 CCTV 3종을 클래스 수가 10에서 2로 바뀌어도 코드 수정 없이 통과시켰습니다. 게이트는 test 지표가 임계치에 못 미치면 레지스트리 승격을 건너뜁니다. 지표를 판정보다 먼저 기록해두니 차단된 런도 사유가 남습니다. 실데이터는 공개 교통 CCTV OpenAPI 키를 직접 신청해 확보하고 카메라 이름으로 자동 라벨링했습니다. 8월엔 v1의 정확도가 데이터 누수(같은 장면이 train/test에 동시 포함·중복 카메라·이름 기반 오라벨)로 부풀려진 것을 스스로 규명하고, 카메라 그룹 단위로 재분할해 재학습하니 0.548로 떨어져 게이트가 등록을 실제로 막았습니다 — 원인 3건을 고쳐 v2로 재등록했습니다. (한계) 전 구간 PoC입니다. 승격 차단만 구현했고 CI 연동은 미완, CCTV는 227장/카메라 80그룹(test는 미학습 카메라 12대 30장)이라 정확도를 성능 주장으로 쓸 표본이 아닙니다.",
                 "tags": "`PyTorch` `MLflow` `ONNX` `scikit-learn` `FastAPI` `Qwen2.5-VL`",
             },
             {
                 "title": "삼성SDI 폐쇄망 RAG",
                 "period": "2025.06 ~ 08 · 인턴",
-                "desc": "완전 인터넷 차단 환경에서 특허 검색 RAG 챗봇 1인 단독 개발. 대화 이력 기반 재검색 로직 설계, 핵심 지표 집계·시각화 기능 포함 → 임원 PoC 호평",
+                "desc": "완전 인터넷 차단 환경에서 특허 검색 RAG 챗봇 개발 — 검색·분기·UI를 담당(LLM 서빙 구성은 멘토 주도). 대화 이력 기반 재검색 로직 설계, 핵심 지표 집계·시각화 기능 포함 → 임원 PoC 호평",
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
@@ -210,21 +210,21 @@ T = {
         "proj_head": "## Key Projects",
         "projects": [
             {
-                "title": "KETI AX Research Division · AI Agent Research",
-                "period": "Feb 2026 ~ Present · AI Researcher",
-                "desc": "Led the design and build of an air-gapped MLOps platform. Converted a PKNU-provided PyTorch 3D U-Net to ONNX and served it on Triton GPU (~200ms inference vs. tens of minutes for CFD), then unified three external PINN models with different I/O onto the same Triton — proving model-agnostic reuse. Runs MLflow (experiments·registry·governance), Gitea Actions CI (checkout 14min→4s), Prometheus+Grafana (7 panels), a Streamlit ops portal (5 views), and an Evidently drift dashboard (PoC) via docker-compose. Integrating the provided data splits (45-291 samples) improved MAE 0.53→0.26°C and R² 0.82→0.95, measured through the MLflow comparison setup. (Separately) Songsan Green City digital twin — integration & validation of 3 parts.",
+                "title": "KETI AX Research Division — On-prem MLOps Platform",
+                "period": "Feb 2026 ~ Present · Research Engineer (Contract)",
+                "desc": "Led the design and build of a self-hosted on-premise MLOps platform (built to hold up under closed-network constraints). Converted a PKNU-provided PyTorch 3D U-Net to ONNX and served it on Triton GPU, then unified three external PINN models with different I/O onto the same Triton (a 100-point PINN request in 22–32 ms on an L40S). MLflow (experiments·registry·governance), Gitea Actions, and Prometheus+Grafana (7 panels) run as one docker-compose stack; in Aug–Sep I chained weekly training → manifest-driven gate → ONNX export → checksum-verified deploy across eight workflows and confirmed the first unattended end-to-end run on 2026-09-12 (Google MLOps Level 1). The gate actually rejected two under-performing versions; gate calls, serving auto-recovery and declared-vs-actual reconciliation are handled by a 25-screen operations console. Integrating the provided data splits (45-291 samples) improved MAE 0.53→0.26°C and R² 0.82→0.95, measured through the MLflow comparison setup. (Limits) No path yet for refreshing training data, so retraining does not improve the model; no behavioral tests in CI, no rollback, and inference traffic is still smoke-test level. (Separately) Songsan Green City digital twin — integration & validation of 3 parts.",
                 "tags": "`Triton` `ONNX` `MLflow` `Gitea Actions` `Prometheus` `Grafana` `Docker` `PyTorch`",
             },
             {
                 "title": "Image-Classification MLOps Rail + CCTV PoC",
                 "period": "Jul 2026 · self-initiated at KETI",
-                "desc": "I had only ever served models handed to me, so this time I wrote the pipeline myself — catalog, training, quality gate, ONNX export. Separating the rail from task config let the same code carry CIFAR-10 → EuroSAT → live traffic CCTV with no code edits, even as the class count went from 10 to 2. The gate skips registry promotion when the test metric falls below a configured threshold, and because metrics are logged *before* the decision, a blocked run still records why. For real data I applied for a public traffic-CCTV OpenAPI key myself and auto-labelled by camera name. (Limits) All of it is proof-of-concept: promotion blocking only, not wired into CI, no blocked run has actually occurred, and the CCTV set is 56 images (test n=9) — too small to claim accuracy as performance.",
+                "desc": "I had only ever served models handed to me, so this time I wrote the pipeline myself — catalog, training, quality gate, ONNX export. Separating the rail from task config let the same code carry CIFAR-10 → EuroSAT → live traffic CCTV with no code edits, even as the class count went from 10 to 2. The gate skips registry promotion when the test metric falls below a configured threshold, and because metrics are logged *before* the decision, a blocked run still records why. For real data I applied for a public traffic-CCTV OpenAPI key myself and auto-labelled by camera name. In August I established that v1's accuracy was inflated by data leakage (same scene in train and test, duplicate cameras, name-based mislabels), re-split by camera group and retrained — accuracy fell to 0.548 and the gate actually blocked registration; I fixed the three causes and re-registered v2. (Limits) All of it is proof-of-concept: promotion blocking only, not wired into CI, and the CCTV set is 227 images / 80 camera groups (test = 30 images from 12 unseen cameras) — too small to claim accuracy as performance.",
                 "tags": "`PyTorch` `MLflow` `ONNX` `scikit-learn` `FastAPI` `Qwen2.5-VL`",
             },
             {
                 "title": "Samsung SDI Air-Gapped RAG",
                 "period": "Jun ~ Aug 2025 · Intern",
-                "desc": "**Solo-built** patent search RAG chatbot in a fully internet-blocked environment. Designed re-search logic using conversation history and provided key metric aggregation & visualization → executive PoC praised",
+                "desc": "Patent-search RAG chatbot in a fully internet-blocked environment — I owned retrieval, query routing and the UI (LLM serving was set up by my mentor). Designed re-search logic using conversation history and provided key metric aggregation & visualization → executive PoC praised",
                 "tags": "`Ollama` `LangChain` `FAISS` `Docker` `Streamlit`",
             },
             {
@@ -293,7 +293,7 @@ if lang == "한국어":
         {"kind": "경력",  "item": "삼성SDI · 데이터 엔지니어 인턴", "start": "2025-06-01", "end": "2025-08-31", "detail": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
         {"kind": "논문",  "item": "TEBO · SCIE 논문 게재",          "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences, CoP 분석 설명력 85%+"},
         {"kind": "활동",  "item": "KSA 웹팀 (UIUC)",               "start": "2024-08-01", "end": "2025-06-30", "detail": "한인 학생회 웹사이트 사용성 및 성능 개선"},
-        {"kind": "경력",  "item": "KETI · AI 에이전트 연구원",      "start": "2026-02-01", "end": "2026-12-31", "detail": "폐쇄망 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 디지털 트윈 연동 · 현재 재직 중"},
+        {"kind": "경력",  "item": "KETI · AX 연구본부 위촉연구원",      "start": "2026-02-01", "end": "2026-12-31", "detail": "온프레미스 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 학습→배포 자동화(Level 1) · 디지털 트윈 연동 · 현재 재직 중"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "kind", "item", "start", "end", "detail"
 else:
@@ -302,10 +302,10 @@ else:
         {"kind": "Education", "item": "University of Washington",        "start": "2022-12-01", "end": "2024-06-30", "detail": "Pre-Science (INFO · CSE · STAT) · Return"},
         {"kind": "Military",  "item": "Military Service (ROKN)",         "start": "2021-02-15", "end": "2022-10-14", "detail": "English Interpreter · 3rd Fleet & USFK"},
         {"kind": "Education", "item": "UIUC · BSIS+DS",                  "start": "2024-06-01", "end": "2025-12-20", "detail": "Information Science + Data Science, GPA 3.89/4.0"},
-        {"kind": "Work",      "item": "Samsung SDI · Data Eng. Intern",  "start": "2025-06-01", "end": "2025-08-31", "detail": "Solo-built air-gapped RAG chatbot → praised by executives"},
+        {"kind": "Work",      "item": "Samsung SDI · Data Eng. Intern",  "start": "2025-06-01", "end": "2025-08-31", "detail": "Air-gapped RAG chatbot (retrieval·routing·UI) → praised by executives"},
         {"kind": "Research",  "item": "TEBO · SCIE Publication",         "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences, CoP analysis 85%+ explanatory power"},
         {"kind": "Activity",  "item": "KSA Web Team (UIUC)",              "start": "2024-08-01", "end": "2025-06-30", "detail": "Improved usability and performance of Korean Student Association website"},
-        {"kind": "Work",      "item": "KETI · AI Agent Researcher",      "start": "2026-02-01", "end": "2026-12-31", "detail": "Air-gapped MLOps platform · Triton model serving · digital twin integration · Present"},
+        {"kind": "Work",      "item": "KETI · Research Engineer, AX Research Division",      "start": "2026-02-01", "end": "2026-12-31", "detail": "On-prem MLOps platform · Triton model serving · train→deploy automation (Level 1) · digital twin integration · Present"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "kind", "item", "start", "end", "detail"
 

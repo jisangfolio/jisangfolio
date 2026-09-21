@@ -40,7 +40,7 @@ Portfolio: jisangfolio.streamlit.app
 """
 
 _KETI = """
-[KETI — Researcher, AX Research Division (AI agent development)]
+[KETI — Research Engineer (Contract), AX Research Division]
 Period: Feb 2026 – present / contract
 
 ▸ Project 1: Songsan Green City digital-twin integration (Feb–Apr 2026, done)
@@ -48,15 +48,17 @@ Period: Feb 2026 – present / contract
   - Analyzed the MQTT + HTTP hybrid comms structure; applied a Ports-and-Adapters pattern
   - Documented the integration & sequence diagrams and presented internally
 
-▸ Project 2: Air-gapped, self-hosted MLOps platform (since Mar 2026, ongoing)
-  - Led the design & build of a model-agnostic, open-source MLOps platform that serves/manages multiple models in an air-gapped network
+▸ Project 2: Self-hosted on-premise MLOps platform, built for closed-network constraints (since Mar 2026, ongoing)
+  - Led the design & build of a model-agnostic, open-source MLOps platform that serves/manages multiple models without external SaaS or cloud
     (the urban-cooling AI research is the backdrop — a PKNU 3D U-Net and an external team's PINNs run on top of it as use cases)
   - PKNU-provided PyTorch 3D U-Net (+CBAM +Attention Gate) → ONNX → Triton GPU serving
   - Unified 3 external (U-Ecotron) PINN models on the same Triton — voxel/point I/O heterogeneous models, the platform's first external use case
   - Round 1 (45 samples): MAE 0.53°C, R² 0.82 → Round 2 (291 samples integrated): MAE 0.26°C, R² 0.95 (MAE ↓51%)
-  - CFD simulation (tens of minutes, PKNU-provided) → Triton inference ~200ms
+  - Latency: a 100-point PINN request in 22–32 ms on an L40S (CFD runtime of tens of minutes is a PKNU figure, not my measurement)
   - Stack: MLflow (tracking·registry·artifact serving) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
-  - New (Jun 2026): Streamlit ops portal (6 pages) · Evidently drift dashboard (PoC) · ONNX validate→deploy CI (manual trigger)
+  - Jun 2026: Streamlit ops portal (5 views) · Evidently drift dashboard (PoC) · ONNX validate→deploy CI (manual trigger, 1 end-to-end run)
+  - Aug–Sep 2026: eight Gitea Actions workflows — weekly train → manifest-driven gate (mlops.yaml thresholds) → ONNX export attached to the registry version → checksum-verified deploy; first unattended end-to-end run 2026-09-12 (Google MLOps Level 1). Gate rejected 2 versions (v6, v8); deployed v12's ONNX hash matches the serving file. A 25-screen operations console (Python http.server + Vue, no build step) calls the gate when training finishes, auto-recovers serving every 60 s, reconciles declared vs. actual, and triggers retraining on input-range drift (fired once, 17 samples). Alerts go to Gitea issues via alert_check.yml.
+  - Known limits: no training-data refresh path (retraining does not improve the model), CI has syntax checks only (no behavioral tests), no rollback, no console auth, inference traffic still smoke-level, root disk at 90%
   - Artifact store: MinIO was dropped over an AGPL license concern → MLflow local store (--serve-artifacts)
   - Self-hosting principle (org policy): avoid external SaaS/cloud → GitHub→Gitea, cloud monitoring→Prometheus+Grafana
   - Role: architecture design, tooling selection, environment build/ops, experiments, analysis, presentations
@@ -66,11 +68,11 @@ _SDI = """
 [Samsung SDI — Data Engineer Intern, DI (Data Intelligence) Group]
 Period: Jun 2025 – Aug 2025
 
-▸ Solo-built "SPA (SDI Patent Assistant)", an air-gapped patent-search RAG chatbot
+▸ Built "SPA (SDI Patent Assistant)", an air-gapped patent-search RAG chatbot — my part was retrieval, routing and UI; LLM serving was set up by my mentor
   - Fully internet-blocked environment; self-hosted Ollama + Qwen2.5-72B
   - LangChain + FAISS vector DB; loaded patent.csv from MinIO
   - Kept context over the last 5 turns + stored prior RAG choices → auto re-retrieval on follow-ups
-  - Rule-based agent: "chart/stats/filing" keywords → bypass the LLM → pandas aggregation + st.bar_chart
+  - Rule-based agent: "chart/stats/filing" keywords → pandas aggregation + st.bar_chart, so numbers come from data rather than the LLM
   - Streamlit UI + Docker; praised in an executive PoC
 """
 
