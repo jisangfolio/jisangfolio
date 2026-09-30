@@ -19,7 +19,10 @@ import pytest
 from banned_tokens import scan
 
 ROOT = Path(__file__).resolve().parents[1]
-TEXT_SUFFIX = {".py", ".md", ".toml", ".jsonl", ".yml", ".yaml", ".sh", ".txt", ".html"}
+# .json 은 평가 실행 기록(evals/runs/*.json)이 여기 해당한다. 지금은 깨끗하지만
+# 다음 실행이 어떤 문자열을 담을지는 알 수 없으니 검사 대상에 둔다.
+TEXT_SUFFIX = {".py", ".md", ".toml", ".json", ".jsonl", ".yml", ".yaml",
+               ".sh", ".txt", ".html"}
 
 
 def _tracked():
@@ -49,12 +52,38 @@ def test_the_scanner_is_actually_looking_at_files():
     assert len(files) > 20, f"{len(files)}개 파일만 수집됨 — 수집이 깨졌을 가능성"
 
 
-def test_the_scanner_catches_a_planted_token():
-    """검출기가 살아 있는지 — 심어놓은 위반을 잡는지 해시로 확인한다."""
+def test_scanner_handles_token_boundaries():
+    """경계에서 새던 것들을 고정한다 — 전부 같은 원인(토큰을 글자 그대로만 봤다).
+
+    ⚠️ 여기서 **진짜 금칙어를 쓰면 이 테스트가 다시 유출 지점이 된다.** 그래서
+    더미 단어의 다이제스트를 만들어 주입한다. scan() 이 digest 집합을 인자로
+    받게 열어 둔 이유가 이것이다.
+    """
     import hashlib
-    from banned_tokens import ASCII_DIGESTS
-    probe = "zz-probe-token"
-    assert hashlib.sha256(probe.encode()).hexdigest()[:16] not in ASCII_DIGESTS
-    assert scan(f"line1\n{probe}\n") == [], "등록 안 된 토큰을 잡으면 오탐이다"
-    # 등록된 토큰 하나를 해시로만 되짚어 탐지가 실제로 도는지 본다
-    assert ASCII_DIGESTS, "ASCII 다이제스트가 비어 있다 — 검사가 무의미해진다"
+
+    def d(w):
+        return hashlib.sha256(w.lower().encode()).hexdigest()[:16]
+
+    ascii_set = {d("zzdummyorg"), d("zzdummy.yml"), d("zzdummyimg")}
+    ko_set = {5: [d("가나다라마")]}
+
+    cases = {
+        "문장 끝 마침표": "앞 zzdummyorg. 뒤",
+        "확장자+마침표": "앞 zzdummy.yml. 뒤",
+        "이미지 경로": "![](assets/zzdummyimg.png)",
+        "정규식 이스케이프": r'r"zzdummy\.yml"',
+        "한글 조사": "가나다라마의 과제",
+    }
+    for label, text in cases.items():
+        assert scan(text, ascii_digests=ascii_set, ko_by_len=ko_set), f"놓침: {label}"
+
+    clean = "관련 없는 문장 abc.def 0.548 입니다"
+    assert not scan(clean, ascii_digests=ascii_set, ko_by_len=ko_set), "오탐"
+
+
+def test_line_numbers_survive_the_deescape_pass():
+    """역슬래시를 뺀 사본으로도 훑는데, 지운 만큼 줄 번호가 밀리면 안 된다."""
+    import hashlib
+    ascii_set = {hashlib.sha256(b"zzdummy.yml").hexdigest()[:16]}
+    text = "1\n2\n3\n" + r'  x = r"zzdummy\.yml"' + "\n"
+    assert scan(text, ascii_digests=ascii_set, ko_by_len={}) == [4]
