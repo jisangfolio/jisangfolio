@@ -293,7 +293,7 @@ if lang == "한국어":
         {"kind": "군복무", "item": "어학병 (제3함대 · 한미연합사)", "start": "2021-02-15", "end": "2022-10-14", "detail": "영어 통역 병과"},
         {"kind": "학력",  "item": "UIUC · BSIS+DS",               "start": "2024-06-01", "end": "2025-12-20", "detail": "Information Science + Data Science, GPA 3.89/4.0"},
         {"kind": "경력",  "item": "삼성SDI · 데이터 엔지니어 인턴", "start": "2025-06-01", "end": "2025-08-31", "detail": "폐쇄망 RAG 챗봇 — 검색·분기·UI 담당 → 임원 PoC 호평"},
-        {"kind": "논문",  "item": "TEBO · SCIE 논문 게재",          "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences 공저 · 코호트 정합화 · 설문 집계 · 그림 출고"},
+        {"kind": "논문",  "item": "TEBO · SCIE 논문 게재",          "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences 공저 · 코호트 정합화 · 설문 집계 · stabilogram 시각화"},
         {"kind": "활동",  "item": "KSA 웹팀 (UIUC)",               "start": "2024-08-01", "end": "2025-06-30", "detail": "한인 학생회 웹사이트 사용성 및 성능 개선"},
         {"kind": "경력",  "item": "KETI · AX 연구본부 위촉연구원",      "start": "2026-02-01", "end": "2026-09-25", "detail": "온프레미스 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 학습→배포 자동화(Level 1) · 디지털 트윈 연동"},
         {"kind": "경력",  "item": "연합인포맥스 · 금융공학연구소",        "start": "2026-09-28", "end": "2026-12-31", "detail": "재직 중"},
@@ -306,7 +306,7 @@ else:
         {"kind": "Military",  "item": "Military Service (ROKN)",         "start": "2021-02-15", "end": "2022-10-14", "detail": "English Interpreter · 3rd Fleet & USFK"},
         {"kind": "Education", "item": "UIUC · BSIS+DS",                  "start": "2024-06-01", "end": "2025-12-20", "detail": "Information Science + Data Science, GPA 3.89/4.0"},
         {"kind": "Work",      "item": "Samsung SDI · Data Eng. Intern",  "start": "2025-06-01", "end": "2025-08-31", "detail": "Air-gapped RAG chatbot (retrieval·routing·UI) → praised by executives"},
-        {"kind": "Research",  "item": "TEBO · SCIE Publication",         "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences co-author · cohort curation · survey aggregation · figures"},
+        {"kind": "Research",  "item": "TEBO · SCIE Publication",         "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences co-author · cohort curation · survey aggregation · stabilogram visualisations"},
         {"kind": "Activity",  "item": "KSA Web Team (UIUC)",              "start": "2024-08-01", "end": "2025-06-30", "detail": "Improved usability and performance of Korean Student Association website"},
         {"kind": "Work",      "item": "KETI · Research Engineer, AX Research Division",      "start": "2026-02-01", "end": "2026-09-25", "detail": "On-prem MLOps platform · Triton model serving · train→deploy automation (Level 1) · digital twin integration"},
         {"kind": "Work",      "item": "Yonhap Infomax · Financial Engineering Research Institute", "start": "2026-09-28", "end": "2026-12-31", "detail": "Current role"},
@@ -396,13 +396,10 @@ with st.container(border=True):
     st.markdown(f"**{_keti_lead}.**")
     st.markdown(_keti_rest)
     st.caption(t["projects"][0]["tags"])
-    grafana_path = os.path.join(os.path.dirname(__file__), "assets", "mlops_grafana.png")
-    if os.path.exists(grafana_path):
-        st.image(
-            grafana_path,
-            caption="Prometheus + Grafana 모니터링 대시보드 (Triton 실시간 메트릭)" if lang == "한국어" else "Prometheus + Grafana Monitoring Dashboard (Triton live metrics)",
-            use_container_width=True,
-        )
+    # 여기 있던 Grafana 대시보드 캡처는 2026-09-30 제거했다. 전 직장 내부 화면
+    # 캡처는 텍스트와 달리 일반화가 불가능해서(지운 라벨 밖의 패널 구성·메트릭
+    # 이름·값이 통째로 남는다) 공개 산출물에 두지 않기로 한 부류다. 관측 스택을
+    # 보여주고 싶으면 캡처가 아니라 직접 그린 도식으로 대체할 것.
 # Row 2: Samsung SDI + TEBO (side by side)
 # 컬럼 수를 프로젝트 수에 맞춘다. 2로 고정하면 zip 이 짧은 쪽에서 끊겨
 # 세 번째 카드부터 화면에서 조용히 사라진다.

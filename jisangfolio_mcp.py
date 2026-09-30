@@ -58,8 +58,8 @@ Period: Feb 2026 – Sep 2026 / contract
   - Latency: a 100-point PINN request in 22–32 ms on an L40S (CFD runtime of tens of minutes is a PKNU figure, not my measurement)
   - Stack: MLflow (tracking·registry·artifact serving) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
   - Jun 2026: Streamlit ops portal (5 views) · Evidently drift dashboard (PoC) · ONNX validate→deploy CI (manual trigger, 1 end-to-end run)
-  - Aug–Sep 2026: eight Gitea Actions workflows — weekly train → manifest-driven gate (mlops.yaml thresholds) → ONNX export attached to the registry version → checksum-verified deploy; first unattended end-to-end run 2026-09-12 (Google MLOps Level 1). Gate rejected 2 versions (v6, v8); deployed v12's ONNX hash matches the serving file. A 10-menu operations console (Python http.server + Vue, no build step) calls the gate when training finishes, auto-recovers serving every 60 s, reconciles declared vs. actual, and triggers retraining on input-range drift (fired once in a demo with lowered thresholds (5 samples / 1 day vs. the default 50 / 3 days), 17–19 samples). Alerts go to Gitea issues via alert_check.yml.
-  - Known limits: no training-data refresh path (retraining does not improve the model), CI has syntax checks only (no behavioral tests), no rollback, no console auth, inference traffic still smoke-level, root disk at 90%
+  - Aug–Sep 2026: eight Gitea Actions workflows — weekly train → manifest-driven gate (thresholds live in a project manifest, not in code) → ONNX export attached to the registry version → checksum-verified deploy; first unattended end-to-end run 2026-09-12 (Google MLOps Level 1). Gate rejected 2 versions (v6, v8); deployed v12's ONNX hash matches the serving file. A 10-menu operations console (Python http.server + Vue, no build step) calls the gate when training finishes, auto-recovers serving every 60 s, reconciles declared vs. actual, and triggers retraining on input-range drift (fired once in a demo with lowered thresholds (5 samples / 1 day vs. the default 50 / 3 days), 17–19 samples). A twice-daily check publishes console findings as Gitea issues and closes them automatically.
+  - Known limits: no training-data refresh path (retraining does not improve the model), CI has syntax checks only (no behavioral tests), no rollback, console access control still on the to-do list, inference traffic still smoke-level
   - Artifact store: MinIO was dropped over an AGPL license concern → MLflow local store (--serve-artifacts)
   - Self-hosting principle (org policy): avoid external SaaS/cloud → GitHub→Gitea, cloud monitoring→Prometheus+Grafana
   - Role: architecture design, tooling selection, environment build/ops, experiments, analysis, presentations
@@ -94,7 +94,7 @@ _PROJECTS = """
 3. TEBO balance analysis · SCIE paper (co-author, 7th of 10)
    - Applied Sciences (SCIE), Jul 2025
    - My part started after data collection: reconciled two cohorts' overlapping subject IDs,
-     scored and aggregated the FES-I / GDS surveys by group, produced the stabilogram figures
+     scored and aggregated the FES-I / GDS surveys by group, produced the stabilogram visualisations
    - CRediT roles: formal analysis, data curation, visualization. The signal filtering and
      component decomposition were the research team's work, not mine
    - Stack: Python, Pandas, NumPy, Matplotlib

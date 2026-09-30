@@ -50,8 +50,8 @@ NODES = [
      "desc_ko": "온프레미스 자체호스팅(폐쇄망 대응 설계) MLOps 플랫폼을 docker-compose로 주도적으로 설계·구축.",
      "desc_en": "Led design & build of a self-hosted on-prem MLOps platform on docker-compose, built to hold up under closed-network constraints."},
     {"id": "imgclf", "group": "project", "ko": "이미지 분류 레일 + CCTV", "en": "Image-clf rail + CCTV",
-     "desc_ko": "받은 모델을 서빙하던 것과 달리 파이프라인을 처음부터 설계. 품질 게이트가 임계치 미달 시 레지스트리 승격을 건너뛰고, 지표를 판정보다 먼저 기록해 차단 사유가 런에 남는다. 같은 코드로 CIFAR-10→EuroSAT→실 CCTV 3종 통과(PoC · CI 연동 미완 · 차단 실사례 0건).",
-     "desc_en": "Unlike serving models handed to me, this pipeline was designed from scratch. A quality gate skips registry promotion below threshold, and metrics are logged before the decision so blocked runs still record why. Same code carried CIFAR-10→EuroSAT→live CCTV (PoC · not wired to CI · no blocked run yet)."},
+     "desc_ko": "받은 모델을 서빙하던 것과 달리 파이프라인을 처음부터 설계. 품질 게이트가 임계치 미달 시 레지스트리 승격을 건너뛰고, 지표를 판정보다 먼저 기록해 차단 사유가 런에 남는다. 같은 코드로 CIFAR-10→EuroSAT→실 CCTV 3종 통과. 직접 등록해 서빙하던 모델의 정확도가 데이터 누수로 부풀려진 것을 스스로 규명하고 카메라 그룹 단위로 재분할하니 게이트가 승격을 실제로 차단했다(PoC · CI 연동 미완).",
+     "desc_en": "Unlike serving models handed to me, this pipeline was designed from scratch. A quality gate skips registry promotion below threshold, and metrics are logged before the decision so blocked runs still record why. Same code carried CIFAR-10→EuroSAT→live CCTV. I established that a model I had registered and served myself scored high only through data leakage; re-splitting by camera group made the gate actually block promotion (PoC · not wired to CI)."},
     {"id": "rag", "group": "project", "ko": "폐쇄망 RAG (SPA)", "en": "Air-gapped RAG (SPA)",
      "desc_ko": "완전 차단망 특허검색 RAG 챗봇 — 검색·분기·UI를 맡았고 LLM 서빙 구성은 멘토 주도 → 임원 PoC 호평.",
      "desc_en": "Patent-search RAG chatbot in a fully internet-blocked env — I owned retrieval, routing and UI; LLM serving was set up by my mentor → executive PoC praised."},
@@ -337,7 +337,7 @@ EDGE_LABEL = {
     ("hybrid", "faiss"): ("dense 절반", "the dense half"),
     ("observability", "streamlit"): ("대시보드", "dashboard"),
     # 논문·코스워크 → 기술
-    ("tebo", "mpl"): ("그림 출고", "produced the figures"),
+    ("tebo", "mpl"): ("stabilogram 시각화", "stabilogram visualisations"),
     ("cs307", "pytorch"): ("CNN lab", "CNN lab"),
     ("info330", "sql"): ("T-SQL", "T-SQL"),
     # MLOps 파이프라인 내부 순서
