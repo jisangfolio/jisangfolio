@@ -67,8 +67,8 @@ NODES = [
 
     # 논문
     {"id": "tebo", "group": "paper", "ko": "TEBO 논문", "en": "TEBO paper",
-     "desc_ko": "측정 이후 단계 기여 — 두 코호트 ID 정합화 · FES-I/GDS 집단 집계 · stabilogram 시각화. SCIE 'Applied Sciences' 공저(2025, 7저자). 신호 필터링·성분 분해는 연구팀 수행.",
-     "desc_en": "Contributed after data collection — reconciled two cohorts' subject IDs, scored and aggregated the FES-I/GDS surveys, produced the stabilogram figures. Co-author, SCIE 'Applied Sciences' (2025, 7th author). Signal filtering and decomposition were done by the research team."},
+     "desc_ko": "측정 이후 단계 기여 — 두 코호트 ID 정합화 · FES-I 집단 집계 · stabilogram 시각화(게재 논문에 실린 그림은 아니다). SCIE 'Applied Sciences' 공저(2025, 7저자). 신호 필터링·성분 분해는 연구팀 수행.",
+     "desc_en": "Contributed after data collection — reconciled two cohorts' subject IDs, scored and aggregated the FES-I survey, produced stabilogram visualisations (not figures in the published paper). Co-author, SCIE 'Applied Sciences' (2025, 7th author). Signal filtering and decomposition were done by the research team."},
 
     # 학부 코스워크 (강의 프로젝트 수준 — 과대표현 금지)
     {"id": "cs307", "group": "course", "ko": "CS307 · ML", "en": "CS307 · ML",
@@ -134,8 +134,8 @@ NODES = [
      "desc_ko": "규칙 채점 + 별도 모델 LLM-judge로 답변 사실성 회귀 검증.",
      "desc_en": "Rule scoring + a separate LLM judge for factual regression."},
     {"id": "mpl", "group": "skill", "ko": "Matplotlib 도식화", "en": "Matplotlib figures",
-     "desc_ko": "TEBO에서 랩이 전달한 대역별 지표로 stabilogram 그림을 EPS 벡터로 출고 · 설문 집단 집계 시각화.",
-     "desc_en": "Produced the TEBO stabilogram figures as vector EPS from the lab's band-power metrics, and visualised the survey group aggregates."},
+     "desc_ko": "TEBO에서 랩이 전달한 대역별 지표로 stabilogram을 EPS 벡터로 시각화 · 설문 집단 집계 도식화. 게재 논문에는 stabilogram이 없다.",
+     "desc_en": "Rendered the TEBO stabilograms as vector EPS from the lab's band-power metrics and visualised the survey group aggregates. The published paper contains no stabilogram."},
     {"id": "sql", "group": "skill", "ko": "SQL", "en": "SQL",
      "desc_ko": "T-SQL 복합 JOIN·CTE·저장 프로시저·스키마 정규화(INFO330).",
      "desc_en": "T-SQL complex JOINs·CTEs·stored procedures·normalization (INFO330)."},

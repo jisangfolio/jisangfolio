@@ -30,7 +30,6 @@ modification:
 
   assets/profile.jpg        Personal photograph.
   assets/resume.pdf         Personal résumé and the personal data in it.
-  assets/mlops_grafana.png  Screenshot of a workplace dashboard.
   assets/tebo_sample.xlsx   Human-subject posture measurements used as a demo
                             dataset. Included here to make the data-analysis
                             page runnable; redistribution rights have not been

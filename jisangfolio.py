@@ -121,7 +121,7 @@ T = {
             {
                 "title": "TEBO 균형 분석 · SCIE 논문",
                 "period": "Applied Sciences, 2025.07 게재",
-                "desc": "측정 이후 단계를 맡았습니다. 두 코호트(PCD·TCOA) 결과 데이터를 병합할 때 겹치는 피험자 번호를 새 대역으로 재배정해 분리하고, 낙상 두려움(FES-I)·우울(GDS) 설문을 채점해 집단별로 집계하고, 랩이 전달한 대역별 지표로 stabilogram 그림을 EPS 벡터로 출고했습니다. 논문 CRediT 기여는 formal analysis · data curation · visualization입니다 — 신호 필터링과 성분 분해는 연구팀이 수행했고 제 기여가 아닙니다. 게재는 SCIE \'Applied Sciences\' 공저(10인 중 7저자)입니다.",
+                "desc": "측정 이후 단계를 맡았습니다. 두 코호트(PCD·TCOA) 결과 데이터를 병합할 때 겹치는 피험자 번호를 새 대역으로 재배정해 분리하고, 낙상 두려움(FES-I) 설문을 채점해 집단별로 집계하고, 랩이 전달한 대역별 지표로 stabilogram을 EPS 벡터로 시각화했습니다 — 게재 논문에는 stabilogram이 없으니 논문 그림을 제가 만든 것은 아닙니다. 논문 CRediT 기여는 formal analysis · data curation · visualization입니다 — 신호 필터링과 성분 분해는 연구팀이 수행했고 제 기여가 아닙니다. 게재는 SCIE \'Applied Sciences\' 공저(10인 중 7저자)입니다.",
                 "tags": "`Python` `Pandas` `Matplotlib` `설문 집계`",
             },
         ],
@@ -231,7 +231,7 @@ T = {
             {
                 "title": "TEBO Balance Analysis · SCIE Paper",
                 "period": "Applied Sciences, Jul 2025",
-                "desc": "My work began after data collection. Merging the two cohorts (PCD·TCOA) meant overlapping subject IDs, so I reassigned them into a separate range; I scored the fear-of-falling (FES-I) and depression (GDS) surveys and aggregated them by group; and I produced the stabilogram figures as vector EPS from the band-power metrics the lab supplied. My CRediT roles on the paper are formal analysis, data curation and visualization — the signal filtering and component decomposition were done by the research team, not by me. Published as a co-author (7th of 10) in SCIE 'Applied Sciences'.",
+                "desc": "My work began after data collection. Merging the two cohorts (PCD·TCOA) meant overlapping subject IDs, so I reassigned them into a separate range; I scored the fear-of-falling (FES-I) survey and aggregated it by group; and I rendered stabilograms as vector EPS from the band-power metrics the lab supplied — the published paper contains no stabilogram, so these are not the paper's figures. My CRediT roles on the paper are formal analysis, data curation and visualization — the signal filtering and component decomposition were done by the research team, not by me. Published as a co-author (7th of 10) in SCIE 'Applied Sciences'.",
                 "tags": "`Python` `Pandas` `Matplotlib` `Survey aggregation`",
             },
         ],

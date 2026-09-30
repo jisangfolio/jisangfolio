@@ -48,7 +48,9 @@ request for the orphaned objects.
 
 **Current state is clean**: the résumé served for download (`assets/resume.pdf`) and the
 `resume_text` the chatbot answers from both carry the e-mail address only, no phone
-number. The dashboard screenshot in `assets/` is the cropped one.
+number. The workplace dashboard screenshot that used to sit in `assets/` was removed on
+2026-09-30 — an internal screen capture cannot be generalised the way prose can, so it does
+not belong in a public artifact regardless of cropping.
 
 ### Credentials
 

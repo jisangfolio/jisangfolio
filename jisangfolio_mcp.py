@@ -59,7 +59,7 @@ Period: Feb 2026 – Sep 2026 / contract
   - Stack: MLflow (tracking·registry·artifact serving) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
   - Jun 2026: Streamlit ops portal (5 views) · Evidently drift dashboard (PoC) · ONNX validate→deploy CI (manual trigger, 1 end-to-end run)
   - Aug–Sep 2026: eight Gitea Actions workflows — weekly train → manifest-driven gate (thresholds live in a project manifest, not in code) → ONNX export attached to the registry version → checksum-verified deploy; first unattended end-to-end run 2026-09-12 (Google MLOps Level 1). Gate rejected 2 versions (v6, v8); deployed v12's ONNX hash matches the serving file. A 10-menu operations console (Python http.server + Vue, no build step) calls the gate when training finishes, auto-recovers serving every 60 s, reconciles declared vs. actual, and triggers retraining on input-range drift (fired once in a demo with lowered thresholds (5 samples / 1 day vs. the default 50 / 3 days), 17–19 samples). A twice-daily check publishes console findings as Gitea issues and closes them automatically.
-  - Known limits: no training-data refresh path (retraining does not improve the model), CI has syntax checks only (no behavioral tests), no rollback, console access control still on the to-do list, inference traffic still smoke-level
+  - Known limits: no training-data refresh path (retraining does not improve the model), CI has syntax checks only (no behavioral tests), no rollback, inference traffic still smoke-level
   - Artifact store: MinIO was dropped over an AGPL license concern → MLflow local store (--serve-artifacts)
   - Self-hosting principle (org policy): avoid external SaaS/cloud → GitHub→Gitea, cloud monitoring→Prometheus+Grafana
   - Role: architecture design, tooling selection, environment build/ops, experiments, analysis, presentations
@@ -94,7 +94,8 @@ _PROJECTS = """
 3. TEBO balance analysis · SCIE paper (co-author, 7th of 10)
    - Applied Sciences (SCIE), Jul 2025
    - My part started after data collection: reconciled two cohorts' overlapping subject IDs,
-     scored and aggregated the FES-I / GDS surveys by group, produced the stabilogram visualisations
+     scored and aggregated the FES-I (fear-of-falling) survey by group, produced stabilogram
+     visualisations that are not figures in the published paper
    - CRediT roles: formal analysis, data curation, visualization. The signal filtering and
      component decomposition were the research team's work, not mine
    - Stack: Python, Pandas, NumPy, Matplotlib
@@ -130,7 +131,7 @@ Docker, Docker Compose
 
 [Data Science]
 Pandas, NumPy, Matplotlib, spaCy
-Survey scoring & group aggregation, figure production (vector EPS), hybrid retrieval (BM25 + dense)
+Survey scoring & group aggregation, stabilogram visualisation (vector EPS), hybrid retrieval (BM25 + dense)
 
 [Visualization]
 Streamlit, Plotly, Tableau, Power BI
@@ -155,8 +156,9 @@ Advisor: Dr. Manuel E. Hernandez (UIUC)
 [My contribution — CRediT: formal analysis, data curation, visualization]
 - Reconciled two participant datasets (PCD · TCOA) and resolved overlapping subject IDs by
   reassigning them into a separate range, so the cohorts could be merged without collision
-- Scored the fear-of-falling (FES-I) and depression (GDS) surveys and aggregated them by group
-- Produced the stabilogram figures as vector EPS from the band-power metrics the lab supplied
+- Scored the fear-of-falling (FES-I) survey and aggregated it by group
+- Produced stabilogram visualisations as vector EPS from the band-power metrics the lab supplied.
+  These are not figures in the published paper — the paper contains no stabilogram
 - Groups compared in the paper: healthy young (23) / healthy older (21) / Tai-Chi-practising
   older adults, TCOA (15) — 59 participants in total. TCOA is a Tai Chi group, not a clinical one
 - I am the 7th of 10 authors (not first or corresponding)
