@@ -61,3 +61,34 @@ def test_edge_labels_render_into_the_html():
     for lang, idx in (("한국어", 0), ("English", 1)):
         html = pg.to_vis_html(lang)
         assert pg.EDGE_LABEL[("jjpark", "infomax")][idx] in html, lang
+
+
+def test_embed_height_covers_the_canvas():
+    """iframe 높이가 캔버스보다 작으면 그래프 아래가 잘린다 — 실제로 100px 잘려 있었다.
+
+    홈이 하드코딩 숫자로 되돌아가는 것도 함께 막는다.
+    """
+    from pathlib import Path
+    home = (Path(__file__).resolve().parents[1] / "jisangfolio.py").read_text(encoding="utf-8")
+    assert pg.EMBED_HEIGHT >= pg.NET_HEIGHT + pg.LEGEND_HEIGHT
+    assert f"height={pg.NET_HEIGHT}" not in home, "캔버스 높이를 홈에 하드코딩하고 있다"
+    assert "height=profile_graph.EMBED_HEIGHT" in home, \
+        "홈이 그래프 모듈의 EMBED_HEIGHT 를 쓰지 않는다 — 다시 어긋난다"
+    assert f"height:{pg.NET_HEIGHT}px" in pg.to_vis_html("English")
+
+
+def test_edge_labels_are_always_on_with_hover_emphasis():
+    """선 이름은 상시 노출이 기본이다 — hover 전용으로 바꿨더니 '사라졌다'가 됐다.
+
+    hover 는 지우고 드러내는 장치가 아니라 **밝기를 올리는** 장치여야 한다.
+    """
+    html = pg.to_vis_html("한국어")
+    assert "hoverNode" in html and "selectNode" in html, "강조 훅이 없다"
+    assert "network.fit(" in html, "fit() 이 없으면 바깥 노드가 캔버스 밖으로 잘린다"
+    assert "drawThreshold" in html, "축소 배율에서 vis 가 라벨을 통째로 안 그린다"
+
+    import json, re
+    raw = re.search(r"new vis\.DataSet\((\[\{\"id\": \"e0\".*?\}\])\);", html, re.S).group(1)
+    labelled = [e for e in json.loads(raw) if e.get("label")]
+    assert len(labelled) == len(pg.EDGES), \
+        f"선 이름이 {len(labelled)}/{len(pg.EDGES)} 개만 박혀 있다 — 상시 노출이 깨졌다"

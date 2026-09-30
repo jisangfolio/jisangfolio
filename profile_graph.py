@@ -408,12 +408,19 @@ def _legend_html(lang):
             'padding:2px 2px 10px;display:flex;flex-wrap:wrap;">' + spans + '</div>')
 
 
+# 캔버스 높이는 여기 하나로 둔다. jisangfolio.py 의 components.html(height=...) 이
+# 이 값보다 작으면 **그래프 아래쪽이 잘린다** — 실제로 680 캔버스를 580 iframe 에
+# 넣어 100px 이 잘려 있었다. tests/test_profile_graph.py 가 둘을 대조한다.
+NET_HEIGHT = 780
+LEGEND_HEIGHT = 34
+EMBED_HEIGHT = NET_HEIGHT + LEGEND_HEIGHT
+
 _HTML_TEMPLATE = """<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 <style>
-  html, body { margin:0; padding:0; background:transparent; }
-  #net { width:100%; height:680px; }
+  html, body { margin:0; padding:0; background:transparent; overflow:hidden; }
+  #net { width:100%; height:__NET_HEIGHT__px; }
 </style></head>
 <body>
 __LEGEND__
@@ -421,20 +428,58 @@ __LEGEND__
 <script>
   const nodes = new vis.DataSet(__NODES__);
   const edges = new vis.DataSet(__EDGES__);
+  // 엣지 이름은 **항상** 띄운다. 다만 92개가 같은 밝기로 떠 있으면 글자 죽이
+  // 되므로 기본은 흐리게 두고, 노드에 마우스를 올리거나 클릭하면 그 노드에 걸린
+  // 관계만 밝고 크게 끌어올린다(나머지는 그대로 흐리게 남는다).
+  const LABELS = __EDGE_LABELS__;
+  const ALL_IDS = Object.keys(LABELS);
+  const DIM   = { size: 9,  color: '#79818F', strokeWidth: 4, strokeColor: '#0E1117' };
+  const FOCUS = { size: 11, color: '#E8EBF0', strokeWidth: 6, strokeColor: '#0E1117' };
+
   const options = {
-    nodes: { borderWidth: 0, shadow: false, font: { face: 'Pretendard, sans-serif' } },
-    edges: { color: { color: 'rgba(180,190,210,0.28)', highlight: '#7AA2F7', hover: '#7AA2F7' },
-             smooth: { type: 'continuous' }, width: 1.1, hoverWidth: 0.6,
-             // 엣지 이름. strokeWidth 로 배경을 깔지 않으면 선·노드와 겹쳐 못 읽는다.
-             font: { size: 9, color: '#9AA3B2', strokeWidth: 4, strokeColor: '#0E1117',
-                     face: 'Pretendard, sans-serif', align: 'horizontal' } },
-    physics: { barnesHut: { gravitationalConstant: -20000, centralGravity: 0.22,
-                            springLength: 210, springConstant: 0.03, avoidOverlap: 0.45 },
-               stabilization: { iterations: 320 } },
-    interaction: { hover: true, tooltipDelay: 80, zoomView: true, dragView: true, navigationButtons: false }
+    // drawThreshold: vis 는 fontSize * 배율이 이 값보다 작으면 라벨을 **통째로 안 그린다**
+    // (기본 5). fit() 으로 축소되면 노드 이름이 전부 사라지는 원인이었다.
+    nodes: { borderWidth: 0, shadow: false, font: { face: 'Pretendard, sans-serif' },
+             scaling: { label: { drawThreshold: 1 } } },
+    edges: { color: { color: 'rgba(180,190,210,0.22)', highlight: '#7AA2F7', hover: '#7AA2F7' },
+             smooth: { type: 'continuous' }, width: 1.1, hoverWidth: 0.8,
+             // strokeWidth 로 배경을 깔지 않으면 선 위에서 글자가 안 읽힌다.
+             font: { size: 9, color: '#79818F', strokeWidth: 4, strokeColor: '#0E1117',
+                     face: 'Pretendard, sans-serif', align: 'horizontal' },
+             // drawThreshold 를 안 내리면 축소 배율에서 선 이름이 통째로 사라진다.
+             scaling: { label: { drawThreshold: 1 } } },
+    physics: { barnesHut: { gravitationalConstant: -13000, centralGravity: 0.33,
+                            springLength: 145, springConstant: 0.045, avoidOverlap: 0.32 },
+               stabilization: { iterations: 400 } },
+    interaction: { hover: true, tooltipDelay: 80, zoomView: true, dragView: true,
+                   hoverConnectedEdges: true, navigationButtons: false }
   };
   const network = new vis.Network(document.getElementById('net'), { nodes, edges }, options);
-  network.once('stabilizationIterationsDone', function () { network.setOptions({ physics: false }); });
+
+  function focusOn(nodeId) {
+    const on = new Set(network.getConnectedEdges(nodeId));
+    edges.update(ALL_IDS.map(id => ({ id: id, font: on.has(id) ? FOCUS : DIM })));
+  }
+  function resetFocus() {
+    edges.update(ALL_IDS.map(id => ({ id: id, font: DIM })));
+  }
+  network.on('hoverNode', p => focusOn(p.node));
+  network.on('blurNode', () => { if (network.getSelectedNodes().length === 0) resetFocus(); });
+  network.on('selectNode', p => focusOn(p.nodes[0]));
+  network.on('deselectNode', resetFocus);
+
+  network.once('stabilizationIterationsDone', function () {
+    network.setOptions({ physics: false });
+    fitInView();
+  });
+  // fit() 이 없으면 바깥쪽 노드가 캔버스 밖으로 나가 라벨이 잘린다. 다만 너무 크게
+  // 확대되면 그래프가 화면을 뚫으므로 배율 상한을 둔다.
+  function fitInView() {
+    network.fit({ animation: false });
+    const s = network.getScale();
+    if (s > 1.15) network.moveTo({ scale: 1.15 });
+  }
+  window.addEventListener('resize', fitInView);
 </script>
 </body></html>"""
 
@@ -465,22 +510,23 @@ def to_vis_html(lang="한국어"):
             "font": {"color": "#E6E8EE", "size": 16 if n["group"] == "person" else 13},
         }
         vis_nodes.append(node)
-    vis_edges = []
-    for (a, b) in EDGES:
+    vis_edges, edge_labels = [], {}
+    for i, (a, b) in enumerate(EDGES):
+        eid = f"e{i}"
         lab = EDGE_LABEL.get((a, b))
-        edge = {"from": a, "to": b}
-        if lab:
-            # label = 선 위 글자, title = hover 툴팁. 92개가 동시에 떠 있으니
-            # 글자는 작고 muted 하게 두고, 어두운 stroke 로 선 위에서 읽히게 한다.
-            edge["label"] = lab[0] if ko else lab[1]
-            edge["title"] = edge["label"]
-        vis_edges.append(edge)
+        text = (lab[0] if ko else lab[1]) if lab else ""
+        # label(선 위 글자)과 title(툴팁) 둘 다 단다. 상시 노출이 기본이고,
+        # 겹침은 밝기 차이(DIM/FOCUS)와 캔버스 높이로 푼다.
+        vis_edges.append({"id": eid, "from": a, "to": b, "label": text, "title": text})
+        edge_labels[eid] = text
     # 정규화한 값을 넘긴다. 노드 쪽만 normalize_lang 을 거치고 범례에 raw 를 넘기던 탓에
     # to_vis_html("ko") 가 LEGEND_LABELS 조회에서 KeyError 로 죽었다 — 형제 함수
     # graph_retrieve 는 'ko' 를 받도록 테스트까지 있는데 이쪽만 안 받았다.
     html = _HTML_TEMPLATE.replace("__LEGEND__", _legend_html("한국어" if ko else "English"))
     html = html.replace("__NODES__", json.dumps(vis_nodes, ensure_ascii=False))
     html = html.replace("__EDGES__", json.dumps(vis_edges, ensure_ascii=False))
+    html = html.replace("__EDGE_LABELS__", json.dumps(edge_labels, ensure_ascii=False))
+    html = html.replace("__NET_HEIGHT__", str(NET_HEIGHT))
     return html
 
 

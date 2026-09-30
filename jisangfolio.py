@@ -127,6 +127,7 @@ T = {
         ],
         "stack_head": "## 기술 스택",
         "profilegraph_head": "## 프로필 구조 그래프",
+        "profilegraph_caption": "선 위 글자가 두 노드의 관계입니다. 노드에 마우스를 올리거나 클릭하면 그 노드에 걸린 관계만 밝게 강조됩니다. 드래그로 이동, 휠로 확대·축소.",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · GraphRAG · Agentic RAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
             ("**Data Engineering**", "Pandas · NumPy · Matplotlib  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
@@ -236,6 +237,7 @@ T = {
         ],
         "stack_head": "## Tech Stack",
         "profilegraph_head": "## Profile graph",
+        "profilegraph_caption": "The text on each line names the relationship. Hover or click a node to highlight just the relationships attached to it. Drag to pan, scroll to zoom.",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · GraphRAG · Agentic RAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
             ("**Data Engineering**", "Pandas · NumPy · Matplotlib  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
@@ -466,7 +468,9 @@ with tab4:
 
 # ── 프로필 구조 그래프 (프로필 SSOT — 챗봇과 데이터 공유) ──────────
 st.markdown(t["profilegraph_head"])
-components.html(profile_graph.to_vis_html(lang), height=580, scrolling=False)
+components.html(profile_graph.to_vis_html(lang),
+                height=profile_graph.EMBED_HEIGHT, scrolling=False)
+st.caption(t["profilegraph_caption"])
 
 # ── 코드 지식그래프 (자체 AST 파서 gen_codegraph.py 생성 · graphify 아님) ──
 st.markdown(t["graph_head"])
