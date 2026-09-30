@@ -44,18 +44,18 @@ _KETI = """
 [KETI — Research Engineer (Contract), AX Research Division]
 Period: Feb 2026 – Sep 2026 / contract
 
-▸ Project 1: Songsan Green City digital-twin integration (Feb–Apr 2026, done)
+▸ Project 1: A municipal digital-twin integration (Feb–Apr 2026, done)
   - Integrated 3 parts (data platform / SWMM simulator / Unity viz) and registered NGSI-LD data models
   - Analyzed the MQTT + HTTP hybrid comms structure; applied a Ports-and-Adapters pattern
   - Documented the integration & sequence diagrams and presented internally
 
 ▸ Project 2: Self-hosted on-premise MLOps platform, built for closed-network constraints (since Mar 2026, ongoing)
   - Led the design & build of a model-agnostic, open-source MLOps platform that serves/manages multiple models without external SaaS or cloud
-    (the urban-cooling AI research is the backdrop — a PKNU 3D U-Net and an external team's PINNs run on top of it as use cases)
-  - PKNU-provided PyTorch 3D U-Net (+CBAM +Attention Gate) → ONNX → Triton GPU serving
-  - Unified 3 external (U-Ecotron) PINN models on the same Triton — voxel/point I/O heterogeneous models, the platform's first external use case
+    (the urban-cooling AI research is the backdrop — a partner university's 3D U-Net and an external team's PINNs run on top of it as use cases)
+  - Partner-university PyTorch 3D U-Net (+CBAM +Attention Gate) → ONNX → Triton GPU serving
+  - Unified 3 PINN models from an external team on the same Triton — voxel/point I/O heterogeneous models, the platform's first external use case
   - Consolidating training data that had arrived in separate splits and retraining improved the error and fit, compared version-to-version in MLflow (the project's metric values are not disclosed — they are a national-programme deliverable, not mine to publish)
-  - Latency: a 100-point PINN request in 22–32 ms on an L40S (CFD runtime of tens of minutes is a PKNU figure, not my measurement)
+  - Latency: a 100-point PINN request in 22–32 ms on an L40S (the CFD runtime of tens of minutes is the partner university's figure, not my measurement)
   - Stack: MLflow (tracking·registry·artifact serving) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
   - Jun 2026: Streamlit ops portal (5 views) · Evidently drift dashboard (PoC) · ONNX validate→deploy CI (manual trigger, 1 end-to-end run)
   - Aug–Sep 2026: eight Gitea Actions workflows — weekly train → manifest-driven gate (thresholds live in a project manifest, not in code) → ONNX export attached to the registry version → checksum-verified deploy; first unattended end-to-end run 2026-09-12 (Google MLOps Level 1). Gate rejected 2 versions (v6, v8); deployed v12's ONNX hash matches the serving file. A 10-menu operations console (Python http.server + Vue, no build step) calls the gate when training finishes, auto-recovers serving every 60 s, reconciles declared vs. actual, and triggers retraining on input-range drift (fired once in a demo with lowered thresholds (5 samples / 1 day vs. the default 50 / 3 days), 17–19 samples). A twice-daily check publishes console findings as Gitea issues and closes them automatically.
@@ -94,8 +94,8 @@ _PROJECTS = """
 3. TEBO balance analysis · SCIE paper (co-author, 7th of 10)
    - Applied Sciences (SCIE), Jul 2025
    - My part started after data collection: reconciled two cohorts' overlapping subject IDs,
-     scored and aggregated the FES-I (fear-of-falling) survey by group, produced stabilogram
-     visualisations that are not figures in the published paper
+     scored and aggregated the FES-I (fear-of-falling) survey by group, produced simulated
+     stabilogram visualisations (not measured sway, and not figures in the published paper)
    - CRediT roles: formal analysis, data curation, visualization. The signal filtering and
      component decomposition were the research team's work, not mine
    - Stack: Python, Pandas, NumPy, Matplotlib
@@ -157,8 +157,8 @@ Advisor: Dr. Manuel E. Hernandez (UIUC)
 - Reconciled two participant datasets (PCD · TCOA) and resolved overlapping subject IDs by
   reassigning them into a separate range, so the cohorts could be merged without collision
 - Scored the fear-of-falling (FES-I) survey and aggregated it by group
-- Produced stabilogram visualisations as vector EPS from the band-power metrics the lab supplied.
-  These are not figures in the published paper — the paper contains no stabilogram
+- Produced stabilogram visualisations as vector EPS — simulated trajectories scaled to the band-power
+  metrics the lab supplied, not measured sway. The published paper contains no stabilogram either
 - Groups compared in the paper: healthy young (23) / healthy older (21) / Tai-Chi-practising
   older adults, TCOA (15) — 59 participants in total. TCOA is a Tai Chi group, not a clinical one
 - I am the 7th of 10 authors (not first or corresponding)

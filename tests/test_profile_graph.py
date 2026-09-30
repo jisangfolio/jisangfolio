@@ -92,3 +92,13 @@ def test_edge_labels_are_always_on_with_hover_emphasis():
     labelled = [e for e in json.loads(raw) if e.get("label")]
     assert len(labelled) == len(pg.EDGES), \
         f"선 이름이 {len(labelled)}/{len(pg.EDGES)} 개만 박혀 있다 — 상시 노출이 깨졌다"
+
+
+def test_relationship_names_reach_the_chatbot_context():
+    """그래프 그림에만 있고 챗봇 프롬프트엔 없던 관계 이름을 근거에 함께 넣는다.
+
+    화면에는 '현 재직'이라 떠 있는데 봇은 두 노드가 이어졌다는 것만 알던 상태였다.
+    """
+    for lang, idx in (("한국어", 0), ("English", 1)):
+        ctx = pg.graph_retrieve("연합인포맥스 Yonhap Infomax", lang)["context"]
+        assert pg.EDGE_LABEL[("jjpark", "infomax")][idx] in ctx, (lang, ctx[:300])

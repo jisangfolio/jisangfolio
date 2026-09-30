@@ -10,7 +10,7 @@ PyTorch)를 여러 프로젝트가 함께 가리키게 해 교차연결을 만�
 
 ⚠️ 노드 설명은 keti_mlops_full_dump / 학부_코스워크_카탈로그 / SDI 실코드 / 작업가이드 §2
    가드레일 준수: KETI="온프레미스 자체호스팅(폐쇄망 대응 설계)"·"주도적 설계·구축"(단독X)
-   ·"전문생산기술연구소"(정출연X)·부경대 제공 모델. SDI SPA=본인 몫은 검색·분기·UI(LLM
+   ·"전문생산기술연구소"(정출연X)·모델은 협업 대학 제공. SDI SPA=본인 몫은 검색·분기·UI(LLM
    서빙은 멘토 주도), 임원 PoC 호평. TEBO=공저 + formal analysis·data curation·
    visualization(신호처리·분해는 연구팀 몫). 코스워크=강의 프로젝트 수준(IS327·IS477 R²
    성과화 금지). FAISS/LangChain은 SDI·JisangData만(KETI 아님).
@@ -67,8 +67,8 @@ NODES = [
 
     # 논문
     {"id": "tebo", "group": "paper", "ko": "TEBO 논문", "en": "TEBO paper",
-     "desc_ko": "측정 이후 단계 기여 — 두 코호트 ID 정합화 · FES-I 집단 집계 · stabilogram 시각화(게재 논문에 실린 그림은 아니다). SCIE 'Applied Sciences' 공저(2025, 7저자). 신호 필터링·성분 분해는 연구팀 수행.",
-     "desc_en": "Contributed after data collection — reconciled two cohorts' subject IDs, scored and aggregated the FES-I survey, produced stabilogram visualisations (not figures in the published paper). Co-author, SCIE 'Applied Sciences' (2025, 7th author). Signal filtering and decomposition were done by the research team."},
+     "desc_ko": "측정 이후 단계 기여 — 두 코호트 ID 정합화 · FES-I 집단 집계 · 시뮬레이션 stabilogram 시각화. SCIE 'Applied Sciences' 공저(2025, 10인 중 7저자). 신호 필터링·성분 분해는 연구팀 수행.",
+     "desc_en": "Contributed after data collection — reconciled two cohorts' subject IDs, scored and aggregated the FES-I survey, produced simulated stabilogram visualisations. Co-author, SCIE 'Applied Sciences' (2025, 7th author). Signal filtering and decomposition were done by the research team."},
 
     # 학부 코스워크 (강의 프로젝트 수준 — 과대표현 금지)
     {"id": "cs307", "group": "course", "ko": "CS307 · ML", "en": "CS307 · ML",
@@ -92,8 +92,8 @@ NODES = [
 
     # 기술·도구 (공유 노드 — 여러 프로젝트가 함께 가리켜 교차연결)
     {"id": "triton", "group": "skill", "ko": "Triton 서빙", "en": "Triton serving",
-     "desc_ko": "부경대 제공 3D U-Net을 GPU 서빙 · voxel I/O와 point I/O가 다른 외부 PINN 3종까지 같은 Triton에 통합(PINN 100점 단일 요청 22–32ms, L40S).",
-     "desc_en": "Serves a PKNU-provided 3D U-Net on GPU and unifies 3 external PINNs with different I/O on the same Triton (a 100-point PINN request in 22–32 ms on an L40S)."},
+     "desc_ko": "협업 대학이 제공한 3D U-Net을 GPU 서빙 · voxel I/O와 point I/O가 다른 외부 PINN 3종까지 같은 Triton에 통합(PINN 100점 단일 요청 22–32ms, L40S).",
+     "desc_en": "Serves a partner university's 3D U-Net on GPU and unifies 3 external PINNs with different I/O on the same Triton (a 100-point PINN request in 22–32 ms on an L40S)."},
     {"id": "onnx", "group": "skill", "ko": "ONNX", "en": "ONNX",
      "desc_ko": "PyTorch 모델을 ONNX(opset 17)로 변환·검증해 Triton 서빙 포맷 확보.",
      "desc_en": "Convert/validate PyTorch models to ONNX (opset 17) for Triton serving."},
@@ -110,8 +110,8 @@ NODES = [
      "desc_ko": "다중 컨테이너 운영 — KETI 자체호스팅 스택과 SDI 폐쇄망 환경 양쪽에서 사용.",
      "desc_en": "Multi-container ops — used across KETI's self-hosted stack and SDI's air-gapped env."},
     {"id": "pytorch", "group": "skill", "ko": "PyTorch", "en": "PyTorch",
-     "desc_ko": "부경대 제공 서빙 모델(→ONNX 변환)과 CS307 CNN 실습의 프레임워크.",
-     "desc_en": "Framework for the PKNU-provided serving model (→ONNX) and the CS307 CNN lab."},
+     "desc_ko": "협업 대학이 제공한 서빙 모델(→ONNX 변환)과 CS307 CNN 실습의 프레임워크.",
+     "desc_en": "Framework for the partner university's serving model (→ONNX) and the CS307 CNN lab."},
     {"id": "ollama", "group": "skill", "ko": "Ollama·Qwen2.5", "en": "Ollama·Qwen2.5",
      "desc_ko": "SPA가 올라간 온프레미스 LLM 런타임(Qwen2.5-72B) — SDI 폐쇄망. 서빙 구성은 멘토 주도이고 본인은 그 위의 검색·분기·UI를 맡았다.",
      "desc_en": "The on-prem LLM runtime SPA ran on (Qwen2.5-72B) in SDI's air-gapped env. My mentor set the serving up; I built retrieval, routing and the UI on top."},
@@ -134,8 +134,8 @@ NODES = [
      "desc_ko": "규칙 채점 + 별도 모델 LLM-judge로 답변 사실성 회귀 검증.",
      "desc_en": "Rule scoring + a separate LLM judge for factual regression."},
     {"id": "mpl", "group": "skill", "ko": "Matplotlib 도식화", "en": "Matplotlib figures",
-     "desc_ko": "TEBO에서 랩이 전달한 대역별 지표로 stabilogram을 EPS 벡터로 시각화 · 설문 집단 집계 도식화. 게재 논문에는 stabilogram이 없다.",
-     "desc_en": "Rendered the TEBO stabilograms as vector EPS from the lab's band-power metrics and visualised the survey group aggregates. The published paper contains no stabilogram."},
+     "desc_ko": "TEBO에서 랩이 전달한 대역별 파워로 **스케일한 시뮬레이션** stabilogram을 EPS 벡터로 그림 · 설문 집단 집계 도식화. 실측 궤적이 아니고, 게재 논문에도 stabilogram은 없다.",
+     "desc_en": "Rendered TEBO stabilograms as vector EPS — simulated trajectories scaled to the lab's band-power metrics, not measured sway — and visualised the survey group aggregates. The published paper contains no stabilogram."},
     {"id": "sql", "group": "skill", "ko": "SQL", "en": "SQL",
      "desc_ko": "T-SQL 복합 JOIN·CTE·저장 프로시저·스키마 정규화(INFO330).",
      "desc_en": "T-SQL complex JOINs·CTEs·stored procedures·normalization (INFO330)."},
@@ -218,7 +218,7 @@ EDGES = [
     # 아래 엣지는 전부 이력서·리포에 근거가 있는 실제 관계만 넣는다(장식용 금지).
 
     # MLOps 파이프라인 내부 — 도구들이 실제로 물려 있는 순서
-    ("pytorch", "onnx"),        # 부경대 제공 PyTorch → ONNX 변환 경로 확보
+    ("pytorch", "onnx"),        # 협업 대학이 제공한 PyTorch → ONNX 변환 경로 확보
     ("onnx", "triton"),         # 변환·검증된 ONNX를 Triton으로 서빙
     ("mlflow", "triton"),       # Registry 모델을 Triton에 로드(운영 포털 워크플로우)
     ("monitor", "triton"),      # Prometheus가 Triton 메트릭 수집 → Grafana 7패널
@@ -337,7 +337,7 @@ EDGE_LABEL = {
     ("hybrid", "faiss"): ("dense 절반", "the dense half"),
     ("observability", "streamlit"): ("대시보드", "dashboard"),
     # 논문·코스워크 → 기술
-    ("tebo", "mpl"): ("stabilogram 시각화", "stabilogram visualisations"),
+    ("tebo", "mpl"): ("시뮬레이션 stabilogram", "simulated stabilograms"),
     ("cs307", "pytorch"): ("CNN lab", "CNN lab"),
     ("info330", "sql"): ("T-SQL", "T-SQL"),
     # MLOps 파이프라인 내부 순서
@@ -640,7 +640,7 @@ def _overlap(q_tokens, node_tokens):
     """질문 토큰 ∩ 노드 토큰. 한글만 접두 일치까지 인정한다(조사가 붙으므로).
 
     영숫자는 정규식이 이미 깔끔하게 끊으므로 정확일치로 충분하다. 한글은
-    '연구를' ↔ '연구', '송산그린시티의' ↔ '송산그린시티' 를 이어줘야 한다.
+    '연구를' ↔ '연구' 처럼 조사가 붙은 형태를 어간과 이어줘야 한다.
     """
     hits = 0
     for q in q_tokens:
@@ -705,7 +705,14 @@ def graph_retrieve(query, lang="English", max_seeds=3, hops=1):
         return by_id[nid]["desc_ko"] if ko else by_id[nid]["desc_en"]
 
     node_lines = [f"- {lab(nid)}: {desc(nid)}" for nid in selected]
-    rels = [f"{lab(a)} → {lab(b)}" for a, b in EDGES if a in selected and b in selected]
+    # 관계 **이름**까지 넣는다. 예전엔 "A → B" 만 줘서, 챗봇은 둘이 이어져 있다는 건
+    # 알아도 *어떤 관계인지*는 몰랐다(그래프 그림에는 그 이름이 떠 있는데 프롬프트에만
+    # 없어서, 화면과 답변이 다른 것을 아는 상태였다).
+    def rel(a, b):
+        arrow = f"{lab(a)} → {lab(b)}"
+        name = EDGE_LABEL.get((a, b))
+        return f"{arrow} ({name[0] if ko else name[1]})" if name else arrow
+    rels = [rel(a, b) for a, b in EDGES if a in selected and b in selected]
     head_n = "관련 노드" if ko else "Relevant nodes"
     head_r = "관계" if ko else "Relationships"
     context = f"[{head_n}]\n" + "\n".join(node_lines) + f"\n[{head_r}]\n" + " · ".join(rels)
