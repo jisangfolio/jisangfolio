@@ -102,3 +102,21 @@ def test_relationship_names_reach_the_chatbot_context():
     for lang, idx in (("한국어", 0), ("English", 1)):
         ctx = pg.graph_retrieve("연합인포맥스 Yonhap Infomax", lang)["context"]
         assert pg.EDGE_LABEL[("jjpark", "infomax")][idx] in ctx, (lang, ctx[:300])
+
+
+def test_node_and_edge_text_is_plain_not_markdown():
+    """노드 설명은 vis 툴팁과 챗봇 프롬프트에 **평문**으로 들어간다.
+
+    홈 카드(st.markdown)에서 쓰던 강조 표기를 그대로 옮겨오면 별표가 화면에
+    그대로 뜬다 — 실제로 mpl·ghci 노드가 그랬다(2026-09-30 외부 검토 적발).
+    """
+    bad = []
+    for n in pg.NODES:
+        for k in ("ko", "en", "desc_ko", "desc_en"):
+            if any(tok in n[k] for tok in ("**", "__", "`", "<b>", "</")):
+                bad.append((n["id"], k))
+    for e, lab in pg.EDGE_LABEL.items():
+        for t in lab:
+            if any(tok in t for tok in ("**", "__", "`", "<")):
+                bad.append((e, t))
+    assert not bad, f"마크다운/HTML 표기가 평문 표면에 들어가 있다: {bad}"
