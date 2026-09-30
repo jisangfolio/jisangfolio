@@ -23,8 +23,8 @@ import re
 # group: person / edu / work / project / paper / course / skill
 NODES = [
     {"id": "jjpark", "group": "person", "ko": "박지상", "en": "Jisang Park",
-     "desc_ko": "온프레미스 자체호스팅 환경의 MLOps와 RAG·LLM 서빙을 맡아 온 AI 엔지니어.",
-     "desc_en": "AI engineer who owns MLOps and RAG·LLM serving in self-hosted, on-prem environments."},
+     "desc_ko": "온프레미스 모델 서빙·배포 자동화를 맡아 온 AI 엔지니어. 별도로 RAG·LLM 앱을 만들고 평가·가드레일을 붙여 왔다.",
+     "desc_en": "AI engineer who has owned on-prem model serving and deployment automation. Separately builds RAG/LLM apps with evals and guardrails."},
 
     # 학력
     {"id": "uiuc", "group": "edu", "ko": "UIUC", "en": "UIUC",

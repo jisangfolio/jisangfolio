@@ -120,3 +120,15 @@ def test_node_and_edge_text_is_plain_not_markdown():
             if any(tok in t for tok in ("**", "__", "`", "<")):
                 bad.append((e, t))
     assert not bad, f"마크다운/HTML 표기가 평문 표면에 들어가 있다: {bad}"
+
+
+def test_person_node_does_not_claim_llm_serving():
+    """루트 노드는 모든 답변의 전제라 개별 노드와 어긋나면 안 된다.
+
+    실제로 person 노드가 "RAG·LLM 서빙을 맡아 왔다"고 적는 동안 rag·ollama 노드는
+    "LLM 서빙 구성은 멘토 주도"라고 적고 있었고, 챗봇은 그 둘을 함께 받았다.
+    """
+    me = next(n for n in pg.NODES if n["id"] == "jjpark")
+    for k in ("desc_ko", "desc_en"):
+        t = me[k]
+        assert "LLM 서빙" not in t and "LLM serving" not in t, (k, t)

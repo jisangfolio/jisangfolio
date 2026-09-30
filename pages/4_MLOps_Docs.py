@@ -4,7 +4,7 @@
 Phase 1: 하이브리드 검색(FAISS+BM25) → 근거 인용 생성. (Phase 2에서 agentic 루프 추가)
 
 '내 온프레 MLOps 파이프라인 vs 클라우드 3사'를 비교·질의할 수 있는, 방대한 기술문서를
-빠르게 검색·학습하려고 만든 도구. KAigen(내부 규정 문서 RAG)과 같은 패턴.
+빠르게 검색·학습하려고 만든 도구. 사내에서 본 규정 문서 RAG와 같은 패턴이다.
 """
 import time
 import streamlit as st
