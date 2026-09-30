@@ -30,9 +30,10 @@ mcp = FastMCP("JisangFolio — Jisang Park portfolio")
 # ── Portfolio data (single source for the MCP tools) ─────────────────
 _PROFILE = """
 Name: Jisang Park (박지상)
-Current: Researcher, AX Research Division, Korea Electronics Technology Institute (KETI) — AI agent development (contract, since Feb 2026)
+Current: Financial Engineering Research Institute, Yonhap Infomax (since Sep 2026)
 Education: B.S. Information Science + Data Science (iSchool), UIUC · GPA 3.89/4.0 · Dec 2025
-Prior: University of Washington, Seattle (Pre-Science, 2019–2024)
+Prior role: Research engineer, AX Research Division, Korea Electronics Technology Institute (KETI) — on-prem MLOps (contract, Feb–Sep 2026)
+Prior school: University of Washington, Seattle (Pre-Science, 2019–2024)
 Military: ROK Navy, honorable discharge as Sergeant — English interpreter (Feb 2021–Oct 2022), incl. ~10 months aboard ROKS Gwangju and interpretation for ROK–US Combined Forces
 Languages: Korean (native), English (near-native — TOEIC 970 · OPIc IH; ~10 years in the U.S.)
 Contact: jjpark324434@gmail.com | linkedin.com/in/jisangpark | github.com/jisangfolio
@@ -41,7 +42,7 @@ Portfolio: jisangfolio.streamlit.app
 
 _KETI = """
 [KETI — Research Engineer (Contract), AX Research Division]
-Period: Feb 2026 – present / contract
+Period: Feb 2026 – Sep 2026 / contract
 
 ▸ Project 1: Songsan Green City digital-twin integration (Feb–Apr 2026, done)
   - Integrated 3 parts (data platform / SWMM simulator / Unity viz) and registered NGSI-LD data models
@@ -53,11 +54,11 @@ Period: Feb 2026 – present / contract
     (the urban-cooling AI research is the backdrop — a PKNU 3D U-Net and an external team's PINNs run on top of it as use cases)
   - PKNU-provided PyTorch 3D U-Net (+CBAM +Attention Gate) → ONNX → Triton GPU serving
   - Unified 3 external (U-Ecotron) PINN models on the same Triton — voxel/point I/O heterogeneous models, the platform's first external use case
-  - Round 1 (45 samples): MAE 0.53°C, R² 0.82 → Round 2 (291 samples integrated): MAE 0.26°C, R² 0.95 (MAE ↓51%)
+  - Consolidating training data that had arrived in separate splits and retraining improved the error and fit, compared version-to-version in MLflow (the project's metric values are not disclosed — they are a national-programme deliverable, not mine to publish)
   - Latency: a 100-point PINN request in 22–32 ms on an L40S (CFD runtime of tens of minutes is a PKNU figure, not my measurement)
   - Stack: MLflow (tracking·registry·artifact serving) + Gitea + Gitea Actions CI + Triton + Prometheus + Grafana
   - Jun 2026: Streamlit ops portal (5 views) · Evidently drift dashboard (PoC) · ONNX validate→deploy CI (manual trigger, 1 end-to-end run)
-  - Aug–Sep 2026: eight Gitea Actions workflows — weekly train → manifest-driven gate (mlops.yaml thresholds) → ONNX export attached to the registry version → checksum-verified deploy; first unattended end-to-end run 2026-09-12 (Google MLOps Level 1). Gate rejected 2 versions (v6, v8); deployed v12's ONNX hash matches the serving file. A 25-screen operations console (Python http.server + Vue, no build step) calls the gate when training finishes, auto-recovers serving every 60 s, reconciles declared vs. actual, and triggers retraining on input-range drift (fired once, 17 samples). Alerts go to Gitea issues via alert_check.yml.
+  - Aug–Sep 2026: eight Gitea Actions workflows — weekly train → manifest-driven gate (mlops.yaml thresholds) → ONNX export attached to the registry version → checksum-verified deploy; first unattended end-to-end run 2026-09-12 (Google MLOps Level 1). Gate rejected 2 versions (v6, v8); deployed v12's ONNX hash matches the serving file. A 10-menu operations console (Python http.server + Vue, no build step) calls the gate when training finishes, auto-recovers serving every 60 s, reconciles declared vs. actual, and triggers retraining on input-range drift (fired once in a demo with lowered thresholds (5 samples / 1 day vs. the default 50 / 3 days), 17–19 samples). Alerts go to Gitea issues via alert_check.yml.
   - Known limits: no training-data refresh path (retraining does not improve the model), CI has syntax checks only (no behavioral tests), no rollback, no console auth, inference traffic still smoke-level, root disk at 90%
   - Artifact store: MinIO was dropped over an AGPL license concern → MLflow local store (--serve-artifacts)
   - Self-hosting principle (org policy): avoid external SaaS/cloud → GitHub→Gitea, cloud monitoring→Prometheus+Grafana
@@ -69,32 +70,34 @@ _SDI = """
 Period: Jun 2025 – Aug 2025
 
 ▸ Built "SPA (SDI Patent Assistant)", an air-gapped patent-search RAG chatbot — my part was retrieval, routing and UI; LLM serving was set up by my mentor
-  - Fully internet-blocked environment; self-hosted Ollama + Qwen2.5-72B
+  - Fully internet-blocked environment; the LLM runtime was Ollama + Qwen2.5-72B, set up by my mentor
   - LangChain + FAISS vector DB; loaded patent.csv from MinIO
   - Kept context over the last 5 turns + stored prior RAG choices → auto re-retrieval on follow-ups
-  - Rule-based agent: "chart/stats/filing" keywords → pandas aggregation + st.bar_chart, so numbers come from data rather than the LLM
+  - Rule-based agent: on "chart/stats/filing" keywords the chart is computed straight from the DataFrame and the LLM is instructed not to answer that query — so the numbers come from data. Worth stating plainly: the code streams the LLM on every query, so that silence is a prompt instruction, not a structural guarantee
   - Streamlit UI + Docker; praised in an executive PoC
 """
 
 _PROJECTS = """
 [Key projects]
 
-1. KETI air-gapped, self-hosted MLOps platform
+1. KETI self-hosted on-prem MLOps platform (built for closed-network constraints)
    - PyTorch 3D U-Net + 3 external PINNs → ONNX → NVIDIA Triton heterogeneous serving
    - MLflow · Gitea · Gitea Actions · Prometheus · Grafana + Streamlit ops portal · Evidently drift (PoC)
-   - Round 2 (291 samples) improved MAE by 51%, R² 0.95
+   - Consolidated training data + retraining improved error and fit, judged by version-to-version comparison in MLflow (metric values not disclosed)
    - Stack: PyTorch, ONNX, Triton, MLflow, Gitea, Docker Compose, Prometheus, Grafana, Evidently, Streamlit
 
 2. Samsung SDI SPA — air-gapped patent RAG chatbot
-   - Fully internet-blocked, solo-built
+   - Fully internet-blocked; I owned retrieval, routing and the UI (LLM serving was my mentor's)
    - Rule-based agent + RAG hybrid; praised in an executive PoC
    - Stack: Ollama, Qwen2.5-72B, LangChain, FAISS, Streamlit, Docker
 
-3. TEBO balance analysis · SCIE paper (co-author)
+3. TEBO balance analysis · SCIE paper (co-author, 7th of 10)
    - Applied Sciences (SCIE), Jul 2025
-   - CoP time-series → 4th-order Butterworth (6Hz) + FFT → Rambling/Trembling decomposition
-   - Individual abstract simulation: R² ≈ 0.85, Pearson r = 0.92 (p<0.001)
-   - Stack: Python, NumPy, SciPy, Matplotlib
+   - My part started after data collection: reconciled two cohorts' overlapping subject IDs,
+     scored and aggregated the FES-I / GDS surveys by group, produced the stabilogram figures
+   - CRediT roles: formal analysis, data curation, visualization. The signal filtering and
+     component decomposition were the research team's work, not mine
+   - Stack: Python, Pandas, NumPy, Matplotlib
 
 [Personal projects]
 
@@ -126,8 +129,8 @@ LLM observability (tracing · latency · routing), Streamlit ops portal
 Docker, Docker Compose
 
 [Data Science]
-Pandas, NumPy, Matplotlib, SciPy, spaCy
-Butterworth filter, FFT, time-series analysis, hybrid retrieval (BM25 + dense)
+Pandas, NumPy, Matplotlib, spaCy
+Survey scoring & group aggregation, figure production (vector EPS), hybrid retrieval (BM25 + dense)
 
 [Visualization]
 Streamlit, Plotly, Tableau, Power BI
@@ -149,19 +152,22 @@ Journal: Applied Sciences (SCIE)
 Date: Jul 2025
 Advisor: Dr. Manuel E. Hernandez (UIUC)
 
-[My contribution]
-- Solo-designed & implemented the full CoP (center-of-pressure) time-series analysis pipeline
-- 4th-order Butterworth low-pass filter (6Hz cutoff) → sensor-noise filtering
-- Zero-crossing equilibrium detection → cubic-spline interpolation to reconstruct Rambling
-- FFT → integrated 0–0.3Hz → low-frequency Rambling power
-- Compared Young (n=1) / Healthy Older (n=37) / TCOA clinical (n=22) groups
-- Note: on the published paper I am a co-author (not first/corresponding author)
+[My contribution — CRediT: formal analysis, data curation, visualization]
+- Reconciled two participant datasets (PCD · TCOA) and resolved overlapping subject IDs by
+  reassigning them into a separate range, so the cohorts could be merged without collision
+- Scored the fear-of-falling (FES-I) and depression (GDS) surveys and aggregated them by group
+- Produced the stabilogram figures as vector EPS from the band-power metrics the lab supplied
+- Groups compared in the paper: healthy young (23) / healthy older (21) / Tai-Chi-practising
+  older adults, TCOA (15) — 59 participants in total. TCOA is a Tai Chi group, not a clinical one
+- I am the 7th of 10 authors (not first or corresponding)
 
-[Individual abstract — sole author; source of the simulation numbers below]
-Title: "Postural Control in Healthy and TCOA Adults: Rambling-Component Analysis and Simulated CoP Trajectories"
-Author: JJ Park (sole)
-- A single Rambling-power metric explained 85%+ of sway variance (R² ≈ 0.85)
-- Simulated area vs. actual stabilogram: Pearson r = 0.92 (p<0.001)
+[Not my work — stated so it is not inferred]
+The signal-processing stage — low-pass filtering, decomposing sway into its low- and
+high-frequency components, and integrating spectral band power — was the research team's; the paper's CRediT methodology/software roles do
+not include me, and I consumed those metrics as spreadsheet inputs. An individual abstract I
+wrote in 2025 claimed that pipeline in the first person and reported correlation numbers for it;
+both were wrong and are retired — the figures in question were simulated trajectories, and the
+published paper contains no stabilogram to compare against.
 """
 
 

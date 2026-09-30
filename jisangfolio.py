@@ -56,11 +56,11 @@ T = {
     "한국어": {
         "title": "박지상 (Jisang Park)",
         "subtitle": "Data Engineer · AI Researcher",
-        "location": "📍 KETI AX연구본부<br>🎓 UIUC Information Science + Data Science",
+        "location": "📍 연합인포맥스 금융공학연구소<br>🎓 UIUC Information Science + Data Science",
         "tagline_head": "## 대화하는 이력서",
         "hero_tagline": "읽지 말고, 물어보세요. 저에 대해 무엇이든 제 AI에게 직접 질문할 수 있습니다.",
         "edu_head": "## 학력",
-        "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — Information Science + Data Science 학사 · GPA 3.89/4.0 · 2025.12  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**주요 이수 과목** (강의 프로젝트 수준): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means 직접구현) · INFO330 Database (T-SQL) · STAT207 · MATH227",
+        "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — Information Science + Data Science 학사 · GPA 3.89/4.0 · 2025.12  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**주요 이수 과목** (강의 프로젝트 수준): CS307 Models of Learning · IS327 Machine Learning (RF 회귀) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means 직접구현) · INFO330 Database (T-SQL) · STAT207 · MATH227",
         "how_head": "## 파이프라인",
         "how_intro": "챗봇·데이터분석·MCP 서버·MLOps 문서 Agentic RAG가 각각 별도의 파이프라인으로 돌아갑니다. 왜 이렇게 나눴는지는 아래 탭에서 볼 수 있습니다.",
         "graph_head": "## 코드베이스 구조 그래프",
@@ -102,8 +102,8 @@ T = {
         "projects": [
             {
                 "title": "KETI AX연구본부 — 온프레미스 MLOps 플랫폼",
-                "period": "2026.02 ~ 현재 · 위촉연구원",
-                "desc": "온프레미스 자체호스팅(폐쇄망 대응 설계) MLOps 플랫폼을 주도적으로 설계·구축했습니다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합했습니다(좌표 100개 지점 단일 요청 22–32ms, L40S). MLflow(실험·레지스트리·거버넌스)·Gitea Actions·Prometheus+Grafana(7패널)를 docker-compose로 묶고, 8~9월엔 주간 학습 → 매니페스트 기준 판정 → ONNX 변환 → 체크섬 대조 배포를 워크플로 8개로 이어 사람 개입 없이 한 바퀴 도는 것을 확인했습니다(2026-09-12, Google MLOps Level 1). 판정이 미달 버전 2건을 실제로 막았고, 판정 호출·서빙 자동 복구·정합성 대조는 25개 화면의 운영 콘솔이 맡습니다. 제공된 분할 데이터 통합(45-291건)으로 MAE 0.53→0.26°C·R² 0.82→0.95를 MLflow 비교 체계에서 측정했습니다. (한계) 학습 데이터 갱신 경로가 없어 재학습이 모델을 개선하진 않고, CI 동작시험·롤백은 미착수, 추론 트래픽은 아직 스모크 수준입니다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
+                "period": "2026.02 ~ 2026.09 · 위촉연구원",
+                "desc": "온프레미스 자체호스팅(폐쇄망 대응 설계) MLOps 플랫폼을 주도적으로 설계·구축했습니다. 부경대 제공 PyTorch 3D U-Net을 ONNX로 변환해 Triton GPU에 서빙하고, 입출력이 다른 외부 PINN 3종까지 같은 Triton에 통합했습니다(좌표 100개 지점 단일 요청 22–32ms, L40S). MLflow(실험·레지스트리·거버넌스)·Gitea Actions·Prometheus+Grafana(7패널)를 docker-compose로 묶고, 8~9월엔 주간 학습 → 매니페스트 기준 판정 → ONNX 변환 → 체크섬 대조 배포를 워크플로 8개로 이어 사람 개입 없이 한 바퀴 도는 것을 확인했습니다(2026-09-12, Google MLOps Level 1). 판정이 미달 버전 2건을 실제로 막았고, 판정 호출·서빙 자동 복구·정합성 대조는 운영 콘솔이 맡습니다. 나뉘어 있던 학습 데이터를 통합해 재학습한 뒤 버전 간 지표를 MLflow 비교 체계에서 대조했고, 그 판정이 승격 여부를 갈랐습니다(지표 수치는 과제 산출물이라 공개하지 않습니다). (한계) 학습 데이터 갱신 경로가 없어 재학습이 모델을 개선하진 않고, CI 동작시험·롤백은 미착수, 추론 트래픽은 아직 스모크 수준입니다. (별도) 송산그린시티 디지털 트윈 3파트 연동·검증.",
                 "tags": "`Triton` `ONNX` `MLflow` `Gitea Actions` `Prometheus` `Grafana` `Docker` `PyTorch`",
             },
             {
@@ -121,15 +121,15 @@ T = {
             {
                 "title": "TEBO 균형 분석 · SCIE 논문",
                 "period": "Applied Sciences, 2025.07 게재",
-                "desc": "CoP 센서 시계열을 4차 Butterworth로 노이즈 필터링(6Hz cutoff)한 뒤 FFT로 Rambling/Trembling을 분해했습니다. 개인 분석에서 단일 Rambling 지표가 자세 동요 분산의 85% 이상을 설명했고, 게재는 SCIE 'Applied Sciences' 공저입니다.",
-                "tags": "`Python` `SciPy` `FFT` `시계열 분석`",
+                "desc": "측정 이후 단계를 맡았습니다. 두 코호트(PCD·TCOA) 결과 데이터를 병합할 때 겹치는 피험자 번호를 새 대역으로 재배정해 분리하고, 낙상 두려움(FES-I)·우울(GDS) 설문을 채점해 집단별로 집계하고, 랩이 전달한 대역별 지표로 stabilogram 그림을 EPS 벡터로 출고했습니다. 논문 CRediT 기여는 formal analysis · data curation · visualization입니다 — 신호 필터링과 성분 분해는 연구팀이 수행했고 제 기여가 아닙니다. 게재는 SCIE \'Applied Sciences\' 공저(10인 중 7저자)입니다.",
+                "tags": "`Python` `Pandas` `Matplotlib` `설문 집계`",
             },
         ],
         "stack_head": "## 기술 스택",
         "profilegraph_head": "## 프로필 구조 그래프",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · GraphRAG · Agentic RAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
-            ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
+            ("**Data Engineering**", "Pandas · NumPy · Matplotlib  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · GitHub Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
         ],
         "personal_head": "## 개인 프로젝트",
@@ -165,11 +165,11 @@ T = {
     "English": {
         "title": "Jisang Park (박지상)",
         "subtitle": "Data Engineer · AI Researcher",
-        "location": "📍 KETI AX Research Division<br>🎓 UIUC Information Science + Data Science",
+        "location": "📍 Yonhap Infomax · Financial Engineering Research Institute<br>🎓 UIUC Information Science + Data Science",
         "tagline_head": "## A Resume You Talk To",
         "hero_tagline": "Don't read it — ask it. You can ask my AI anything about me, live.",
         "edu_head": "## Education",
-        "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — B.S., Information Science + Data Science · GPA 3.89/4.0 · Dec 2025  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**Selected coursework** (course projects): CS307 Models of Learning · IS327 Machine Learning (RF R²≈0.85) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means from scratch) · INFO330 Database (T-SQL) · STAT207 · MATH227",
+        "edu_body": "**University of Illinois Urbana-Champaign (UIUC)** — B.S., Information Science + Data Science · GPA 3.89/4.0 · Dec 2025  \n**University of Washington, Seattle** — Pre-Science · Dean's List\n\n**Selected coursework** (course projects): CS307 Models of Learning · IS327 Machine Learning (RF regression) · IS477 Data Curation (ETL) · IS467 Data Ethics · CSE160 (k-means from scratch) · INFO330 Database (T-SQL) · STAT207 · MATH227",
         "how_head": "## Pipelines",
         "how_intro": "Four separate pipelines — chat, data analysis, an MCP server, and Agentic RAG over MLOps docs — each doing its own thing. The tabs show why I split them up.",
         "graph_head": "## Codebase structure graph",
@@ -211,8 +211,8 @@ T = {
         "projects": [
             {
                 "title": "KETI AX Research Division — On-prem MLOps Platform",
-                "period": "Feb 2026 ~ Present · Research Engineer (Contract)",
-                "desc": "Led the design and build of a self-hosted on-premise MLOps platform (built to hold up under closed-network constraints). Converted a PKNU-provided PyTorch 3D U-Net to ONNX and served it on Triton GPU, then unified three external PINN models with different I/O onto the same Triton (a 100-point PINN request in 22–32 ms on an L40S). MLflow (experiments·registry·governance), Gitea Actions, and Prometheus+Grafana (7 panels) run as one docker-compose stack; in Aug–Sep I chained weekly training → manifest-driven gate → ONNX export → checksum-verified deploy across eight workflows and confirmed the first unattended end-to-end run on 2026-09-12 (Google MLOps Level 1). The gate actually rejected two under-performing versions; gate calls, serving auto-recovery and declared-vs-actual reconciliation are handled by a 25-screen operations console. Integrating the provided data splits (45-291 samples) improved MAE 0.53→0.26°C and R² 0.82→0.95, measured through the MLflow comparison setup. (Limits) No path yet for refreshing training data, so retraining does not improve the model; no behavioral tests in CI, no rollback, and inference traffic is still smoke-test level. (Separately) Songsan Green City digital twin — integration & validation of 3 parts.",
+                "period": "Feb 2026 ~ Sep 2026 · Research Engineer (Contract)",
+                "desc": "Led the design and build of a self-hosted on-premise MLOps platform (built to hold up under closed-network constraints). Converted a PKNU-provided PyTorch 3D U-Net to ONNX and served it on Triton GPU, then unified three external PINN models with different I/O onto the same Triton (a 100-point PINN request in 22–32 ms on an L40S). MLflow (experiments·registry·governance), Gitea Actions, and Prometheus+Grafana (7 panels) run as one docker-compose stack; in Aug–Sep I chained weekly training → manifest-driven gate → ONNX export → checksum-verified deploy across eight workflows and confirmed the first unattended end-to-end run on 2026-09-12 (Google MLOps Level 1). The gate actually rejected two under-performing versions; gate calls, serving auto-recovery and declared-vs-actual reconciliation are handled by a 10-menu operations console. After consolidating training data that had arrived in separate splits, I compared versions through the MLflow setup and let that comparison decide promotion (the project's metric values are not disclosed). (Limits) No path yet for refreshing training data, so retraining does not improve the model; no behavioral tests in CI, no rollback, and inference traffic is still smoke-test level. (Separately) Songsan Green City digital twin — integration & validation of 3 parts.",
                 "tags": "`Triton` `ONNX` `MLflow` `Gitea Actions` `Prometheus` `Grafana` `Docker` `PyTorch`",
             },
             {
@@ -230,15 +230,15 @@ T = {
             {
                 "title": "TEBO Balance Analysis · SCIE Paper",
                 "period": "Applied Sciences, Jul 2025",
-                "desc": "Denoised CoP sensor time-series with a 4th-order Butterworth filter (6Hz cutoff), then used FFT to separate Rambling/Trembling. In my own analysis a single Rambling metric explained 85%+ of sway variance; published as a co-author in SCIE 'Applied Sciences'.",
-                "tags": "`Python` `SciPy` `FFT` `Time-series Analysis`",
+                "desc": "My work began after data collection. Merging the two cohorts (PCD·TCOA) meant overlapping subject IDs, so I reassigned them into a separate range; I scored the fear-of-falling (FES-I) and depression (GDS) surveys and aggregated them by group; and I produced the stabilogram figures as vector EPS from the band-power metrics the lab supplied. My CRediT roles on the paper are formal analysis, data curation and visualization — the signal filtering and component decomposition were done by the research team, not by me. Published as a co-author (7th of 10) in SCIE 'Applied Sciences'.",
+                "tags": "`Python` `Pandas` `Matplotlib` `Survey aggregation`",
             },
         ],
         "stack_head": "## Tech Stack",
         "profilegraph_head": "## Profile graph",
         "stacks": [
             ("**AI / LLM**", "LangChain · RAG · GraphRAG · Agentic RAG · Hybrid(BM25+dense)  \nOllama · Groq · FAISS · PyTorch  \nLLM eval · Guardrails · MCP · Observability · CI"),
-            ("**Data Engineering**", "Pandas · NumPy · SciPy  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
+            ("**Data Engineering**", "Pandas · NumPy · Matplotlib  \nTableau · Power BI · Streamlit  \nSQL · Docker · Git"),
             ("**MLOps / Infra**", "MLflow · NVIDIA Triton · ONNX  \nGitea Actions · GitHub Actions · Prometheus · Grafana  \nEvidently(PoC) · Docker Compose"),
         ],
         "personal_head": "## Personal Projects",
@@ -290,10 +290,11 @@ if lang == "한국어":
         {"kind": "학력",  "item": "University of Washington",      "start": "2022-12-01", "end": "2024-06-30", "detail": "Pre-Science (INFO · CSE · STAT) · 복학"},
         {"kind": "군복무", "item": "어학병 (제3함대 · 한미연합사)", "start": "2021-02-15", "end": "2022-10-14", "detail": "영어 통역 병과"},
         {"kind": "학력",  "item": "UIUC · BSIS+DS",               "start": "2024-06-01", "end": "2025-12-20", "detail": "Information Science + Data Science, GPA 3.89/4.0"},
-        {"kind": "경력",  "item": "삼성SDI · 데이터 엔지니어 인턴", "start": "2025-06-01", "end": "2025-08-31", "detail": "폐쇄망 RAG 챗봇 1인 개발 → 임원 PoC 호평"},
-        {"kind": "논문",  "item": "TEBO · SCIE 논문 게재",          "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences, CoP 분석 설명력 85%+"},
+        {"kind": "경력",  "item": "삼성SDI · 데이터 엔지니어 인턴", "start": "2025-06-01", "end": "2025-08-31", "detail": "폐쇄망 RAG 챗봇 — 검색·분기·UI 담당 → 임원 PoC 호평"},
+        {"kind": "논문",  "item": "TEBO · SCIE 논문 게재",          "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences 공저 · 코호트 정합화 · 설문 집계 · 그림 출고"},
         {"kind": "활동",  "item": "KSA 웹팀 (UIUC)",               "start": "2024-08-01", "end": "2025-06-30", "detail": "한인 학생회 웹사이트 사용성 및 성능 개선"},
-        {"kind": "경력",  "item": "KETI · AX 연구본부 위촉연구원",      "start": "2026-02-01", "end": "2026-12-31", "detail": "온프레미스 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 학습→배포 자동화(Level 1) · 디지털 트윈 연동 · 현재 재직 중"},
+        {"kind": "경력",  "item": "KETI · AX 연구본부 위촉연구원",      "start": "2026-02-01", "end": "2026-09-25", "detail": "온프레미스 MLOps 플랫폼 구축·운영 · Triton 모델 서빙 · 학습→배포 자동화(Level 1) · 디지털 트윈 연동"},
+        {"kind": "경력",  "item": "연합인포맥스 · 금융공학연구소",        "start": "2026-09-28", "end": "2026-12-31", "detail": "재직 중"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "kind", "item", "start", "end", "detail"
 else:
@@ -303,9 +304,10 @@ else:
         {"kind": "Military",  "item": "Military Service (ROKN)",         "start": "2021-02-15", "end": "2022-10-14", "detail": "English Interpreter · 3rd Fleet & USFK"},
         {"kind": "Education", "item": "UIUC · BSIS+DS",                  "start": "2024-06-01", "end": "2025-12-20", "detail": "Information Science + Data Science, GPA 3.89/4.0"},
         {"kind": "Work",      "item": "Samsung SDI · Data Eng. Intern",  "start": "2025-06-01", "end": "2025-08-31", "detail": "Air-gapped RAG chatbot (retrieval·routing·UI) → praised by executives"},
-        {"kind": "Research",  "item": "TEBO · SCIE Publication",         "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences, CoP analysis 85%+ explanatory power"},
+        {"kind": "Research",  "item": "TEBO · SCIE Publication",         "start": "2025-01-01", "end": "2025-07-31", "detail": "Applied Sciences co-author · cohort curation · survey aggregation · figures"},
         {"kind": "Activity",  "item": "KSA Web Team (UIUC)",              "start": "2024-08-01", "end": "2025-06-30", "detail": "Improved usability and performance of Korean Student Association website"},
-        {"kind": "Work",      "item": "KETI · Research Engineer, AX Research Division",      "start": "2026-02-01", "end": "2026-12-31", "detail": "On-prem MLOps platform · Triton model serving · train→deploy automation (Level 1) · digital twin integration · Present"},
+        {"kind": "Work",      "item": "KETI · Research Engineer, AX Research Division",      "start": "2026-02-01", "end": "2026-09-25", "detail": "On-prem MLOps platform · Triton model serving · train→deploy automation (Level 1) · digital twin integration"},
+        {"kind": "Work",      "item": "Yonhap Infomax · Financial Engineering Research Institute", "start": "2026-09-28", "end": "2026-12-31", "detail": "Current role"},
     ]
     col_구분, col_항목, col_시작, col_종료, col_상세 = "kind", "item", "start", "end", "detail"
 
@@ -356,7 +358,7 @@ fig = px.timeline(
     hover_name=col_항목,
     hover_data={col_상세: True, col_시작: "|%Y.%m", col_종료: "|%Y.%m", col_구분: False, col_항목: False},
     # 다섯 키를 전부 매핑한다. 예전엔 두 개만 처리해서, 영어 UI 의 Plotly 호버 툴팁에
-    # "상세=Solo-built air-gapped RAG chatbot…" 처럼 한글 필드명이 그대로 떴다
+    # "상세=Air-gapped RAG chatbot…" 처럼 한글 필드명이 그대로 떴다
     # (영어권 채용담당자가 보는 화면이다). 데이터 키는 내부용 영문으로 두고
     # 보이는 라벨만 여기서 언어별로 붙인다.
     labels={

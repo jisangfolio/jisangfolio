@@ -79,3 +79,21 @@ def test_graphrag_naming_is_qualified():
     if "GraphRAG" in MCP_SRC:
         assert "not Microsoft GraphRAG" in MCP_SRC, \
             "GraphRAG를 단서 없이 주장하고 있음 (실체는 어휘 시드 + 1-hop 탐색)"
+
+
+def test_current_employer_is_consistent_across_surfaces():
+    """'현 소속'은 조용히 낡는 사실이다 — 실제로 MCP 는 이직 후에도 KETI 를
+    "Current:" 로 들고 있었다. 세 표면(그래프·MCP·홈)이 같은 곳을 가리키게 못 박는다.
+    """
+    home = (ROOT / "jisangfolio.py").read_text(encoding="utf-8")
+    graph_ids = {n["id"] for n in profile_graph.NODES}
+    assert "infomax" in graph_ids, "프로필 그래프에 현 소속 노드가 없다"
+
+    # MCP 는 설계상 영문 전용이라(모듈 독스트링 참조) 한글 표기를 요구하지 않는다.
+    for label in ("연합인포맥스", "Yonhap Infomax"):
+        assert label in _graph_text(), f"프로필 그래프에 없음: {label}"
+        assert label in home, f"홈 화면에 현 소속 누락 — 드리프트: {label}"
+    assert "Yonhap Infomax" in MCP_SRC, "MCP 사본에 현 소속 누락 — 드리프트"
+
+    assert "Current: Financial Engineering Research Institute" in MCP_SRC, \
+        "MCP 의 'Current:' 줄이 현 소속을 가리키지 않는다"

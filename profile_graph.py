@@ -9,10 +9,13 @@
 PyTorch)를 여러 프로젝트가 함께 가리키게 해 교차연결을 만든다.
 
 ⚠️ 노드 설명은 keti_mlops_full_dump / 학부_코스워크_카탈로그 / SDI 실코드 / 작업가이드 §2
-   가드레일 준수: KETI="주도적 설계·구축"(단독X)·"전문생산기술연구소"(정출연X)·부경대 제공
-   모델, SDI RAG=1인 단독·임원 PoC 호평·Rule-based Agent, TEBO=공저·노이즈 필터링, 코스워크
-   =강의 프로젝트 수준(IS477 R² 성과화 금지). FAISS/LangChain은 SDI·JisangData만(KETI 아님).
-   Kubeflow/K8s/정출연 등 금지어 없음.
+   가드레일 준수: KETI="온프레미스 자체호스팅(폐쇄망 대응 설계)"·"주도적 설계·구축"(단독X)
+   ·"전문생산기술연구소"(정출연X)·부경대 제공 모델. SDI SPA=본인 몫은 검색·분기·UI(LLM
+   서빙은 멘토 주도), 임원 PoC 호평. TEBO=공저 + formal analysis·data curation·
+   visualization(신호처리·분해는 연구팀 몫). 코스워크=강의 프로젝트 수준(IS327·IS477 R²
+   성과화 금지). FAISS/LangChain은 SDI·JisangData만(KETI 아님).
+   전 직장 성능 지표(MAE·R²)와 사내 CI 실측치는 공개 산출물에 수치로 쓰지 않는다.
+   금지 표현 목록은 tests/retired_claims.py 가 소유하고 CI 가 이 파일을 대조한다.
 """
 import json
 import re
@@ -20,8 +23,8 @@ import re
 # group: person / edu / work / project / paper / course / skill
 NODES = [
     {"id": "jjpark", "group": "person", "ko": "박지상", "en": "Jisang Park",
-     "desc_ko": "온프레미스·폐쇄망 MLOps와 RAG·LLM 서빙을 소유하는 AI 엔지니어.",
-     "desc_en": "AI engineer who owns on-prem / air-gapped MLOps and RAG·LLM serving."},
+     "desc_ko": "온프레미스 자체호스팅 환경의 MLOps와 RAG·LLM 서빙을 맡아 온 AI 엔지니어.",
+     "desc_en": "AI engineer who owns MLOps and RAG·LLM serving in self-hosted, on-prem environments."},
 
     # 학력
     {"id": "uiuc", "group": "edu", "ko": "UIUC", "en": "UIUC",
@@ -32,23 +35,26 @@ NODES = [
      "desc_en": "University of Washington · Pre-Science · Dean's List."},
 
     # 경력
+    {"id": "infomax", "group": "work", "ko": "연합인포맥스", "en": "Yonhap Infomax",
+     "desc_ko": "금융공학연구소 재직 중(2026.09~).",
+     "desc_en": "Financial Engineering Research Institute (since Sep 2026)."},
     {"id": "keti", "group": "work", "ko": "KETI", "en": "KETI",
-     "desc_ko": "AX 연구본부 연구원(2026.02~현재) · 산업부 소관 전문생산기술연구소.",
-     "desc_en": "Researcher, AX Research Division (Feb 2026~) · industrial R&D institute."},
+     "desc_ko": "AX 연구본부 위촉연구원(2026.02~2026.09) · 산업부 소관 전문생산기술연구소.",
+     "desc_en": "Research engineer, AX Research Division (Feb–Sep 2026) · industrial R&D institute."},
     {"id": "sdi", "group": "work", "ko": "삼성SDI", "en": "Samsung SDI",
      "desc_ko": "DI(Data Intelligence)그룹 데이터 엔지니어 인턴(2025.06~08).",
      "desc_en": "Data Engineer Intern, DI (Data Intelligence) Group (Jun~Aug 2025)."},
 
     # 프로젝트
     {"id": "mlops", "group": "project", "ko": "온프레 MLOps 플랫폼", "en": "On-prem MLOps platform",
-     "desc_ko": "폐쇄망 자체호스팅 MLOps 플랫폼을 docker-compose로 주도적으로 설계·구축.",
-     "desc_en": "Led design & build of an air-gapped self-hosted MLOps platform (docker-compose)."},
+     "desc_ko": "온프레미스 자체호스팅(폐쇄망 대응 설계) MLOps 플랫폼을 docker-compose로 주도적으로 설계·구축.",
+     "desc_en": "Led design & build of a self-hosted on-prem MLOps platform on docker-compose, built to hold up under closed-network constraints."},
     {"id": "imgclf", "group": "project", "ko": "이미지 분류 레일 + CCTV", "en": "Image-clf rail + CCTV",
      "desc_ko": "받은 모델을 서빙하던 것과 달리 파이프라인을 처음부터 설계. 품질 게이트가 임계치 미달 시 레지스트리 승격을 건너뛰고, 지표를 판정보다 먼저 기록해 차단 사유가 런에 남는다. 같은 코드로 CIFAR-10→EuroSAT→실 CCTV 3종 통과(PoC · CI 연동 미완 · 차단 실사례 0건).",
      "desc_en": "Unlike serving models handed to me, this pipeline was designed from scratch. A quality gate skips registry promotion below threshold, and metrics are logged before the decision so blocked runs still record why. Same code carried CIFAR-10→EuroSAT→live CCTV (PoC · not wired to CI · no blocked run yet)."},
     {"id": "rag", "group": "project", "ko": "폐쇄망 RAG (SPA)", "en": "Air-gapped RAG (SPA)",
-     "desc_ko": "완전 차단망 특허검색 RAG 챗봇 1인 단독 개발 → 임원 PoC 호평.",
-     "desc_en": "Solo-built patent-search RAG chatbot in a fully air-gapped env → executive PoC praised."},
+     "desc_ko": "완전 차단망 특허검색 RAG 챗봇 — 검색·분기·UI를 맡았고 LLM 서빙 구성은 멘토 주도 → 임원 PoC 호평.",
+     "desc_en": "Patent-search RAG chatbot in a fully internet-blocked env — I owned retrieval, routing and UI; LLM serving was set up by my mentor → executive PoC praised."},
     {"id": "jf", "group": "project", "ko": "JisangFolio", "en": "JisangFolio",
      "desc_ko": "이 포트폴리오 · GraphRAG·가드레일·LLM 옵저버빌리티·하이브리드 RAG·Agentic RAG·CI 실장. 회귀 평가 하니스 최근 실행 17/20 (n=20, 벤치마크가 아니라 변경 전후 게이트).",
      "desc_en": "This portfolio · GraphRAG, guardrails, LLM observability, hybrid & agentic RAG, CI. Latest regression eval run 17/20 (n=20 — a before/after gate, not a benchmark)."},
@@ -61,16 +67,16 @@ NODES = [
 
     # 논문
     {"id": "tebo", "group": "paper", "ko": "TEBO 논문", "en": "TEBO paper",
-     "desc_ko": "CoP 신호처리 파이프라인 기여 · SCIE 'Applied Sciences' 공저(2025).",
-     "desc_en": "CoP signal-processing pipeline · co-author, SCIE 'Applied Sciences' (2025)."},
+     "desc_ko": "측정 이후 단계 기여 — 두 코호트 ID 정합화 · FES-I/GDS 집단 집계 · stabilogram 시각화. SCIE 'Applied Sciences' 공저(2025, 7저자). 신호 필터링·성분 분해는 연구팀 수행.",
+     "desc_en": "Contributed after data collection — reconciled two cohorts' subject IDs, scored and aggregated the FES-I/GDS surveys, produced the stabilogram figures. Co-author, SCIE 'Applied Sciences' (2025, 7th author). Signal filtering and decomposition were done by the research team."},
 
     # 학부 코스워크 (강의 프로젝트 수준 — 과대표현 금지)
     {"id": "cs307", "group": "course", "ko": "CS307 · ML", "en": "CS307 · ML",
      "desc_ko": "Models of Learning — 6개 lab로 KNN·RandomForest·GBM·캘리브레이션에서 PyTorch CNN까지(강의 프로젝트).",
      "desc_en": "Models of Learning — 6 labs from KNN·RandomForest·GBM·calibration to a PyTorch CNN (coursework)."},
     {"id": "is327", "group": "course", "ko": "IS327 · 회귀", "en": "IS327 · Regression",
-     "desc_ko": "Machine Learning — 게임 판매 예측 회귀 플래그십(Random Forest R²≈0.85, 강의 프로젝트).",
-     "desc_en": "Machine Learning — flagship game-sales regression (Random Forest R²≈0.85, coursework)."},
+     "desc_ko": "Machine Learning — 게임 판매 예측 회귀(Random Forest, 강의 프로젝트). 좋은 R²가 나왔지만 피처에 판매 구간 지표가 남아 정답이 새고 있었고, 걷어내니 0.22로 떨어졌다 — 수치가 아니라 이 규명을 근거로 쓴다.",
+     "desc_en": "Machine Learning — game-sales regression with Random Forest (coursework). The R² looked strong until I found a sales-bracket feature leaking the target; with the leak removed it fell to 0.22. I cite the audit, not the number."},
     {"id": "is477", "group": "course", "ko": "IS477 · ETL", "en": "IS477 · ETL",
      "desc_ko": "Data Management & Curation — 시카고 Airbnb ETL 파이프라인(통합·정제·모델링, 강의 프로젝트).",
      "desc_en": "Data Management & Curation — Chicago Airbnb ETL pipeline (integrate·clean·model, coursework)."},
@@ -86,17 +92,17 @@ NODES = [
 
     # 기술·도구 (공유 노드 — 여러 프로젝트가 함께 가리켜 교차연결)
     {"id": "triton", "group": "skill", "ko": "Triton 서빙", "en": "Triton serving",
-     "desc_ko": "부경대 제공 3D U-Net을 GPU 서빙(약 200ms) · 외부 PINN 3종을 같은 Triton에 통합.",
-     "desc_en": "Serves a PKNU-provided 3D U-Net on GPU (~200ms) · unified 3 external PINNs on one Triton."},
+     "desc_ko": "부경대 제공 3D U-Net을 GPU 서빙 · voxel I/O와 point I/O가 다른 외부 PINN 3종까지 같은 Triton에 통합(PINN 100점 단일 요청 22–32ms, L40S).",
+     "desc_en": "Serves a PKNU-provided 3D U-Net on GPU and unifies 3 external PINNs with different I/O on the same Triton (a 100-point PINN request in 22–32 ms on an L40S)."},
     {"id": "onnx", "group": "skill", "ko": "ONNX", "en": "ONNX",
      "desc_ko": "PyTorch 모델을 ONNX(opset 17)로 변환·검증해 Triton 서빙 포맷 확보.",
      "desc_en": "Convert/validate PyTorch models to ONNX (opset 17) for Triton serving."},
     {"id": "mlflow", "group": "skill", "ko": "MLflow 거버넌스", "en": "MLflow governance",
-     "desc_ko": "실험·레지스트리·라이프사이클 태그 거버넌스 · v1↔v2 비교(MAE 0.53→0.26°C).",
-     "desc_en": "Experiments·registry·lifecycle-tag governance · v1↔v2 compare (MAE 0.53→0.26°C)."},
+     "desc_ko": "실험·레지스트리·라이프사이클 태그 거버넌스 · 버전 간 지표 비교로 승격/기각 판단(과제 지표 수치는 비공개).",
+     "desc_en": "Experiments, registry and lifecycle-tag governance · version-to-version metric comparison drives promote/reject (project metrics not disclosed)."},
     {"id": "ci", "group": "skill", "ko": "Gitea Actions CI", "en": "Gitea Actions CI",
-     "desc_ko": "ONNX 검증→배포 CI 체인 · 체크아웃 14분→4초 단축.",
-     "desc_en": "ONNX validate→deploy CI chain · checkout 14min→4s."},
+     "desc_ko": "주간 학습 → 매니페스트 기준 판정 → ONNX 변환 → 체크섬 대조 배포를 워크플로 8개로 이은 CI 체인. 표준 checkout 액션이 인증에서 매달리는 문제를 raw git clone으로 대체해 해소.",
+     "desc_en": "Eight workflows chaining weekly training → manifest-driven gate → ONNX export → checksum-verified deploy. Replaced the stock checkout action, which hung on auth, with a raw git clone."},
     {"id": "monitor", "group": "skill", "ko": "Prometheus·Grafana", "en": "Prometheus·Grafana",
      "desc_ko": "서빙 메트릭 7패널 대시보드 · Streamlit 운영 포털 · Evidently 드리프트(PoC).",
      "desc_en": "7-panel serving dashboard · Streamlit ops portal · Evidently drift (PoC)."},
@@ -107,8 +113,8 @@ NODES = [
      "desc_ko": "부경대 제공 서빙 모델(→ONNX 변환)과 CS307 CNN 실습의 프레임워크.",
      "desc_en": "Framework for the PKNU-provided serving model (→ONNX) and the CS307 CNN lab."},
     {"id": "ollama", "group": "skill", "ko": "Ollama·Qwen2.5", "en": "Ollama·Qwen2.5",
-     "desc_ko": "온프레미스 sLLM 자체호스팅(Qwen2.5-72B) — SDI 폐쇄망.",
-     "desc_en": "On-prem self-hosted sLLM (Qwen2.5-72B) — SDI air-gapped."},
+     "desc_ko": "SPA가 올라간 온프레미스 LLM 런타임(Qwen2.5-72B) — SDI 폐쇄망. 서빙 구성은 멘토 주도이고 본인은 그 위의 검색·분기·UI를 맡았다.",
+     "desc_en": "The on-prem LLM runtime SPA ran on (Qwen2.5-72B) in SDI's air-gapped env. My mentor set the serving up; I built retrieval, routing and the UI on top."},
     {"id": "langchain", "group": "skill", "ko": "LangChain", "en": "LangChain",
      "desc_ko": "검색·생성·라우팅 오케스트레이션 — SDI RAG와 JisangData에서 사용.",
      "desc_en": "Retrieval/generation/routing orchestration — used in SDI RAG and JisangData."},
@@ -122,14 +128,14 @@ NODES = [
      "desc_ko": "Groq(Qwen3 27B) 저지연 추론 — JisangFolio·JisangData·MCP.",
      "desc_en": "Groq (Qwen3 27B) low-latency inference — JisangFolio·JisangData·MCP."},
     {"id": "ruleagent", "group": "skill", "ko": "Rule-based Agent", "en": "Rule-based Agent",
-     "desc_ko": "'그래프/통계/출원' 키워드 감지 시 LLM 우회 → pandas 집계·차트로 환각 차단(SDI).",
-     "desc_en": "Keyword ('graph/stats/filing') detection bypasses the LLM → pandas aggregation·chart (SDI)."},
+     "desc_ko": "'그래프/통계/출원' 키워드를 감지하면 차트를 원본 DataFrame 집계로 직접 만들고, LLM에는 그 질의에 답하지 말라고 지시한다(SDI). 침묵이 프롬프트 지시라 구조적 보장은 아니었다 — 코드는 모든 질의에 LLM을 호출한다.",
+     "desc_en": "On 'chart/stats/filing' keywords the chart is computed straight from the DataFrame and the LLM is told not to answer that query (SDI). The silence is a prompt instruction, not a structural guarantee — the code calls the LLM on every query."},
     {"id": "eval", "group": "skill", "ko": "LLM eval 하니스", "en": "LLM eval harness",
      "desc_ko": "규칙 채점 + 별도 모델 LLM-judge로 답변 사실성 회귀 검증.",
      "desc_en": "Rule scoring + a separate LLM judge for factual regression."},
-    {"id": "scipy", "group": "skill", "ko": "SciPy·FFT", "en": "SciPy·FFT",
-     "desc_ko": "TEBO CoP 신호처리 — 4차 Butterworth 노이즈 필터·FFT 주파수 분해.",
-     "desc_en": "TEBO CoP signal processing — 4th-order Butterworth denoise·FFT decomposition."},
+    {"id": "mpl", "group": "skill", "ko": "Matplotlib 도식화", "en": "Matplotlib figures",
+     "desc_ko": "TEBO에서 랩이 전달한 대역별 지표로 stabilogram 그림을 EPS 벡터로 출고 · 설문 집단 집계 시각화.",
+     "desc_en": "Produced the TEBO stabilogram figures as vector EPS from the lab's band-power metrics, and visualised the survey group aggregates."},
     {"id": "sql", "group": "skill", "ko": "SQL", "en": "SQL",
      "desc_ko": "T-SQL 복합 JOIN·CTE·저장 프로시저·스키마 정규화(INFO330).",
      "desc_en": "T-SQL complex JOINs·CTEs·stored procedures·normalization (INFO330)."},
@@ -163,7 +169,7 @@ NODES = [
 
 EDGES = [
     # 뿌리
-    ("jjpark", "uiuc"), ("jjpark", "uw"), ("jjpark", "keti"), ("jjpark", "sdi"),
+    ("jjpark", "uiuc"), ("jjpark", "uw"), ("jjpark", "infomax"), ("jjpark", "keti"), ("jjpark", "sdi"),
     ("jjpark", "jf"), ("jjpark", "jd"), ("jjpark", "mcp"),
     # 학력 → 코스워크·논문
     ("uiuc", "cs307"), ("uiuc", "is327"), ("uiuc", "is477"), ("uiuc", "is467"),
@@ -201,7 +207,7 @@ EDGES = [
     # LLMOps 스택 내부 교차연결 (망 형성)
     ("hybrid", "faiss"), ("observability", "streamlit"),
     # 논문·코스워크 → 기술 (교차연결)
-    ("tebo", "scipy"), ("cs307", "pytorch"), ("info330", "sql"),
+    ("tebo", "mpl"), ("cs307", "pytorch"), ("info330", "sql"),
 
     # ── 망 형성 (2026-07-29) ─────────────────────────────────────────
     # 여기까지의 그래프는 사실상 **스타/트리**였다: 기술 노드 15개가 차수 1이라
@@ -223,7 +229,7 @@ EDGES = [
 
     # 폐쇄망 RAG 내부, 그리고 그 아이디어의 다음 세대
     ("ollama", "langchain"),    # LangChain + 온프레 sLLM(Qwen2.5-72B)
-    ("ruleagent", "jd"),        # "언제 LLM을 쓰지 말까" — SPA의 키워드 우회가
+    ("ruleagent", "jd"),        # "수치는 누가 만드나" — SPA의 키워드 분기가
                                 # JisangData의 LLM 라우터로 이어지는 계보
 
     # LLMOps 스택 내부 — 오늘 실제로 생긴 연결 포함
@@ -241,10 +247,127 @@ EDGES = [
     ("cse160", "graphrag"),     # NetworkX 없이 짠 그래프 탐색 → 프로필 서브그래프 탐색
     ("is477", "sql"),           # ETL 과제의 관계형 모델링 ↔ INFO330 DB
     ("is327", "cs307"),         # 회귀(RF) ↔ 분류·CNN, 같은 ML 코스워크 계보
-    ("tebo", "is327"),          # 낙상 위험 '예측' 시뮬레이션 ↔ 회귀 모델링 코스워크
-                                # (둘 다 설명력/R² 로 성능을 말하는 같은 계열)
+    ("tebo", "is327"),          # 설문·집단 집계 ↔ 회귀 모델링 코스워크 — 같은 시기의
+                                # 같은 종류(표 만들고 모델 돌리는) 데이터 분석 계보
     ("is467", "guardrails"),    # 채용 AI 편향·EU AI Act 연구 → 책임 있는 AI 가드레일
 ]
+
+
+# ── 엣지 이름 (2026-09-30) ────────────────────────────────────────
+# 엣지가 92개인데 전부 무명이라, 그래프는 "무엇이 무엇과 이어졌나"는 보여주고
+# **"어떤 관계인가"는 못 보여줬다.** 관계 근거는 위 EDGES 의 주석에만 있었고 그건
+# 화면에 안 나간다. 아래 라벨이 그 주석을 화면으로 끌어올린다.
+#
+# 라벨을 EDGES 3-튜플로 합치지 않은 이유: `for a, b in EDGES` 로 EDGES 를 도는
+# 코드가 to_prompt_text·graph_retrieve·테스트까지 네 군데다. 튜플 폭을 늘리면
+# 그 전부가 조용히 깨진다(언패킹 에러는 조용하지 않지만, 라벨을 노드 id 로 착각해
+# 도는 쪽은 조용하다). 별 dict 로 두고 아래 test 가 누락을 잡게 한다.
+EDGE_LABEL = {
+    # 뿌리
+    ("jjpark", "uiuc"): ("학사 졸업", "B.S."),
+    ("jjpark", "uw"): ("편입 전", "before transfer"),
+    ("jjpark", "infomax"): ("현 재직", "current role"),
+    ("jjpark", "keti"): ("전 재직", "former role"),
+    ("jjpark", "sdi"): ("인턴", "internship"),
+    ("jjpark", "jf"): ("직접 제작", "built it"),
+    ("jjpark", "jd"): ("직접 제작", "built it"),
+    ("jjpark", "mcp"): ("직접 제작", "built it"),
+    # 학력 → 코스워크·논문
+    ("uiuc", "cs307"): ("이수", "took"),
+    ("uiuc", "is327"): ("이수", "took"),
+    ("uiuc", "is477"): ("이수", "took"),
+    ("uiuc", "is467"): ("이수", "took"),
+    ("uiuc", "tebo"): ("학부 연구생", "undergrad researcher"),
+    ("uw", "cse160"): ("이수", "took"),
+    ("uw", "info330"): ("이수", "took"),
+    # 경력 → 프로젝트
+    ("keti", "mlops"): ("배정 과제", "assigned project"),
+    ("keti", "imgclf"): ("자발 과제", "self-initiated"),
+    ("sdi", "rag"): ("배정 과제", "assigned project"),
+    # 이미지 레일
+    ("imgclf", "mlflow"): ("게이트 통과분만 등록", "register only if gated"),
+    ("imgclf", "onnx"): ("학습 후 내보내기", "export after training"),
+    ("imgclf", "pytorch"): ("resnet18 파인튜닝", "resnet18 fine-tune"),
+    ("imgclf", "eval"): ("지표가 곧 게이트", "metric as the gate"),
+    # MLOps 플랫폼 → 기술
+    ("mlops", "triton"): ("모델 서빙", "serves models"),
+    ("mlops", "onnx"): ("서빙 포맷", "serving format"),
+    ("mlops", "mlflow"): ("실험·레지스트리", "experiments & registry"),
+    ("mlops", "ci"): ("배포 자동화", "deploy automation"),
+    ("mlops", "monitor"): ("운영 관측", "observability"),
+    ("mlops", "docker"): ("단일 서버 통합", "one-server stack"),
+    ("mlops", "pytorch"): ("수령 모델", "model received"),
+    ("mlops", "streamlit"): ("운영 포털", "ops portal"),
+    # RAG → 기술
+    ("rag", "ollama"): ("LLM 런타임", "LLM runtime"),
+    ("rag", "langchain"): ("오케스트레이션", "orchestration"),
+    ("rag", "faiss"): ("벡터 검색", "vector search"),
+    ("rag", "ruleagent"): ("키워드 분기", "keyword branch"),
+    ("rag", "docker"): ("컨테이너 배포", "containerised"),
+    ("rag", "streamlit"): ("UI", "UI"),
+    # JisangFolio → LLMOps 스택
+    ("jf", "eval"): ("회귀 게이트", "regression gate"),
+    ("jf", "groq"): ("추론", "inference"),
+    ("jf", "streamlit"): ("UI", "UI"),
+    ("jf", "graphrag"): ("근거 검색", "grounding retrieval"),
+    ("jf", "guardrails"): ("입력 가드", "input guard"),
+    ("jf", "observability"): ("턴 트레이싱", "per-turn tracing"),
+    ("jf", "agenticrag"): ("문서 Q&A", "docs Q&A"),
+    ("jf", "codeguard"): ("실행 가드", "execution guard"),
+    ("jf", "ghci"): ("CI 게이트", "CI gates"),
+    ("jf", "probe"): ("검색 자기진단", "retrieval self-diagnosis"),
+    ("probe", "hybrid"): ("측정 대상", "what it measured"),
+    ("probe", "faiss"): ("절단률 계량", "quantified truncation"),
+    ("probe", "agenticrag"): ("코퍼스 편중 규명", "found corpus skew"),
+    ("codeguard", "jd"): ("생성 코드 실행", "runs generated code"),
+    ("ghci", "eval"): ("빠른 결정적 층", "fast deterministic layer"),
+    ("agenticrag", "hybrid"): ("검색 융합", "fused retrieval"),
+    ("agenticrag", "faiss"): ("dense 절반", "the dense half"),
+    ("agenticrag", "langchain"): ("루프 배선", "loop wiring"),
+    ("agenticrag", "groq"): ("생성·평가", "generate & grade"),
+    ("agenticrag", "eval"): ("근거 충실성 평가", "groundedness eval"),
+    ("agenticrag", "mlops"): ("코퍼스에 포함", "part of the corpus"),
+    ("jd", "langchain"): ("오케스트레이션", "orchestration"),
+    ("jd", "faiss"): ("벡터 검색", "vector search"),
+    ("jd", "groq"): ("라우팅·생성", "routing & generation"),
+    ("jd", "streamlit"): ("UI", "UI"),
+    ("jd", "hybrid"): ("BM25+dense", "BM25+dense"),
+    ("jd", "observability"): ("턴 트레이싱", "per-turn tracing"),
+    ("mcp", "groq"): ("ask_jisang", "ask_jisang"),
+    ("hybrid", "faiss"): ("dense 절반", "the dense half"),
+    ("observability", "streamlit"): ("대시보드", "dashboard"),
+    # 논문·코스워크 → 기술
+    ("tebo", "mpl"): ("그림 출고", "produced the figures"),
+    ("cs307", "pytorch"): ("CNN lab", "CNN lab"),
+    ("info330", "sql"): ("T-SQL", "T-SQL"),
+    # MLOps 파이프라인 내부 순서
+    ("pytorch", "onnx"): ("변환 경로", "conversion path"),
+    ("onnx", "triton"): ("검증 후 로드", "validated, then loaded"),
+    ("mlflow", "triton"): ("레지스트리 → 서빙", "registry → serving"),
+    ("monitor", "triton"): ("메트릭 수집", "scrapes metrics"),
+    ("ci", "onnx"): ("변환·검증", "convert & validate"),
+    ("ci", "mlflow"): ("거버넌스 갱신", "updates governance"),
+    ("docker", "monitor"): ("같은 compose", "same compose stack"),
+    # SPA 내부와 그 계보
+    ("ollama", "langchain"): ("체인 백엔드", "chain backend"),
+    ("ruleagent", "jd"): ("라우터의 계보", "the router's lineage"),
+    # LLMOps 스택 내부
+    ("graphrag", "eval"): ("주입 프롬프트까지 평가", "evaluates the injected prompt"),
+    ("guardrails", "eval"): ("인젝션 케이스", "injection cases"),
+    ("guardrails", "codeguard"): ("2층 방어", "two-layer defence"),
+    ("guardrails", "observability"): ("판정 기록", "verdict logged"),
+    ("ghci", "codeguard"): ("우회 3건 재현", "replays 3 escapes"),
+    ("ghci", "graphrag"): ("검색 회귀", "retrieval regression"),
+    ("probe", "eval"): ("주장 대신 측정", "measure, don't claim"),
+    ("mcp", "jf"): ("같은 이력서 노출", "exposes the same resume"),
+    # 코스워크를 본체에 잇는 엣지
+    ("cse160", "cs307"): ("직접구현 → 프레임워크", "scratch → framework"),
+    ("cse160", "graphrag"): ("그래프 탐색 계보", "graph-traversal lineage"),
+    ("is477", "sql"): ("관계형 모델링", "relational modelling"),
+    ("is327", "cs307"): ("회귀 ↔ 분류", "regression ↔ classification"),
+    ("tebo", "is327"): ("데이터 분석 계보", "data-analysis lineage"),
+    ("is467", "guardrails"): ("편향 연구 → 가드레일", "bias study → guardrails"),
+}
 
 GROUP_COLOR = {
     "person": "#7AA2F7",   # 브랜드 periwinkle
@@ -290,7 +413,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 <style>
   html, body { margin:0; padding:0; background:transparent; }
-  #net { width:100%; height:600px; }
+  #net { width:100%; height:680px; }
 </style></head>
 <body>
 __LEGEND__
@@ -301,9 +424,12 @@ __LEGEND__
   const options = {
     nodes: { borderWidth: 0, shadow: false, font: { face: 'Pretendard, sans-serif' } },
     edges: { color: { color: 'rgba(180,190,210,0.28)', highlight: '#7AA2F7', hover: '#7AA2F7' },
-             smooth: { type: 'continuous' }, width: 1.1, hoverWidth: 0.6 },
-    physics: { barnesHut: { gravitationalConstant: -14000, centralGravity: 0.25,
-                            springLength: 150, springConstant: 0.035, avoidOverlap: 0.3 },
+             smooth: { type: 'continuous' }, width: 1.1, hoverWidth: 0.6,
+             // 엣지 이름. strokeWidth 로 배경을 깔지 않으면 선·노드와 겹쳐 못 읽는다.
+             font: { size: 9, color: '#9AA3B2', strokeWidth: 4, strokeColor: '#0E1117',
+                     face: 'Pretendard, sans-serif', align: 'horizontal' } },
+    physics: { barnesHut: { gravitationalConstant: -20000, centralGravity: 0.22,
+                            springLength: 210, springConstant: 0.03, avoidOverlap: 0.45 },
                stabilization: { iterations: 320 } },
     interaction: { hover: true, tooltipDelay: 80, zoomView: true, dragView: true, navigationButtons: false }
   };
@@ -339,7 +465,16 @@ def to_vis_html(lang="한국어"):
             "font": {"color": "#E6E8EE", "size": 16 if n["group"] == "person" else 13},
         }
         vis_nodes.append(node)
-    vis_edges = [{"from": a, "to": b} for (a, b) in EDGES]
+    vis_edges = []
+    for (a, b) in EDGES:
+        lab = EDGE_LABEL.get((a, b))
+        edge = {"from": a, "to": b}
+        if lab:
+            # label = 선 위 글자, title = hover 툴팁. 92개가 동시에 떠 있으니
+            # 글자는 작고 muted 하게 두고, 어두운 stroke 로 선 위에서 읽히게 한다.
+            edge["label"] = lab[0] if ko else lab[1]
+            edge["title"] = edge["label"]
+        vis_edges.append(edge)
     # 정규화한 값을 넘긴다. 노드 쪽만 normalize_lang 을 거치고 범례에 raw 를 넘기던 탓에
     # to_vis_html("ko") 가 LEGEND_LABELS 조회에서 KeyError 로 죽었다 — 형제 함수
     # graph_retrieve 는 'ko' 를 받도록 테스트까지 있는데 이쪽만 안 받았다.
